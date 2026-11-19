@@ -223,9 +223,60 @@ export function zoomAround(cam: CanvasCamera, sx: number, sy: number, zoom: numb
   return { zoom: z, x: sx - (sx - cam.x) * (z / cam.zoom), y: sy - (sy - cam.y) * (z / cam.zoom) };
 }
 
-/** Font size for a sticky so its text fills the note without overflowing. */
+const fontCache = new Map<string, number>();
+
+/**
+ * Font size for a sticky so its text fills the note without overflowing:
+ * the largest size at which a word-wrap estimate still fits the note.
+ */
 export function stickyFont(text: string, w: number, h: number): number {
-  const len = Math.max(text.length, 8);
-  const area = Math.max(w - 28, 20) * Math.max(h - 48, 20);
-  return Math.round(clamp(Math.sqrt(area / (len * 0.62 * 1.3)), 12, 30));
+  const key = `${Math.round(w)}|${Math.round(h)}|${text}`;
+  const hit = fontCache.get(key);
+  if (hit) return hit;
+  const aw = Math.max(w - 32, 10), ah = Math.max(h - 48, 10);
+  const paras = (text || "Write an idea").split("\n").map((p) => p.split(/\s+/).filter(Boolean));
+  let size = 12;
+  for (let fs = 30; fs >= 12; fs--) {
+    const max = Math.max(1, Math.floor(aw / (fs * 0.57)));
+    let lines = 0;
+    for (const words of paras) {
+      let cur = 0;
+      lines++;
+      for (const word of words) {
+        const len = word.length;
+        if (cur === 0) cur = len;
+        else if (cur + 1 + len <= max) cur += 1 + len;
+        else {
+          lines++;
+          cur = len;
+        }
+        while (cur > max) {
+          lines++;
+          cur -= max;
+        }
+      }
+    }
+    if (lines * fs * 1.3 <= ah) {
+      size = fs;
+      break;
+    }
+  }
+  if (fontCache.size > 2000) fontCache.clear();
+  fontCache.set(key, size);
+  return size;
+}
+
+/** Does segment a-b touch the box? (For marquee-selecting arrows.) */
+export function segmentHitsBox(a: Pt, b: Pt, box: Box): boolean {
+  const inside = (p: Pt) => p[0] >= box.x && p[0] <= box.x + box.w && p[1] >= box.y && p[1] <= box.y + box.h;
+  if (inside(a) || inside(b)) return true;
+  const x1 = box.x, y1 = box.y, x2 = box.x + box.w, y2 = box.y + box.h;
+  const edges: [Pt, Pt][] = [
+    [[x1, y1], [x2, y1]],
+    [[x2, y1], [x2, y2]],
+    [[x2, y2], [x1, y2]],
+    [[x1, y2], [x1, y1]],
+  ];
+  const cross = (o: Pt, p: Pt, q: Pt) => (p[0] - o[0]) * (q[1] - o[1]) - (p[1] - o[1]) * (q[0] - o[0]);
+  return edges.some(([c, d]) => cross(a, b, c) * cross(a, b, d) <= 0 && cross(c, d, a) * cross(c, d, b) <= 0);
 }

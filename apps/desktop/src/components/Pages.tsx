@@ -1,7 +1,8 @@
-import { BookOpen, CircleDashed, FolderTree, GitPullRequest, Palette, Plus, Server, Users, Workflow } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useMemo } from "react";
 import { LANGUAGES, getLang, setLang, useT, type Lang } from "../i18n";
-import { useStore, useWorkspaceCaptains, useWorkspaceThreads, type SoonPage, type ThemePref } from "../store";
+import { useStore, useWorkspaceCaptains, useWorkspaceThreads, type ThemePref } from "../store";
+import { HubSettings, ProviderSettings } from "./More";
 import { ago, cost } from "../lib/format";
 import { Overview } from "./Panel";
 import { PixelAvatar } from "./PixelAvatar";
@@ -126,29 +127,6 @@ export function WorkspacesPage() {
   );
 }
 
-const SOON: Record<SoonPage, { phase: number; icon: typeof Plus; name: Parameters<ReturnType<typeof useT>>[0] }> = {
-  issues: { phase: 4, icon: CircleDashed, name: "ws.issues" },
-  pullRequests: { phase: 4, icon: GitPullRequest, name: "ws.pullRequests" },
-  automations: { phase: 4, icon: Workflow, name: "ws.automations" },
-  studio: { phase: 5, icon: Palette, name: "ws.studio" },
-  files: { phase: 4, icon: FolderTree, name: "ws.files" },
-  runners: { phase: 3, icon: Server, name: "nav.runners" },
-  library: { phase: 7, icon: BookOpen, name: "nav.library" },
-  people: { phase: 3, icon: Users, name: "nav.people" },
-};
-
-export function Soon({ page }: { page: SoonPage }) {
-  const t = useT();
-  const s = SOON[page];
-  return (
-    <div className="page soon">
-      <s.icon size={22} strokeWidth={1.5} />
-      <h1 className="page-title">{t("soon.title", { name: t(s.name), phase: s.phase })}</h1>
-      <p>{t(`soon.${page}`)}</p>
-    </div>
-  );
-}
-
 export function Settings() {
   const t = useT();
   const theme = useStore((s) => s.theme);
@@ -193,6 +171,9 @@ export function Settings() {
           <input className="input" value={name} onChange={(e) => setUserName(e.target.value)} />
         </label>
       </section>
+
+      <ProviderSettings />
+      <HubSettings />
 
       <section className="set-group">
         <h2>{t("settings.agents")}</h2>

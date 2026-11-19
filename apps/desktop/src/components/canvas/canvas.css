@@ -34,11 +34,11 @@
   --canvas-item-shadow: 0 0 0 1px rgba(240, 240, 235, .04), 0 6px 16px -8px rgba(0, 0, 0, .6);
   --canvas-float: 0 0 0 1px rgba(240, 240, 235, .08), 0 2px 4px rgba(0, 0, 0, .3), 0 16px 36px -10px rgba(0, 0, 0, .65);
 
-  --sticky-yellow: #4A4020;
-  --sticky-green: #233D2C;
-  --sticky-blue: #22344F;
-  --sticky-pink: #4A2533;
-  --sticky-purple: #342A50;
+  --sticky-yellow: #514624;
+  --sticky-green: #254431;
+  --sticky-blue: #253A58;
+  --sticky-pink: #502A39;
+  --sticky-purple: #3A2F58;
   --sticky-grey: #2C2C2F;
   --sticky-ink: #ECECE8;
   --sticky-meta: rgba(236, 236, 232, .45);
@@ -191,6 +191,9 @@
   user-select: text;
   overflow: hidden;
 }
+.cv-editor:focus-visible {
+  outline: none;
+}
 .cv-editor::placeholder {
   color: var(--sticky-meta);
 }
@@ -285,10 +288,10 @@
   background: var(--sheet);
   border-radius: 10px;
   box-shadow: var(--canvas-item-shadow), 0 0 0 1px var(--line);
-  padding: 10px 12px 12px;
+  padding: 9px 12px 10px;
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 4px;
   overflow: hidden;
 }
 .cv-task-head {
@@ -302,8 +305,8 @@
   color: var(--mute);
 }
 .cv-task-title {
-  font-size: 13.5px;
-  line-height: 1.35;
+  font-size: 13px;
+  line-height: 1.3;
   font-weight: 500;
   color: var(--ink);
   display: -webkit-box;
@@ -460,6 +463,21 @@
   box-shadow: 0 0 0 1px var(--canvas-sel);
   border-radius: 0;
   opacity: .7;
+}
+.cv-sel-arrows {
+  left: 0;
+  top: 0;
+  overflow: visible;
+}
+.cv-sel-arrows line {
+  stroke: var(--canvas-sel);
+  stroke-width: 1.5;
+  opacity: .5;
+}
+.cv-sel-arrows circle {
+  fill: #fff;
+  stroke: var(--canvas-sel);
+  stroke-width: 1.5;
 }
 .cv-handle {
   width: 9px;
@@ -934,7 +952,7 @@
 }
 .ci-row {
   display: grid;
-  grid-template-columns: 64px minmax(0, 1fr);
+  grid-template-columns: 58px minmax(0, 1fr);
   align-items: center;
   gap: 6px;
   min-height: 28px;
@@ -1038,7 +1056,8 @@ textarea.ci-input {
   flex: 1;
   height: 24px;
   border-radius: 4px;
-  font-size: 12px;
+  padding: 0 4px;
+  font-size: 11.5px;
   text-align: center;
   color: var(--ink-2);
   white-space: nowrap;

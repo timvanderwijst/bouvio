@@ -1,7 +1,8 @@
 import { PanelRight, Plus, X } from "lucide-react";
 import { useT } from "../i18n";
 import type { Thread } from "../protocol/Thread";
-import { useStore, useWorkspaceCaptains, useWorkspaceThreads } from "../store";
+import { useStore, useWorkspaceCaptains, useWorkspaceThreads, useWsData } from "../store";
+import { personColor } from "./Sidebar";
 import { cost } from "../lib/format";
 import { Composer } from "./Composer";
 import { PixelAvatar } from "./PixelAvatar";
@@ -77,6 +78,7 @@ function TabBar({ thread }: { thread: Thread | null }) {
         </button>
       </div>
       <div className="tabbar-right">
+        <Watchers threadId={thread?.id} />
         {thread && thread.cost_usd > 0 && <span className="cost num">{cost(thread.cost_usd)}</span>}
         {!panel.open && (
           <button className="icon-btn" onClick={() => setPanel({ open: true })} aria-label={t("panel.open")} title={t("panel.open")}>
@@ -89,3 +91,20 @@ function TabBar({ thread }: { thread: Thread | null }) {
 }
 
 const NO_TABS: string[] = [];
+
+/** Who else is looking at this thread right now. */
+function Watchers({ threadId }: { threadId?: string }) {
+  const presence = useWsData().presence;
+  const me = useStore((s) => s.hub.user?.id);
+  const here = Object.values(presence ?? {}).filter((p) => p.viewing === threadId && p.user.id !== me);
+  if (!threadId || !here.length) return null;
+  return (
+    <div className="watchers">
+      {here.map((p) => (
+        <span key={p.user.id} className="person-avatar" style={{ background: personColor(p.user.name) }} title={p.user.name}>
+          {p.user.name.slice(0, 1)}
+        </span>
+      ))}
+    </div>
+  );
+}

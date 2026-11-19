@@ -52,6 +52,12 @@ export function CommandPalette() {
         run: () => (s.setTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark"), close()),
       },
       { id: "lang", label: t("palette.toggleLanguage"), icon: <Languages size={15} />, run: () => (setLang(getLang() === "en" ? "nl" : "en"), close()) },
+      ...(["issues", "pullRequests", "automations", "studio", "files", "knowledge", "chat"] as const).map((page) => ({
+        id: `p${page}`,
+        label: t(page === "chat" ? "ws.general" : (`ws.${page}` as "ws.issues")),
+        icon: <Layers size={15} />,
+        run: () => (s.go({ kind: "page", page }), close()),
+      })),
     ];
     for (const w of s.workspaces) list.push({ id: `w${w.id}`, label: w.name, hint: t("nav.workspaces"), icon: <Layers size={15} />, run: () => (s.selectWorkspace(w.id), close()) });
     for (const [wid, cs] of Object.entries(s.captains))

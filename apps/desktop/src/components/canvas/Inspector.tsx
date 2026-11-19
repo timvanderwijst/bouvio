@@ -1,4 +1,4 @@
-import { ArrowUpRight, Circle, FileText, Frame, Image, Pencil, Square, SquareCheck, StickyNote, Type } from "lucide-react";
+import { ArrowUpRight, Circle, Layers, Frame, Image, Pencil, Square, SquareCheck, StickyNote, Type } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useT } from "../../i18n";
 import type { MessageKey } from "../../i18n/en";
@@ -162,17 +162,21 @@ export function Inspector({ items, onChange }: { items: CanvasItem[]; onChange(i
 
   const kind = common(items, (i) => i.kind);
   const one = items.length === 1 ? items[0] : null;
-  const colorable = items.every((i) => i.kind === "sticky" || i.kind === "rect" || i.kind === "ellipse" || i.kind === "pen");
+  const isColorable = (i: CanvasItem) => i.kind === "sticky" || i.kind === "rect" || i.kind === "ellipse" || i.kind === "pen";
+  const colorable = items.some(isColorable);
+  const boxed = items.filter((i) => i.kind !== "arrow");
   const textual = items.every((i) => i.kind === "sticky" || i.kind === "text" || i.kind === "rect" || i.kind === "ellipse" || i.kind === "task");
-  const color = common(items, (i) => i.color ?? (i.kind === "sticky" ? "yellow" : i.kind === "pen" ? undefined : "grey"));
-  const positional = items.every((i) => i.kind !== "arrow");
+  const color = common(items.filter(isColorable), (i) => i.color ?? (i.kind === "sticky" ? "yellow" : i.kind === "pen" ? undefined : "grey"));
+  const positional = boxed.length > 0;
+  /** Apply to the items that have a box (arrows follow their anchors). */
+  const setBoxed = (f: (i: CanvasItem) => CanvasItem) => set((i) => (i.kind === "arrow" ? i : f(i)));
   const setFrame = (patch: Partial<CanvasFrame>) =>
     set((i) => (i.frame ? { ...i, frame: { ...i.frame, ...patch } } : i));
 
   return (
     <div className="ci-root">
       <div className="ci-head">
-        <span className="ci-head-icon">{kind ? (kind === "frame" && one ? frameIcon(one.frame?.kind, 14) : KIND_ICON[kind]) : <FileText size={14} />}</span>
+        <span className="ci-head-icon">{kind ? (kind === "frame" && one ? frameIcon(one.frame?.kind, 14) : KIND_ICON[kind]) : <Layers size={14} />}</span>
         <span className="ci-head-title truncate">
           {one ? (one.kind === "frame" ? one.frame?.label || t("canvas.frame.untitled") : t(`canvas.kind.${one.kind}` as MessageKey)) : t("canvas.inspector.selection", { count: items.length })}
         </span>
@@ -182,15 +186,15 @@ export function Inspector({ items, onChange }: { items: CanvasItem[]; onChange(i
       {positional && (
         <Section title={t("canvas.inspector.layout")}>
           <Row label={t("canvas.inspector.position")}>
-            <NumField label="X" value={common(items, (i) => i.x)} onCommit={(v) => set((i) => ({ ...i, x: v }))} />
-            <NumField label="Y" value={common(items, (i) => i.y)} onCommit={(v) => set((i) => ({ ...i, y: v }))} />
+            <NumField label="X" value={common(boxed, (i) => i.x)} onCommit={(v) => setBoxed((i) => ({ ...i, x: v }))} />
+            <NumField label="Y" value={common(boxed, (i) => i.y)} onCommit={(v) => setBoxed((i) => ({ ...i, y: v }))} />
           </Row>
           <Row label={t("canvas.inspector.size")}>
-            <NumField label="W" value={common(items, (i) => i.w)} onCommit={(v) => set((i) => ({ ...i, w: Math.max(4, v) }))} />
-            <NumField label="H" value={common(items, (i) => i.h)} onCommit={(v) => set((i) => ({ ...i, h: Math.max(4, v) }))} />
+            <NumField label="W" value={common(boxed, (i) => i.w)} onCommit={(v) => setBoxed((i) => ({ ...i, w: Math.max(4, v) }))} />
+            <NumField label="H" value={common(boxed, (i) => i.h)} onCommit={(v) => setBoxed((i) => ({ ...i, h: Math.max(4, v) }))} />
           </Row>
           <Row label={t("canvas.inspector.rotation")}>
-            <NumField label="°" value={common(items, (i) => i.rotation ?? 0)} onCommit={(v) => set((i) => ({ ...i, rotation: ((v % 360) + 360) % 360 || undefined }))} />
+            <NumField label="°" value={common(boxed, (i) => i.rotation ?? 0)} onCommit={(v) => setBoxed((i) => ({ ...i, rotation: ((v % 360) + 360) % 360 || undefined }))} />
             <span className="ci-spacer" />
           </Row>
         </Section>
@@ -206,7 +210,7 @@ export function Inspector({ items, onChange }: { items: CanvasItem[]; onChange(i
                 className={`cv-swatch cv-c-${c} ${color === c ? "on" : ""}`}
                 aria-label={t(`canvas.color.${c}`)}
                 title={t(`canvas.color.${c}`)}
-                onClick={() => set((i) => ({ ...i, color: c }))}
+                onClick={() => set((i) => (isColorable(i) ? { ...i, color: c } : i))}
               />
             ))}
           </div>
@@ -229,7 +233,7 @@ export function Inspector({ items, onChange }: { items: CanvasItem[]; onChange(i
               </Row>
             </>
           )}
-          <TextField value={common(items, (i) => i.text ?? "")} multiline placeholder={t("canvas.inspector.mixed")} onCommit={(v) => set((i) => ({ ...i, text: v }))} />
+          <TextField value={common(items, (i) => i.text ?? "")} multiline placeholder={common(items, (i) => i.text ?? "") === undefined ? t("canvas.inspector.mixed") : undefined} onCommit={(v) => set((i) => ({ ...i, text: v }))} />
         </Section>
       )}
 

@@ -1,21 +1,39 @@
 # Bouvio
 
-A desktop workspace where people and agent fleets work together. Phase 1: the app shell and a local runner that drives Claude Code and Codex.
+A desktop workspace where people and agent fleets work together, live, without pushing to Git first.
 
-## What works now
+Bouvio runs the agents you already have (Claude Code, Codex) and models from your own keys, on your own machines. A small hub you host lets others join your workspace: they see threads, diffs and terminals as they happen, chat, and steer agents with the role you give them. Bouvio never pays for or proxies model calls.
 
-- **Desktop app** (Tauri 2): hover rail (left edge or `Ctrl+\`), workspace sidebar with captains and their threads, thread tabs, Overview / Changes / Terminal panel, `Ctrl+K` command palette, light and dark theme, English and Dutch.
-- **Runner** (`crates/runner`): starts Claude Code over `stream-json`, keeps one process per thread, records every event to disk, tracks status (working, needs you, idle, error) and cost, gives a thread its own git worktree and branch, and serves real terminals (ConPTY on Windows).
-- **Codex** (`codex exec --json`): wired up but not yet tested against a real Codex install.
-- **Headless runner** (`bouvio-runner`): the same core without a window, for a VPS or scripts.
+## What's in it
 
-Not yet: approvals inside the app, the API loop for OpenRouter and API keys (phase 2), the hub and multiplayer (phase 3). See the spec for the order.
+| Area | What it does |
+| --- | --- |
+| **Captains and threads** | Long-lived agents per domain (captains) split work into threads. Each thread can get its own git worktree and branch. Status per agent: working, needs you, idle, error. |
+| **Harnesses** | Claude Code (`stream-json`, one process per thread, resumed after restarts), Codex (`codex exec --json`), and Bouvio's own agent loop for API keys: OpenRouter, Anthropic, OpenAI, Google. |
+| **Approvals** | Ask for everything, ask when risky, or free. Claude Code's permission prompts and the API loop's risky tools land in the thread as a card anyone with the right role can answer. |
+| **Fleet tools** | Every agent gets a `bouvio` MCP server: `spawn_thread`, `list_threads`, `thread_status`, `create_issue`, `remember`. |
+| **Work** | Own issue tracker with GitHub sync, pull requests and merges through `gh`, commits from a thread, scheduled automations (cron). |
+| **Studio** | Artifacts agents make (HTML, images, documents, media) with previews; image, video and speech generation with your keys; design boards with live frames of each branch's dev server, variants, remote cursors. |
+| **Knowledge** | Workspace instructions, editable memory, MCP servers per workspace. |
+| **Multiplayer** | Hub with email codes and Google/GitHub sign-in, invites with roles (viewer → admin), chat, presence, relay of RPCs to the hosting runner. |
+| **Everywhere** | Hover rail (left edge or `Ctrl+\`), `Ctrl+K`, light and dark, English and Dutch, voice input. |
 
-## Run it
+## Layout
 
-You need Rust (stable), Node 22, pnpm 10, and Claude Code and/or Codex on your PATH, logged in.
+```
+apps/desktop          Tauri 2 app: React UI (src/) + Rust shell with the runner built in (src-tauri/)
+apps/hub              hub server (axum + SQLite), Dockerfile and compose.yml
+apps/runner-cli       headless runner: `serve` hosts shared workspaces from a VPS
+crates/protocol       types shared by app, runner and hub; generates TypeScript
+crates/runner         harnesses, event log, approvals, MCP server, worktrees, terminals, issues, studio, hub client
+crates/agent          Bouvio's agent loop, tools, providers, keychain, media generation
+```
 
-On **Windows**: install the [Tauri prerequisites](https://tauri.app/start/prerequisites/) (Microsoft C++ Build Tools and WebView2, which Windows 11 already has).
+## Run the app
+
+You need Rust (stable), Node 22, pnpm 10, and Claude Code and/or Codex on your PATH, logged in. For pull requests and GitHub sync, the `gh` CLI, logged in.
+
+On **Windows**: the [Tauri prerequisites](https://tauri.app/start/prerequisites/) (Microsoft C++ Build Tools; WebView2 ships with Windows 11).
 On **Linux**: `libwebkit2gtk-4.1-dev libgtk-3-dev librsvg2-dev libayatana-appindicator3-dev`.
 
 ```bash
@@ -23,31 +41,27 @@ pnpm install
 pnpm tauri dev
 ```
 
-The UI alone, with sample data and no runner, runs in a browser:
+The UI alone runs in a browser with sample data: `pnpm dev` → http://127.0.0.1:1420.
+
+Data lives in `~/.bouvio` (`BOUVIO_DATA` to change). API keys live in the OS keychain.
+
+## Host a hub
+
+See [`apps/hub/README.md`](apps/hub/README.md). Short version, on your VPS:
 
 ```bash
-pnpm dev   # http://127.0.0.1:1420
+docker compose -f apps/hub/compose.yml up -d
 ```
 
-Data lives in `~/.bouvio` (set `BOUVIO_DATA` to use another folder). Worktrees go to `~/.bouvio/worktrees/<workspace>/`.
+Then in the app: Settings → Hub → Sign in, and Share on a workspace.
 
-## Headless runner
+## Keep agents working at night
+
+On the VPS, next to the hub or anywhere else:
 
 ```bash
-cargo run -p bouvio-runner-cli -- detect
-cargo run -p bouvio-runner-cli -- run --cwd ~/code/project --isolate "Fix the failing test"
+cargo run --release -p bouvio-runner-cli -- serve --hub https://hub.example.com --token <your hub token>
 ```
-
-## Layout
-
-```
-apps/desktop          React UI (src/) + Tauri shell (src-tauri/)
-apps/runner-cli       headless runner
-crates/protocol       types shared by app, runner and hub; generates TypeScript
-crates/runner         harnesses, event log, worktrees, terminals
-```
-
-Types are defined once in Rust. After changing `crates/protocol`, run `pnpm types` to regenerate `apps/desktop/src/protocol/`.
 
 ## Checks
 

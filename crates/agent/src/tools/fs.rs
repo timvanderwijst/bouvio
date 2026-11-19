@@ -314,7 +314,7 @@ impl Tool for Glob {
             if hits.is_empty() {
                 return Ok("No files found.".to_string());
             }
-            hits.sort_by(|a, b| b.0.cmp(&a.0));
+            hits.sort_by_key(|h| std::cmp::Reverse(h.0));
             let total = hits.len();
             let mut out: Vec<String> = hits.iter().take(500).map(|(_, p)| show(&cwd, p)).collect();
             if total > 500 {

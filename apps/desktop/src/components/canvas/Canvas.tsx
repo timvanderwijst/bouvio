@@ -12,6 +12,7 @@ import {
   intersects,
   penItem,
   resolveArrow,
+  segmentHitsBox,
   smooth,
   snap,
   snapLines,
@@ -517,7 +518,8 @@ export function Canvas({ doc, onChange, cursors, onCursor, me, onSelectionChange
     cancelAnimationFrame(anim.current);
     const vp = viewport.current!;
     vp.setPointerCapture(e.pointerId);
-    const p = toBoard(e.clientX, e.clientY);
+    const raw = toBoard(e.clientX, e.clientY);
+    const p: Pt = [Math.round(raw[0]), Math.round(raw[1])];
 
     if (e.button === 1 || spaceRef.current) {
       gesture.current = { kind: "pan", sx: e.clientX, sy: e.clientY, cam: camRef.current };
@@ -622,12 +624,12 @@ export function Canvas({ doc, onChange, cursors, onCursor, me, onSelectionChange
             setSelection(new Set(g.ids));
           }
         }
-        let dx = p[0] - g.start[0], dy = p[1] - g.start[1];
+        let dx = Math.round(p[0] - g.start[0]), dy = Math.round(p[1] - g.start[1]);
         let gl: Guide[] = [];
         if (!(e.metaKey || e.ctrlKey)) {
           const s = snap({ ...g.box, x: g.box.x + dx, y: g.box.y + dy }, g.lines, 6 / z);
-          dx += s.dx;
-          dy += s.dy;
+          dx = Math.round(dx + s.dx);
+          dy = Math.round(dy + s.dy);
           gl = s.guides;
         }
         const g2: Getter = (id) => g.orig.get(id) ?? localRef.current.items.find((i) => i.id === id);
@@ -677,7 +679,8 @@ export function Canvas({ doc, onChange, cursors, onCursor, me, onSelectionChange
             patch.set(it.id, n);
             continue;
           }
-          const n: CanvasItem = { ...it, x: x1 + (it.x - b.x) * sx, y: y1 + (it.y - b.y) * sy, w: Math.max(4, it.w * sx), h: Math.max(4, it.h * sy) };
+          const nx = Math.round(x1 + (it.x - b.x) * sx), ny = Math.round(y1 + (it.y - b.y) * sy);
+          const n: CanvasItem = { ...it, x: nx, y: ny, w: Math.max(4, Math.round(x1 + (it.x + it.w - b.x) * sx) - nx), h: Math.max(4, Math.round(y1 + (it.y + it.h - b.y) * sy) - ny) };
           if (it.kind === "pen" && it.points) n.points = it.points.map(([px, py]) => [px * sx, py * sy]);
           patch.set(it.id, n);
         }
@@ -689,6 +692,11 @@ export function Canvas({ doc, onChange, cursors, onCursor, me, onSelectionChange
         setMarquee(box);
         const sel = new Set(g.base);
         for (const it of items) {
+          if (it.kind === "arrow") {
+            const { a, b } = resolveArrow(it, get);
+            if (segmentHitsBox(a, b, box)) sel.add(it.id);
+            continue;
+          }
           const b = boundsOf(it, get);
           if (it.kind === "frame" ? contains(box, b) : intersects(box, b)) sel.add(it.id);
         }
@@ -697,6 +705,8 @@ export function Canvas({ doc, onChange, cursors, onCursor, me, onSelectionChange
         return;
       }
       case "create": {
+        p[0] = Math.round(p[0]);
+        p[1] = Math.round(p[1]);
         if (!g.dragged && Math.hypot(e.clientX - g.sx, e.clientY - g.sy) < 4) return;
         g.dragged = true;
         let b = boxFrom(g.start, p);
@@ -747,7 +757,7 @@ export function Canvas({ doc, onChange, cursors, onCursor, me, onSelectionChange
         let it = d?.get(g.id) ?? null;
         if (!it) {
           const [w, h] = DEFAULT_SIZE[g.tool] ?? [160, 110];
-          const at: Pt = g.tool === "text" ? [g.start[0], g.start[1] - h / 2] : [g.start[0] - w / 2, g.start[1] - h / 2];
+          const at: Pt = g.tool === "text" ? [g.start[0], Math.round(g.start[1] - h / 2)] : [Math.round(g.start[0] - w / 2), Math.round(g.start[1] - h / 2)];
           it = { ...newItem(g.tool, at, maxZ() + 1), id: g.id };
         }
         commit(new Map([[g.id, it]]));
@@ -776,8 +786,10 @@ export function Canvas({ doc, onChange, cursors, onCursor, me, onSelectionChange
   };
 
   const onDoubleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    const target = e.target as HTMLElement;
+    // Pointer capture retargets dblclick to the viewport; ask what is really under the pointer.
+    const target = (document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null) ?? (e.target as HTMLElement);
     if (isEditable(target) || tool !== "select") return;
+    if (entered && target.closest(`[data-frame-body="${entered}"]`)) return;
     const id = target.closest<HTMLElement>("[data-id]")?.dataset.id;
     const it = id ? byId.get(id) : undefined;
     if (it) {
@@ -925,14 +937,15 @@ export function Canvas({ doc, onChange, cursors, onCursor, me, onSelectionChange
   const selected = items.filter((i) => selection.has(i.id));
   const selBoxes = selected.map((i) => ({ id: i.id, kind: i.kind, box: toScreen(boundsOf(i, get)) }));
   const selUnion = union(selBoxes.map((s) => s.box));
-  const showHandles = selUnion && !(selected.length === 1 && selected[0].kind === "arrow") && gestureKind !== "move" && gestureKind !== "marquee" && !editing;
+  const showHandles = selUnion && !selected.every((i) => i.kind === "arrow") && gestureKind !== "move" && gestureKind !== "marquee" && !editing;
   const hovered = hover && !selection.has(hover) && !gestureKind ? byId.get(hover) : undefined;
   const singleFrame = selected.length === 1 && selected[0].kind === "frame" && (!gestureKind || gestureKind === "pan") ? selected[0] : null;
   const frameBox = singleFrame ? toScreen(singleFrame) : null;
 
-  const step = cam.zoom * 24;
-  const gridMul = step < 12 ? Math.pow(2, Math.ceil(Math.log2(12 / step))) : 1;
-  const gap = step * gridMul;
+  // Keep the dot density steady: double the spacing when zoomed out, halve it when zoomed in.
+  let gap = cam.zoom * 24;
+  while (gap < 14) gap *= 2;
+  while (gap > 40) gap /= 2;
   const dotR = clamp(cam.zoom * 1.1, 0.8, 1.4);
 
   const cursorClass =
@@ -985,7 +998,24 @@ export function Canvas({ doc, onChange, cursors, onCursor, me, onSelectionChange
             const b = toScreen(boundsOf(hovered, get));
             return <div className={`cv-hover ${hovered.kind === "ellipse" ? "round" : ""}`} style={{ left: b.x, top: b.y, width: b.w, height: b.h }} />;
           })()}
-          {selBoxes.map((s) => (
+          {selected.some((i) => i.kind === "arrow") && (
+            <svg className="cv-sel-arrows" width={size.w} height={size.h}>
+              {selected
+                .filter((i) => i.kind === "arrow")
+                .map((i) => {
+                  const { a, b } = resolveArrow(i, get);
+                  const [ax, ay, bx, by] = [a[0] * cam.zoom + cam.x, a[1] * cam.zoom + cam.y, b[0] * cam.zoom + cam.x, b[1] * cam.zoom + cam.y];
+                  return (
+                    <g key={i.id}>
+                      <line x1={ax} y1={ay} x2={bx} y2={by} />
+                      <circle cx={ax} cy={ay} r="4" />
+                      <circle cx={bx} cy={by} r="4" />
+                    </g>
+                  );
+                })}
+            </svg>
+          )}
+          {selBoxes.filter((s) => s.kind !== "arrow").map((s) => (
             <div key={s.id} className={`cv-sel ${s.kind === "ellipse" ? "round" : ""}`} style={{ left: s.box.x, top: s.box.y, width: s.box.w, height: s.box.h }} />
           ))}
           {selUnion && selBoxes.length > 1 && <div className="cv-sel group" style={{ left: selUnion.x, top: selUnion.y, width: selUnion.w, height: selUnion.h }} />}
