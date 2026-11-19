@@ -1,0 +1,7 @@
+# Used by BuildKit for apps/hub/Dockerfile (the build context is the repo root).
+**/target
+**/node_modules
+**/dist
+.git
+apps/desktop/src
+apps/desktop/public

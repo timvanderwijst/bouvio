@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Canvas demo</title>
+    <script>
+      document.documentElement.dataset.theme = new URLSearchParams(location.search).get("theme") || "light";
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/canvas-demo.tsx"></script>
+  </body>
+</html>

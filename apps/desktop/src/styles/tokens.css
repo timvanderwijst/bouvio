@@ -1,0 +1,106 @@
+/* Bouvio design tokens. Light and dark are equals, not inversions. */
+
+:root {
+  --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", Inter, system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+
+  --e: cubic-bezier(.22, 1, .36, 1);
+  --e-io: cubic-bezier(.76, 0, .24, 1);
+  --t-fast: .18s;
+  --t: .32s;
+  --t-slow: .6s;
+
+  --r-xs: 4px;
+  --r-sm: 6px;
+  --r: 8px;
+  --r-md: 10px;
+  --r-lg: 14px;
+
+  --rail-w: 56px;
+  --sidebar-w: 248px;
+  --panel-w: 440px;
+  --row-h: 30px;
+}
+
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #F4F4F3;           /* window, behind the sheets */
+  --sidebar: #F4F4F3;
+  --sheet: #FFFFFF;        /* chat and panel */
+  --sheet-2: #F7F7F6;      /* group headers, code */
+  --hover: rgba(20, 20, 18, .045);
+  --active: rgba(20, 20, 18, .075);
+  --line: rgba(20, 20, 18, .08);
+  --line-strong: rgba(20, 20, 18, .14);
+
+  --ink: #1B1B1A;
+  --ink-2: #4A4A47;
+  --mute: #8A8A86;
+  --faint: #B8B8B3;
+
+  --accent: #3E63DD;
+  --accent-hi: #3557C9;
+  --accent-ink: #FFFFFF;
+  --accent-tint: rgba(62, 99, 221, .1);
+  --link: #3557C9;
+
+  --ok: #2F9E5A;
+  --warn: #D08A1A;
+  --fail: #D93F3F;
+  --ok-tint: rgba(47, 158, 90, .12);
+  --fail-tint: rgba(217, 63, 63, .1);
+
+  --diff-add: #E9F6EC;
+  --diff-add-hi: #CDEBD5;
+  --diff-del: #FCEBEB;
+  --diff-del-hi: #F6CFCF;
+  --diff-hunk: #EEF2FD;
+
+  --bubble: #F0F0EE;
+  --shadow-sm: 0 1px 2px rgba(20, 20, 18, .06);
+  --shadow: 0 1px 2px rgba(20, 20, 18, .05), 0 4px 16px -4px rgba(20, 20, 18, .08);
+  --shadow-lg: 0 2px 4px rgba(20, 20, 18, .04), 0 24px 48px -12px rgba(20, 20, 18, .22);
+  --scrim: rgba(20, 20, 18, .18);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #111112;
+  --sidebar: #111112;
+  --sheet: #19191B;
+  --sheet-2: #1F1F22;
+  --hover: rgba(240, 240, 235, .05);
+  --active: rgba(240, 240, 235, .085);
+  --line: rgba(240, 240, 235, .07);
+  --line-strong: rgba(240, 240, 235, .13);
+
+  --ink: #ECECE8;
+  --ink-2: #B9B9B4;
+  --mute: #84847F;
+  --faint: #55554F;
+
+  --accent: #5B7FFF;
+  --accent-hi: #7090FF;
+  --accent-ink: #FFFFFF;
+  --accent-tint: rgba(91, 127, 255, .16);
+  --link: #8AA3FF;
+
+  --ok: #45C277;
+  --warn: #E8A33A;
+  --fail: #F06363;
+  --ok-tint: rgba(69, 194, 119, .14);
+  --fail-tint: rgba(240, 99, 99, .14);
+
+  --diff-add: rgba(69, 194, 119, .1);
+  --diff-add-hi: rgba(69, 194, 119, .22);
+  --diff-del: rgba(240, 99, 99, .1);
+  --diff-del-hi: rgba(240, 99, 99, .22);
+  --diff-hunk: rgba(91, 127, 255, .1);
+
+  --bubble: #252528;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, .4);
+  --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px -8px rgba(0, 0, 0, .5);
+  --shadow-lg: 0 2px 4px rgba(0, 0, 0, .3), 0 32px 64px -16px rgba(0, 0, 0, .7);
+  --scrim: rgba(0, 0, 0, .45);
+}

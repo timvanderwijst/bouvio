@@ -1,0 +1,281 @@
+//! `GET /ws?token=…`: one socket per desktop app or runner.
+
+use std::sync::Arc;
+use std::time::Duration;
+
+use axum::extract::ws::{Message, WebSocket, WebSocketUpgrade};
+use axum::extract::{Query, State};
+use axum::response::Response;
+use bouvio_protocol::{required_role, ChatMessage, ClientMsg, HubUser, Presence, Role, ServerMsg};
+use chrono::Utc;
+use futures_util::{SinkExt, StreamExt};
+use serde::Deserialize;
+use tokio::sync::mpsc;
+use uuid::Uuid;
+
+use crate::auth::authenticate;
+use crate::db::{self, role_str};
+use crate::error::ApiResult;
+use crate::hub::{rpc_err, ConnId, Except, Hub};
+use crate::AppState;
+
+/// Messages queued per connection before it counts as too slow and is dropped.
+const QUEUE: usize = 512;
+const PING_EVERY: Duration = Duration::from_secs(25);
+const RPC_TIMEOUT: Duration = Duration::from_secs(60);
+const MAX_CHAT_LEN: usize = 8000;
+
+#[derive(Deserialize)]
+pub struct WsQuery {
+    token: String,
+}
+
+pub async fn upgrade(
+    State(st): State<AppState>,
+    Query(q): Query<WsQuery>,
+    ws: WebSocketUpgrade,
+) -> ApiResult<Response> {
+    let user = authenticate(&st.db, &q.token).await?;
+    Ok(ws
+        .max_message_size(16 << 20)
+        .on_upgrade(move |socket| run(socket, st, user)))
+}
+
+async fn run(socket: WebSocket, st: AppState, user: HubUser) {
+    let (mut sink, mut stream) = socket.split();
+    let (tx, mut rx) = mpsc::channel::<Message>(QUEUE);
+    let (conn, kick) = st.hub.register(user.clone(), tx);
+    tracing::debug!(conn, user = %user.email, "connected");
+    st.hub
+        .send(conn, &ServerMsg::Welcome { user: user.clone() });
+
+    let writer = tokio::spawn(async move {
+        let mut ping =
+            tokio::time::interval_at(tokio::time::Instant::now() + PING_EVERY, PING_EVERY);
+        loop {
+            let msg = tokio::select! {
+                m = rx.recv() => match m { Some(m) => m, None => break },
+                _ = ping.tick() => Message::Ping(Default::default()),
+            };
+            if sink.send(msg).await.is_err() {
+                break;
+            }
+        }
+        let _ = sink.close().await;
+    });
+
+    let ctx = Ctx {
+        st: &st,
+        conn,
+        user: &user,
+    };
+    loop {
+        tokio::select! {
+            _ = kick.notified() => break,
+            m = stream.next() => match m {
+                Some(Ok(Message::Text(text))) => match serde_json::from_str::<ClientMsg>(&text) {
+                    Ok(msg) => ctx.handle(msg).await,
+                    Err(e) => ctx.error(format!("bad message: {e}")),
+                },
+                Some(Ok(Message::Close(_))) | Some(Err(_)) | None => break,
+                Some(Ok(_)) => {}
+            },
+        }
+    }
+
+    st.hub.disconnect(conn).await;
+    // The hub dropped its sender, so the writer drains its queue and stops.
+    let abort = writer.abort_handle();
+    if tokio::time::timeout(Duration::from_secs(5), writer)
+        .await
+        .is_err()
+    {
+        abort.abort();
+    }
+    tracing::debug!(conn, user = %user.email, "disconnected");
+}
+
+struct Ctx<'a> {
+    st: &'a AppState,
+    conn: ConnId,
+    user: &'a HubUser,
+}
+
+impl Ctx<'_> {
+    fn hub(&self) -> &Arc<Hub> {
+        &self.st.hub
+    }
+
+    fn error(&self, message: impl Into<String>) {
+        self.hub().send(
+            self.conn,
+            &ServerMsg::Error {
+                message: message.into(),
+            },
+        );
+    }
+
+    async fn role(&self, ws: Uuid) -> Option<Role> {
+        self.hub().role(ws, self.user.id).await
+    }
+
+    async fn handle(&self, msg: ClientMsg) {
+        match msg {
+            ClientMsg::Host { workspace_ids } => self.host(workspace_ids).await,
+            ClientMsg::Rpc {
+                id,
+                workspace_id,
+                method,
+                params,
+            } => self.rpc(id, workspace_id, method, params).await,
+            ClientMsg::RpcResult { id, ok, err } => {
+                if let Some((asker, asker_id)) = self.hub().finish_rpc(id, Some(self.conn)) {
+                    self.hub().send(
+                        asker,
+                        &ServerMsg::RpcResult {
+                            id: asker_id,
+                            ok,
+                            err,
+                        },
+                    );
+                }
+            }
+            ClientMsg::Publish {
+                workspace_id,
+                kind,
+                payload,
+            } => {
+                if self.hub().host_of(workspace_id) != Some(self.conn) {
+                    return self.error(format!(
+                        "only the connection hosting {workspace_id} may publish to it"
+                    ));
+                }
+                let msg = ServerMsg::Event {
+                    workspace_id,
+                    kind,
+                    payload,
+                };
+                self.hub()
+                    .broadcast(workspace_id, &msg, Except::Conn(self.conn))
+                    .await;
+            }
+            ClientMsg::Chat {
+                workspace_id,
+                channel,
+                text,
+            } => self.chat(workspace_id, channel, text).await,
+            ClientMsg::Presence {
+                workspace_id,
+                viewing,
+                cursor,
+            } => {
+                if self.role(workspace_id).await.is_none() {
+                    return self.error(format!("not a member of {workspace_id}"));
+                }
+                self.hub().add_presence(self.conn, workspace_id);
+                let presence = Presence {
+                    workspace_id,
+                    user: self.user.clone(),
+                    viewing,
+                    cursor,
+                };
+                let msg = ServerMsg::Presence {
+                    presence,
+                    online: true,
+                };
+                self.hub()
+                    .broadcast(workspace_id, &msg, Except::User(self.user.id))
+                    .await;
+            }
+        }
+    }
+
+    async fn host(&self, workspace_ids: Vec<Uuid>) {
+        for ws in workspace_ids {
+            match db::workspace(&self.st.db, ws).await {
+                Ok(Some(row)) if row.host.id == self.user.id => {
+                    self.hub().set_host(ws, self.conn);
+                    let msg = ServerMsg::HostStatus {
+                        workspace_id: ws,
+                        online: true,
+                    };
+                    self.hub().broadcast(ws, &msg, Except::Nobody).await;
+                }
+                Ok(_) => self.error(format!("you do not host workspace {ws}")),
+                Err(e) => {
+                    tracing::error!("host {ws}: {e}");
+                    self.error("database error");
+                }
+            }
+        }
+    }
+
+    async fn rpc(&self, id: u64, ws: Uuid, method: String, params: serde_json::Value) {
+        let hub = self.hub();
+        let Some(role) = self.role(ws).await else {
+            return hub.send(self.conn, &rpc_err(id, "not a member of this workspace"));
+        };
+        let needed = required_role(&method);
+        if role < needed {
+            let err = format!(
+                "forbidden: {method} needs role {}, you are {}",
+                role_str(needed),
+                role_str(role)
+            );
+            return hub.send(self.conn, &rpc_err(id, err));
+        }
+        let Some(host) = hub.host_of(ws) else {
+            return hub.send(self.conn, &rpc_err(id, "host offline"));
+        };
+        let hub_id = hub.start_rpc(self.conn, id, host);
+        let msg = ServerMsg::Rpc {
+            id: hub_id,
+            workspace_id: ws,
+            method,
+            params,
+            from: self.user.clone(),
+            role,
+        };
+        hub.send(host, &msg);
+
+        let hub = hub.clone();
+        tokio::spawn(async move {
+            tokio::time::sleep(RPC_TIMEOUT).await;
+            if let Some((asker, asker_id)) = hub.finish_rpc(hub_id, None) {
+                hub.send(
+                    asker,
+                    &rpc_err(asker_id, "timeout: the host did not answer within 60 s"),
+                );
+            }
+        });
+    }
+
+    async fn chat(&self, ws: Uuid, channel: String, text: String) {
+        match self.role(ws).await {
+            None => return self.error(format!("not a member of {ws}")),
+            Some(r) if r < Role::Commenter => return self.error("chat needs role commenter"),
+            Some(_) => {}
+        }
+        let channel = channel.trim();
+        let text = text.trim();
+        if channel.is_empty() || channel.len() > 64 || text.is_empty() || text.len() > MAX_CHAT_LEN
+        {
+            return self.error("chat needs a channel (max 64 chars) and text (max 8000 chars)");
+        }
+        let message = ChatMessage {
+            id: Uuid::new_v4(),
+            workspace_id: ws,
+            channel: channel.to_string(),
+            author: self.user.clone(),
+            text: text.to_string(),
+            at: Utc::now(),
+        };
+        if let Err(e) = db::insert_chat(&self.st.db, &message).await {
+            tracing::error!("chat insert: {e}");
+            return self.error("could not save the message");
+        }
+        self.hub()
+            .broadcast(ws, &ServerMsg::Chat { message }, Except::Nobody)
+            .await;
+    }
+}

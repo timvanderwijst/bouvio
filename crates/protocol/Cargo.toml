@@ -1,0 +1,13 @@
+[package]
+name = "bouvio-protocol"
+description = "Shared types between the Bouvio app, runner and hub"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+uuid.workspace = true
+chrono.workspace = true
+ts-rs.workspace = true

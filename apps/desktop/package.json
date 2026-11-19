@@ -1,0 +1,33 @@
+{
+  "name": "@bouvio/desktop",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -b --noEmit",
+    "tauri": "tauri"
+  },
+  "dependencies": {
+    "@fontsource/geist-mono": "5.2.5",
+    "@tauri-apps/api": "2.5.0",
+    "@tauri-apps/plugin-opener": "2.2.7",
+    "@xterm/addon-fit": "0.10.0",
+    "@xterm/xterm": "5.5.0",
+    "intl-messageformat": "10.7.16",
+    "lucide-react": "0.511.0",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "zustand": "5.0.5"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "2.5.0",
+    "@types/react": "19.1.6",
+    "@types/react-dom": "19.1.5",
+    "@vitejs/plugin-react": "4.5.0",
+    "typescript": "5.8.3",
+    "vite": "6.3.5"
+  }
+}

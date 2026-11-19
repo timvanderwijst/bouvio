@@ -1,0 +1,28 @@
+{
+  "id": "gen-1731000000-xyz",
+  "provider": "Anthropic",
+  "model": "anthropic/claude-sonnet-4.5",
+  "object": "chat.completion",
+  "created": 1731000000,
+  "choices": [
+    {
+      "logprobs": null,
+      "finish_reason": "stop",
+      "native_finish_reason": "end_turn",
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "The tests pass now.",
+        "refusal": null,
+        "reasoning": null
+      }
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 5000,
+    "completion_tokens": 20,
+    "total_tokens": 5020,
+    "cost": 0.0153,
+    "is_byok": false
+  }
+}

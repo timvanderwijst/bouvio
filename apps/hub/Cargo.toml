@@ -1,0 +1,34 @@
+[package]
+name = "bouvio-hub"
+description = "Bouvio hub: accounts, sharing, permissions, realtime relay, chat and presence"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "bouvio-hub"
+path = "src/main.rs"
+
+[dependencies]
+bouvio-protocol.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+anyhow.workspace = true
+uuid.workspace = true
+chrono.workspace = true
+tracing.workspace = true
+axum = { version = "0.8", features = ["ws"] }
+sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio", "sqlite", "migrate", "macros"] }
+tower-http = { version = "0.6", features = ["cors", "trace"] }
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+rand = "0.9"
+sha2 = "0.10"
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+lettre = { version = "0.11", default-features = false, features = ["tokio1", "tokio1-rustls", "rustls-native-certs", "ring", "builder", "smtp-transport"] }
+futures-util = { version = "0.3", default-features = false, features = ["sink", "std"] }
+
+[dev-dependencies]
+tokio-tungstenite = "0.26"
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+tempfile = "3"
