@@ -30,7 +30,7 @@ impl Runner {
 
     pub fn list_issues(&self, workspace_id: Uuid) -> Vec<Issue> {
         let mut v = self.issues.filter(|i| i.workspace_id == workspace_id);
-        v.sort_by(|a, b| b.number.cmp(&a.number));
+        v.sort_by_key(|x| std::cmp::Reverse(x.number));
         v
     }
 

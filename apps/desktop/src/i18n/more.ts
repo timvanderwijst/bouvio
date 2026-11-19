@@ -11,6 +11,7 @@ export const enMore = {
   "composer.chooseModel": "Choose a model",
   "composer.needsKey": "needs a key",
   "composer.voice": "Speak",
+  "composer.runnerOf": "{name}'s runner",
 
   "dev.commit": "Commit",
   "dev.committed": "Committed {hash}",
@@ -160,6 +161,7 @@ export const nlMore: Partial<Record<MoreKey, string>> = {
   "composer.chooseModel": "Kies een model",
   "composer.needsKey": "key nodig",
   "composer.voice": "Inspreken",
+  "composer.runnerOf": "Runner van {name}",
   "dev.commit": "Commit",
   "dev.committed": "{hash} gecommit",
   "dev.openPr": "PR openen",

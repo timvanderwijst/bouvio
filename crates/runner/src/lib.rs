@@ -61,6 +61,7 @@ pub struct Runner {
 
 /// Builds a session for `HarnessKind::Api`; set by the app so the runner does
 /// not depend on any provider code.
+#[allow(clippy::type_complexity)]
 pub type ApiFactory = Arc<dyn Fn(Arc<Runner>, &Thread, SessionConfig, mpsc::UnboundedSender<HarnessOut>) -> Result<Box<dyn HarnessSession>> + Send + Sync>;
 
 impl Runner {
@@ -70,10 +71,10 @@ impl Runner {
         let (events, _) = broadcast::channel(4096);
         let (threads, _) = broadcast::channel(256);
 
-        // A thread that was working when the app closed is not working now.
+        // A thread that was working or waiting when the runner stopped is neither now.
         for ws in store.workspaces() {
             for t in store.threads(ws.id) {
-                if matches!(t.status, AgentStatus::Working) {
+                if matches!(t.status, AgentStatus::Working | AgentStatus::Blocked) {
                     store.update_thread(t.id, |t| t.status = AgentStatus::Idle)?;
                 }
             }

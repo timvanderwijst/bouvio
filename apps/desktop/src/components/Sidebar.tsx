@@ -239,7 +239,7 @@ export function personColor(name: string) {
 }
 
 function UserRow() {
-  const name = useStore((s) => s.userName);
+  const name = useStore((s) => s.hub.user?.name ?? s.userName);
   const ws = useStore((s) => s.workspaces.find((w) => w.id === s.workspaceId));
   const go = useStore((s) => s.go);
   return (

@@ -105,7 +105,7 @@ impl Runner {
 
     pub fn list_artifacts(&self, workspace_id: Uuid) -> Vec<Artifact> {
         let mut v = self.artifacts.filter(|a| a.workspace_id == workspace_id && Path::new(&a.path).exists());
-        v.sort_by(|a, b| b.created_at.cmp(&a.created_at));
+        v.sort_by_key(|x| std::cmp::Reverse(x.created_at));
         v
     }
 
@@ -198,7 +198,7 @@ impl Runner {
                 b
             })
             .collect();
-        out.sort_by(|a, b| b.updated_at.cmp(&a.updated_at));
+        out.sort_by_key(|x| std::cmp::Reverse(x.updated_at));
         out
     }
 

@@ -26,7 +26,14 @@ export function App() {
   const thread = view.kind === "thread" ? threads.find((x) => x.id === view.id) ?? null : null;
 
   useEffect(() => {
-    useStore.getState().init();
+    // A runner that fails to answer must not leave a blank window.
+    useStore
+      .getState()
+      .init()
+      .catch((e) => {
+        useStore.setState({ ready: true });
+        useStore.getState().notify(String(e));
+      });
   }, []);
 
   // The sidebar shows open issues; settings decide which dev tools show.

@@ -33,7 +33,7 @@ async fn rpc(app: State<'_, Arc<App>>, workspace_id: Option<Uuid>, method: Strin
     if method == "list_workspaces" {
         let mut all = app.runner.workspaces();
         all.extend(app.hub.remote.lock().unwrap().iter().cloned());
-        return Ok(serde_json::to_value(all).map_err(err)?);
+        return serde_json::to_value(all).map_err(err);
     }
     if let Some(ws) = workspace_id.filter(|w| app.hub.is_remote(*w)) {
         return app.hub.client().map_err(err)?.rpc(ws, &method, params).await.map_err(err);
@@ -59,11 +59,41 @@ fn providers() -> Vec<ProviderInfo> {
     KeyringStore::configured()
 }
 
+/// Keys go to the OS keychain. Where there is none (some Linux setups) they go
+/// to a file only this user can read, and into this process's environment,
+/// which `KeyringStore` reads as its fallback.
 #[tauri::command]
-fn set_key(provider: ProviderKind, key: Option<String>) -> R<()> {
-    match key.filter(|k| !k.trim().is_empty()) {
-        Some(k) => KeyringStore::set(provider, k.trim()).map_err(err),
-        None => KeyringStore::delete(provider).map_err(err),
+fn set_key(app: State<'_, Arc<App>>, provider: ProviderKind, key: Option<String>) -> R<()> {
+    let key = key.map(|k| k.trim().to_string()).filter(|k| !k.is_empty());
+    let keychain = match &key {
+        Some(k) => KeyringStore::set(provider, k),
+        None => KeyringStore::delete(provider),
+    };
+    let path = app.runner.store().dir().join("keys.json");
+    let mut file: serde_json::Map<String, Value> = std::fs::read(&path).ok().and_then(|b| serde_json::from_slice(&b).ok()).unwrap_or_default();
+    let var = bouvio_agent::keys::env_vars(provider).first().copied().unwrap_or_default();
+    match (&key, keychain.is_ok()) {
+        (Some(k), false) => {
+            file.insert(provider.id().into(), Value::String(k.clone()));
+            std::env::set_var(var, k);
+        }
+        _ => {
+            file.remove(provider.id());
+            if key.is_none() {
+                std::env::remove_var(var);
+            }
+        }
+    }
+    hub::write_private(&path, &serde_json::to_string(&file).map_err(err)?).map_err(err)
+}
+
+fn load_file_keys(dir: &std::path::Path) {
+    let Ok(b) = std::fs::read(dir.join("keys.json")) else { return };
+    let Ok(map) = serde_json::from_slice::<serde_json::Map<String, Value>>(&b) else { return };
+    for p in ProviderKind::ALL {
+        if let (Some(Value::String(k)), Some(var)) = (map.get(p.id()), bouvio_agent::keys::env_vars(p).first()) {
+            std::env::set_var(var, k);
+        }
     }
 }
 
@@ -213,6 +243,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             let dir = std::env::var_os("BOUVIO_DATA").map(PathBuf::from).unwrap_or_else(Runner::default_dir);
+            load_file_keys(&dir);
             let runner = Runner::open(dir)?;
             runner.set_api_factory(api::factory());
             tauri::async_runtime::block_on(runner.start())?;

@@ -50,6 +50,8 @@ impl ClaudeSession {
         }
         if let Some(path) = &self.cfg.mcp_config {
             cmd.arg("--mcp-config").arg(path);
+            // Bouvio's own fleet tools never need a person's yes.
+            cmd.args(["--allowedTools", "mcp__bouvio__spawn_thread,mcp__bouvio__list_threads,mcp__bouvio__thread_status,mcp__bouvio__create_issue,mcp__bouvio__remember"]);
             if self.cfg.prompt_tool {
                 cmd.args(["--permission-prompt-tool", "mcp__bouvio__approve"]);
             }

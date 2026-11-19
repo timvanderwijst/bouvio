@@ -211,7 +211,7 @@ export function StudioPage({ sub }: { sub?: string }) {
         <>
           <Generate />
           <div className="studio-filter">
-            {["all", "media", "documents"].map((k) => (
+            {(["all", "media", "documents"] as const).map((k) => (
               <button key={k} className={`chip-btn ${kind === k ? "on" : ""}`} onClick={() => setKind(k)}>
                 {t(`studio.filter.${k}`)}
               </button>

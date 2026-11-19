@@ -168,7 +168,7 @@ function IssueDetail({ issue, onClose }: { issue: Issue; onClose: () => void }) 
           <Trash2 size={14} />
         </button>
       </div>
-      <input className="detail-title" value={title} onChange={(e) => setTitle(e.target.value)} onBlur={() => title !== issue.title && save({})} />
+      <textarea className="detail-title" rows={2} value={title} onChange={(e) => setTitle(e.target.value.replace(/\n/g, " "))} onBlur={() => title !== issue.title && save({})} />
       <textarea className="detail-body" value={body} placeholder={t("issues.bodyHint")} onChange={(e) => setBody(e.target.value)} onBlur={() => body !== issue.body && save({})} />
       <div className="detail-props">
         <span>{t("issues.status")}</span>
@@ -288,6 +288,7 @@ export function PullRequestsPage() {
 /** "0 8 * * 1-5" → "08:00 · Mon–Fri", for the common shapes; the raw cron otherwise. */
 export function describeCron(cron: string, lang: string): string {
   const [m, h, dom, mon, dow] = cron.trim().split(/\s+/);
+  if (/^\d+$/.test(m ?? "") && h === "*" && dom === "*" && mon === "*" && dow === "*") return lang === "nl" ? `elk uur om :${m.padStart(2, "0")}` : `every hour at :${m.padStart(2, "0")}`;
   if (!/^\d+$/.test(m ?? "") || !/^\d+$/.test(h ?? "") || dom !== "*" || mon !== "*") return cron;
   const time = `${h.padStart(2, "0")}:${m.padStart(2, "0")}`;
   const days = new Intl.DateTimeFormat(lang, { weekday: "short" });

@@ -152,7 +152,7 @@ export function Composer({ thread }: { thread: Thread | null }) {
       <div className="composer-foot">
         <span className="runner-pill">
           <Monitor size={13} />
-          {t("composer.thisComputer")}
+          {ws?.host ? t("composer.runnerOf", { name: ws.host.name }) : t("composer.thisComputer")}
           <span className="online" />
         </span>
         <Menu

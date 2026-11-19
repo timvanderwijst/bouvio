@@ -17,9 +17,11 @@ use tokio::sync::{broadcast, mpsc, oneshot};
 use tokio_tungstenite::tungstenite::Message;
 use uuid::Uuid;
 
+type Pending = Arc<Mutex<HashMap<u64, oneshot::Sender<Result<Value, String>>>>>;
+
 pub struct HubClient {
     out: mpsc::UnboundedSender<ClientMsg>,
-    pending: Arc<Mutex<HashMap<u64, oneshot::Sender<Result<Value, String>>>>>,
+    pending: Pending,
     next: AtomicU64,
     /// Everything the hub sends that is not an RPC answer: events, chat, presence.
     pub inbound: broadcast::Sender<ServerMsg>,

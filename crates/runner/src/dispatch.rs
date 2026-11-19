@@ -105,6 +105,10 @@ impl Runner {
     /// The workspace an RPC touches, so a member of one shared workspace can
     /// never reach into another one through the same runner.
     fn workspace_of(&self, method: &str, params: &Value) -> Result<Uuid> {
+        if method.ends_with("_terminal") && method != "open_terminal" || method == "resolve_approval" {
+            // Terminal and approval ids carry no workspace; call_scoped checks their owner.
+            return Err(anyhow::anyhow!("scoped"));
+        }
         if let Some(w) = opt::<Uuid>(params, "workspace_id") {
             return Ok(w);
         }
@@ -138,10 +142,6 @@ impl Runner {
             }
             if let Ok(b) = self.get_board(id) {
                 return Ok(b.workspace_id);
-            }
-            if method.ends_with("_terminal") || method == "resolve_approval" {
-                // Terminal and approval ids carry no workspace; they are checked by owner below.
-                return Err(anyhow::anyhow!("scoped"));
             }
         }
         bail!("cannot tell which workspace `{method}` touches")

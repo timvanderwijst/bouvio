@@ -14,6 +14,7 @@ const KEYCHAIN: &str = "bouvio-hub";
 
 #[derive(Default)]
 pub struct Hub {
+    dir: PathBuf,
     pub url: Mutex<Option<String>>,
     pub client: Mutex<Option<Arc<HubClient>>>,
     pub user: Mutex<Option<HubUser>>,
@@ -30,15 +31,33 @@ fn token_entry(url: &str) -> Result<keyring::Entry> {
     Ok(keyring::Entry::new(KEYCHAIN, url)?)
 }
 
+/// Where the token goes when the OS has no keychain (some Linux setups).
+fn token_file(dir: &std::path::Path) -> PathBuf {
+    dir.join("hub-token")
+}
+
+pub fn write_private(path: &std::path::Path, data: &str) -> Result<()> {
+    std::fs::write(path, data)?;
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o600))?;
+    }
+    Ok(())
+}
+
 impl Hub {
     pub fn load(runner: &Runner) -> Self {
         let url = std::fs::read(config_path(runner)).ok().and_then(|b| serde_json::from_slice::<Value>(&b).ok()).and_then(|v| v["url"].as_str().map(String::from));
-        Self { url: Mutex::new(url), ..Default::default() }
+        Self { dir: runner.store().dir().to_path_buf(), url: Mutex::new(url), ..Default::default() }
     }
 
     fn token(&self) -> Option<String> {
         let url = self.url.lock().unwrap().clone()?;
-        token_entry(&url).ok()?.get_password().ok()
+        token_entry(&url)
+            .ok()
+            .and_then(|e| e.get_password().ok())
+            .or_else(|| std::fs::read_to_string(token_file(&self.dir)).ok().map(|t| t.trim().to_string()).filter(|t| !t.is_empty()))
     }
 
     pub fn status(&self) -> HubStatus {
@@ -81,14 +100,19 @@ impl Hub {
         let token = v["token"].as_str().context("no token")?.to_string();
         let user: HubUser = serde_json::from_value(v["user"].clone())?;
         let url = self.url.lock().unwrap().clone().context("no hub")?;
-        token_entry(&url)?.set_password(&token)?;
+        if token_entry(&url).and_then(|e| Ok(e.set_password(&token)?)).is_err() {
+            write_private(&token_file(&self.dir), &token)?;
+        }
         *self.user.lock().unwrap() = Some(user.clone());
         self.connect(runner).await?;
         Ok(user)
     }
 
     pub async fn connect(&self, runner: &Arc<Runner>) -> Result<()> {
-        let (Some(url), Some(token)) = (self.url.lock().unwrap().clone(), self.token()) else { return Ok(()) };
+        // Take the url and the token in separate statements: `token()` locks `url` too.
+        let url = self.url.lock().unwrap().clone();
+        let token = self.token();
+        let (Some(url), Some(token)) = (url, token) else { return Ok(()) };
         if self.user.lock().unwrap().is_none() {
             let me: HubUser = serde_json::from_value(self.request("GET", "/me", None).await?)?;
             *self.user.lock().unwrap() = Some(me);
@@ -100,9 +124,13 @@ impl Hub {
     }
 
     pub fn logout(&self) -> Result<()> {
-        if let Some(url) = self.url.lock().unwrap().clone() {
-            let _ = token_entry(&url)?.delete_credential();
+        let url = self.url.lock().unwrap().clone();
+        if let Some(url) = url {
+            if let Ok(e) = token_entry(&url) {
+                let _ = e.delete_credential();
+            }
         }
+        let _ = std::fs::remove_file(token_file(&self.dir));
         *self.client.lock().unwrap() = None;
         *self.user.lock().unwrap() = None;
         self.remote.lock().unwrap().clear();

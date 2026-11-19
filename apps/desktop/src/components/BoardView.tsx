@@ -61,7 +61,8 @@ export function BoardView({ id }: { id: string }) {
     rpc<Board>("get_board", { id })
       .then((b) => {
         setBoard(b);
-        setDoc((b.doc as CanvasDoc)?.items ? (b.doc as CanvasDoc) : { items: [] });
+        const d = b.doc as unknown as CanvasDoc | null;
+        setDoc(d?.items ? d : { items: [] });
       })
       .catch((e) => notify(String(e)));
     rpc<DevServer[]>("dev_servers", { workspace_id: workspaceId })
@@ -151,6 +152,11 @@ export function BoardView({ id }: { id: string }) {
     }
   };
 
+  const renderFrame = useCallback(
+    (item: CanvasItem) => <FrameBody item={item} reloads={reloads} servers={servers} onStart={startDev} />,
+    [reloads, servers], // eslint-disable-line react-hooks/exhaustive-deps
+  );
+
   const threadItems = useMemo(() => threads.filter((th) => th.branch).map((th) => ({ value: th.id, label: th.title, hint: th.branch ?? undefined })), [threads]);
 
   if (!board) return <div className="board-loading shimmer" />;
@@ -187,7 +193,7 @@ export function BoardView({ id }: { id: string }) {
             cursors={cursors}
             onCursor={onCursor}
             onSelectionChange={setSelection}
-            renderFrame={(item) => <FrameBody item={item} reloads={reloads} servers={servers} onStart={startDev} />}
+            renderFrame={renderFrame}
             onFrameAction={(item, action) => {
               if (action === "reload") setReloads((r) => r + 1);
               if (action === "open") {

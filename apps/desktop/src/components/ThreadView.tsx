@@ -180,7 +180,7 @@ function Steps({ item, live }: { item: Extract<Item, { kind: "steps" }>; live: b
       <button className={`msg-meta ${live ? "live" : ""}`} onClick={() => has && setOpen((o) => !o)} disabled={!has}>
         {live && <StatusIcon status="working" size={12} />}
         <span>{label}</span>
-        {has && item.first && <span className="dot-sep">{t("thread.steps", { count: item.tools.length })}</span>}
+        {has && item.first && (live || item.ms !== undefined) && <span className="dot-sep">{t("thread.steps", { count: item.tools.length })}</span>}
         {has && <ChevronRight size={12} className="chev" />}
       </button>
       {has && (

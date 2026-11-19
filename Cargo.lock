@@ -498,6 +498,7 @@ dependencies = [
  "bouvio-agent",
  "bouvio-protocol",
  "bouvio-runner",
+ "chrono",
  "dirs 6.0.0",
  "keyring",
  "reqwest 0.12.28",

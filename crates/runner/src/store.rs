@@ -72,7 +72,7 @@ impl Store {
     pub fn threads(&self, workspace_id: Uuid) -> Vec<Thread> {
         let s = self.state.lock().unwrap();
         let mut t: Vec<_> = s.threads.iter().filter(|t| t.workspace_id == workspace_id).cloned().collect();
-        t.sort_by(|a, b| b.updated_at.cmp(&a.updated_at));
+        t.sort_by_key(|x| std::cmp::Reverse(x.updated_at));
         t
     }
 
