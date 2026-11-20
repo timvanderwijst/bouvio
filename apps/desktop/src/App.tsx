@@ -5,7 +5,7 @@ import { Dialogs } from "./components/Dialogs";
 import { Main } from "./components/Main";
 import { Home, Settings, ThreadsPage, WorkspacesPage } from "./components/Pages";
 import { BoardView } from "./components/BoardView";
-import { ChatPage, FilesPage, KnowledgePage, PeoplePage, RunnersPage } from "./components/More";
+import { FilesPage, KnowledgePage, PeoplePage, RunnersPage } from "./components/More";
 import { StudioPage } from "./components/Studio";
 import { AutomationsPage, IssuesPage, PullRequestsPage } from "./components/Work";
 import { Panel } from "./components/Panel";
@@ -85,6 +85,12 @@ export function App() {
   );
 }
 
+/** Old routes that now live in a feature area. */
+function ExtRedirect({ id }: { id: string }) {
+  useEffect(() => useStore.getState().go({ kind: "ext", id }), [id]);
+  return null;
+}
+
 function PageView() {
   const view = useStore((s) => s.view);
   return (
@@ -101,7 +107,7 @@ function PageView() {
       {view.kind === "page" && view.page === "studio" && <StudioPage sub={view.sub} />}
       {view.kind === "page" && view.page === "files" && <FilesPage />}
       {view.kind === "page" && view.page === "knowledge" && <KnowledgePage />}
-      {view.kind === "page" && view.page === "chat" && <ChatPage />}
+      {view.kind === "page" && view.page === "chat" && <ExtRedirect id="comms.chat" />}
       {view.kind === "board" && <BoardView id={view.id} />}
       {view.kind === "ext" && (() => {
         const P = findPage(view.id);

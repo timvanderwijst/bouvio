@@ -7,7 +7,7 @@ import type { Thread } from "../../protocol/Thread";
 import { rpc, useStore, useWsData } from "../../store";
 import { Menu } from "../Menu";
 import { Empty } from "../Panel";
-import { errText, prefs } from "./state";
+import { errText, prefs, useDevNotice } from "./state";
 
 type Device = "desktop" | "laptop" | "tablet" | "phone";
 const WIDTHS: Record<Device, number | null> = { desktop: null, laptop: 1280, tablet: 768, phone: 390 };
@@ -23,19 +23,16 @@ export interface Picked {
   path?: string;
 }
 
-// One proxy per thread, shared by every frame that shows it.
-const cache = new Map<string, Promise<DevProxy>>();
-const subs = new Map<string, Set<(p: DevProxy | null) => void>>();
+// Frames of the same thread share one request while it is in flight.
+const inflight = new Map<string, Promise<DevProxy>>();
 
-function proxyFor(threadId: string, ws: string | null, fresh = false) {
-  let p = fresh ? undefined : cache.get(threadId);
+function proxyFor(threadId: string, ws: string | null) {
+  let p = inflight.get(threadId);
   if (!p) {
+    // Asked again on every mount: it restarts a dev server that was stopped meanwhile.
     p = rpc<DevProxy>("dev_proxy", { thread_id: threadId }, ws);
-    cache.set(threadId, p);
-    p.then(
-      (d) => subs.get(threadId)?.forEach((f) => f(d)),
-      () => cache.delete(threadId),
-    );
+    inflight.set(threadId, p);
+    p.finally(() => inflight.delete(threadId)).catch(() => {});
   }
   return p;
 }
@@ -50,6 +47,7 @@ export function useProxiedUrl(threadId: string | null | undefined): string | nul
 }
 
 function useProxy(threadId: string | null | undefined) {
+  const t = useT();
   const ws = useStore((s) => s.workspaceId);
   const hasDev = useWsData().settings?.dev_command;
   const [proxy, setProxy] = useState<DevProxy | null>(null);
@@ -66,17 +64,25 @@ function useProxy(threadId: string | null | undefined) {
     if (!threadId || !hasDev) return;
     let live = true;
     const set = (d: DevProxy | null) => live && setProxy(d);
-    if (!subs.has(threadId)) subs.set(threadId, new Set());
-    subs.get(threadId)!.add(set);
-    proxyFor(threadId, ws, n > 0).then(set, (e) => live && setError(errText(e)));
+    proxyFor(threadId, ws).then(set, (e) => live && setError(errText(e)));
     return () => {
       live = false;
-      subs.get(threadId)?.delete(set);
     };
   }, [threadId, ws, hasDev, n]);
 
+  // Stopped elsewhere (the Changes tab): say so instead of waiting forever.
+  useDevNotice("dev-server", (d: { thread_id: string; running: boolean }) => {
+    if (d?.thread_id === threadId && !d.running) {
+      setProxy(null);
+      setError(t("dev.browser.stopped"));
+    }
+  });
+
   return { proxy, error, retry: () => setN((x) => x + 1) };
 }
+
+/** A path on the proxy. (The browser preview stands in a blob page, which has no paths.) */
+const at = (base: string, path: string) => (base.startsWith("blob:") ? base : base + (path.startsWith("/") ? path : `/${path}`));
 
 /** The picked element as a Markdown block for the agent. */
 export function pickedBlock(p: Picked) {
@@ -128,7 +134,7 @@ function Browser({ thread }: { thread: Thread }) {
   pickRef.current = picking;
 
   useEffect(() => {
-    if (proxy) setSrc(proxy.url + (path.startsWith("/") ? path : `/${path}`));
+    if (proxy) setSrc(at(proxy.url, path));
     // Only when the proxy itself changes; in-frame navigation updates `path`.
   }, [proxy?.url]);
 
@@ -179,7 +185,7 @@ function Browser({ thread }: { thread: Thread }) {
     if (!proxy) return;
     const clean = p.trim().replace(/^https?:\/\/[^/]+/, "") || "/";
     const next = clean.startsWith("/") ? clean : `/${clean}`;
-    const url = proxy.url + next;
+    const url = at(proxy.url, next);
     setPath(next);
     setTyped(next);
     // The same address again reloads it.
@@ -233,7 +239,7 @@ function Browser({ thread }: { thread: Thread }) {
           <MousePointerClick size={13} />
           {t("dev.browser.pick")}
         </button>
-        <button className="icon-btn" title={t("dev.browser.open")} aria-label={t("dev.browser.open")} disabled={!proxy} onClick={() => proxy && backend.openUrl(proxy.url + path)}>
+        <button className="icon-btn" title={t("dev.browser.open")} aria-label={t("dev.browser.open")} disabled={!proxy} onClick={() => proxy && backend.openUrl(at(proxy.url, path))}>
           <ArrowUpRight size={14} />
         </button>
       </div>

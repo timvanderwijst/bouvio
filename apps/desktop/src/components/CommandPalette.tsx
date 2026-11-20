@@ -53,9 +53,9 @@ export function CommandPalette() {
         run: () => (s.setTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark"), close()),
       },
       { id: "lang", label: t("palette.toggleLanguage"), icon: <Languages size={15} />, run: () => (setLang(getLang() === "en" ? "nl" : "en"), close()) },
-      ...(["issues", "pullRequests", "automations", "studio", "files", "knowledge", "chat"] as const).map((page) => ({
+      ...(["issues", "pullRequests", "automations", "studio", "files", "knowledge"] as const).map((page) => ({
         id: `p${page}`,
-        label: t(page === "chat" ? "ws.general" : (`ws.${page}` as "ws.issues")),
+        label: t(`ws.${page}`),
         icon: <Layers size={15} />,
         run: () => (s.go({ kind: "page", page }), close()),
       })),

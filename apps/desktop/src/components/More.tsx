@@ -1,5 +1,5 @@
-import { ChevronRight, Copy, File, Folder, LogOut, Monitor, Plus, Send, Server, Trash2 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { ChevronRight, Copy, File, Folder, LogOut, Monitor, Plus, Server, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { backend } from "../backend";
 import { useT } from "../i18n";
 import type { FileEntry } from "../protocol/FileEntry";
@@ -183,81 +183,6 @@ export function KnowledgePage() {
           <input className="input mono" value={s.github_repo ?? ""} placeholder="owner/repo" onChange={(e) => set({ github_repo: e.target.value || null })} />
         </label>
       </section>
-    </div>
-  );
-}
-
-// ---- chat with people ---------------------------------------------------------------------------------
-
-export function ChatPage() {
-  const t = useT();
-  const ws = useWorkspace();
-  const hub = useStore((s) => s.hub);
-  const load = useStore((s) => s.load);
-  const setDialog = useStore((s) => s.setDialog);
-  const data = useWsData();
-  const [text, setText] = useState("");
-  const end = useRef<HTMLDivElement>(null);
-  const shared = ws?.kind === "shared";
-  useEffect(() => {
-    if (shared) load("chat");
-  }, [load, shared, ws?.id]);
-  const messages = data.chat?.general ?? [];
-  useEffect(() => end.current?.scrollIntoView({ block: "end" }), [messages.length]);
-
-  if (!shared)
-    return (
-      <div className="page soon">
-        <h1 className="page-title">{t("chat.notShared")}</h1>
-        <p>{t("chat.notSharedHint")}</p>
-        <button className="btn primary" onClick={() => setDialog(hub.user ? "share" : "signin")}>
-          {t("share.title")}
-        </button>
-      </div>
-    );
-
-  return (
-    <div className="chat">
-      <div className="chat-scroll">
-        <div className="chat-list">
-          {messages.map((m, i) => {
-            const same = i > 0 && messages[i - 1].author.id === m.author.id && new Date(m.at).getTime() - new Date(messages[i - 1].at).getTime() < 5 * 60_000;
-            return (
-              <div key={m.id} className={`chat-msg ${same ? "cont" : ""}`}>
-                {!same && (
-                  <span className="person-avatar lg" style={{ background: personColor(m.author.name) }}>
-                    {m.author.name.slice(0, 1)}
-                  </span>
-                )}
-                <div className="chat-body">
-                  {!same && (
-                    <div className="chat-meta">
-                      <b>{m.author.name}</b>
-                      <span>{new Date(m.at).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}</span>
-                    </div>
-                  )}
-                  <div className="chat-text">{m.text}</div>
-                </div>
-              </div>
-            );
-          })}
-          <div ref={end} />
-        </div>
-      </div>
-      <form
-        className="chat-input"
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (!text.trim() || !ws) return;
-          backend.hub.send({ t: "chat", workspace_id: ws.id, channel: "general", text: text.trim() });
-          setText("");
-        }}
-      >
-        <input className="input" value={text} placeholder={t("chat.placeholder")} onChange={(e) => setText(e.target.value)} />
-        <button className="send" disabled={!text.trim()}>
-          <Send size={14} />
-        </button>
-      </form>
     </div>
   );
 }

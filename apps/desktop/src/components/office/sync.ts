@@ -203,16 +203,16 @@ export function useSession(id: string | undefined): Session | null {
 const noopSub = () => () => {};
 const zero = () => 0;
 
-/** Re-render whenever a Yjs type (or anything inside it) changes. */
-export function useY<T>(type: Y.AbstractType<any> | null | undefined, read: () => T): T {
-  const [, bump] = useState(0);
+/** A counter that goes up whenever a Yjs type (or anything inside it) changes. */
+export function useYVersion(type: Y.AbstractType<any> | null | undefined): number {
+  const [n, bump] = useState(0);
   useEffect(() => {
     if (!type) return;
-    const f = () => bump((n) => n + 1);
+    const f = () => bump((x) => x + 1);
     type.observeDeep(f);
     return () => type.unobserveDeep(f);
   }, [type]);
-  return read();
+  return n;
 }
 
 /** Re-render on presence changes; returns the other people in the doc. */

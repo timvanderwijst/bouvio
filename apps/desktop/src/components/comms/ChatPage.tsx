@@ -109,11 +109,10 @@ function Chat({ wsId, sub }: { wsId: string; sub?: string }) {
   const pinned = useComms((s) => s.pinned[wsId]) ?? EMPTY;
   const unread = useComms((s) => s.unread);
   const huddlePeople = useComms((s) => s.huddles[wsId]);
-  const huddle = useHuddle();
-  const inHuddle = huddle.ws === wsId && huddle.status !== "idle";
+  const inHuddle = useHuddle((s) => s.ws === wsId && s.status !== "idle");
 
   useEffect(() => {
-    load("members");
+    load("members", true);
     loadChannels(wsId).catch(() => {});
     loadPinned(wsId).catch(() => {});
     loadHuddle(wsId).catch(() => {});

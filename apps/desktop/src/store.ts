@@ -224,6 +224,7 @@ export const useStore = create<State>((set, get) => ({
       boardListeners.forEach((f) => f(w, kind, payload));
     });
     backend.on<ChatMessage>("hub-chat", (m) => {
+      if (m.parent) return; // thread replies live in the chat area
       const d = get().data[m.workspace_id] ?? {};
       const chat = { ...(d.chat ?? {}) };
       chat[m.channel] = [...(chat[m.channel] ?? []), m];

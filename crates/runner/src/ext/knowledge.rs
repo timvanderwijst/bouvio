@@ -47,11 +47,16 @@ const MCP_REGISTRY: &str = "https://registry.modelcontextprotocol.io/v0/servers"
 // ---- params ---------------------------------------------------------------------------------
 
 fn p<T: DeserializeOwned>(params: &Value, key: &str) -> Result<T> {
-    serde_json::from_value(params.get(key).cloned().unwrap_or(Value::Null)).with_context(|| format!("param `{key}`"))
+    serde_json::from_value(params.get(key).cloned().unwrap_or(Value::Null))
+        .with_context(|| format!("param `{key}`"))
 }
 
 fn opt<T: DeserializeOwned>(params: &Value, key: &str) -> Option<T> {
-    params.get(key).cloned().filter(|v| !v.is_null()).and_then(|v| serde_json::from_value(v).ok())
+    params
+        .get(key)
+        .cloned()
+        .filter(|v| !v.is_null())
+        .and_then(|v| serde_json::from_value(v).ok())
 }
 
 fn ok<T: serde::Serialize>(v: T) -> Result<Value> {
@@ -60,7 +65,12 @@ fn ok<T: serde::Serialize>(v: T) -> Result<Value> {
 
 // ---- entry points ----------------------------------------------------------------------------
 
-pub async fn call(r: &Arc<Runner>, method: &str, params: &Value, _actor: &str) -> Option<Result<Value>> {
+pub async fn call(
+    r: &Arc<Runner>,
+    method: &str,
+    params: &Value,
+    _actor: &str,
+) -> Option<Result<Value>> {
     let w = || p::<Uuid>(params, "workspace_id");
     let out = match method {
         "search" => search(r, params).await.and_then(ok),
@@ -73,9 +83,21 @@ pub async fn call(r: &Arc<Runner>, method: &str, params: &Value, _actor: &str) -
             let ws = w()?;
             let path: String = p(params, "path")?;
             let path = PathBuf::from(path);
-            let bytes = tokio::fs::read(&path).await.with_context(|| format!("read {}", path.display()))?;
-            let name = path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_else(|| "import".into());
-            import(r, ws, &name, bytes, Source::File(path.to_string_lossy().into_owned())).await
+            let bytes = tokio::fs::read(&path)
+                .await
+                .with_context(|| format!("read {}", path.display()))?;
+            let name = path
+                .file_name()
+                .map(|n| n.to_string_lossy().into_owned())
+                .unwrap_or_else(|| "import".into());
+            import(
+                r,
+                ws,
+                &name,
+                bytes,
+                Source::File(path.to_string_lossy().into_owned()),
+            )
+            .await
         }
         .await
         .and_then(ok),
@@ -83,8 +105,13 @@ pub async fn call(r: &Arc<Runner>, method: &str, params: &Value, _actor: &str) -
             let ws = w()?;
             let name: String = p(params, "name")?;
             let b64: String = p(params, "base64")?;
-            let b64 = b64.split_once(";base64,").map(|(_, b)| b.to_string()).unwrap_or(b64);
-            let bytes = base64::engine::general_purpose::STANDARD.decode(b64.trim()).context("invalid base64")?;
+            let b64 = b64
+                .split_once(";base64,")
+                .map(|(_, b)| b.to_string())
+                .unwrap_or(b64);
+            let bytes = base64::engine::general_purpose::STANDARD
+                .decode(b64.trim())
+                .context("invalid base64")?;
             import(r, ws, &name, bytes, Source::Upload(name.clone())).await
         }
         .await
@@ -96,18 +123,32 @@ pub async fn call(r: &Arc<Runner>, method: &str, params: &Value, _actor: &str) -
             },
             Err(e) => Err(e),
         },
-        "search_mcp_registry" => search_mcp_registry(&opt::<String>(params, "query").unwrap_or_default()).await.and_then(ok),
-        "install_mcp" => w().and_then(|ws| install_mcp(r, ws, p(params, "server")?)).and_then(ok),
-        "remove_mcp" => w().and_then(|ws| remove_mcp(r, ws, &p::<String>(params, "name")?)).and_then(ok),
-        "list_skills_catalog" => list_skills_catalog(r, opt(params, "refresh").unwrap_or(false)).await.and_then(ok),
+        "search_mcp_registry" => {
+            search_mcp_registry(&opt::<String>(params, "query").unwrap_or_default())
+                .await
+                .and_then(ok)
+        }
+        "install_mcp" => w()
+            .and_then(|ws| install_mcp(r, ws, p(params, "server")?))
+            .and_then(ok),
+        "remove_mcp" => w()
+            .and_then(|ws| remove_mcp(r, ws, &p::<String>(params, "name")?))
+            .and_then(ok),
+        "list_skills_catalog" => list_skills_catalog(r, opt(params, "refresh").unwrap_or(false))
+            .await
+            .and_then(ok),
         "get_skill_sources" => ok(skill_sources(r)),
-        "set_skill_sources" => p::<Vec<String>>(params, "sources").and_then(|s| set_skill_sources(r, s)).and_then(ok),
+        "set_skill_sources" => p::<Vec<String>>(params, "sources")
+            .and_then(|s| set_skill_sources(r, s))
+            .and_then(ok),
         "install_skill" => match (w(), p::<SkillSource>(params, "source")) {
             (Ok(ws), Ok(src)) => install_skill(r, ws, &src).await.and_then(ok),
             (Err(e), _) | (_, Err(e)) => Err(e),
         },
         "list_installed_skills" => w().map(|ws| list_installed_skills(r, ws)).and_then(ok),
-        "remove_skill" => w().and_then(|ws| remove_skill(r, ws, &p::<String>(params, "name")?)).and_then(ok),
+        "remove_skill" => w()
+            .and_then(|ws| remove_skill(r, ws, &p::<String>(params, "name")?))
+            .and_then(ok),
         _ => return None,
     };
     Some(out)
@@ -116,10 +157,13 @@ pub async fn call(r: &Arc<Runner>, method: &str, params: &Value, _actor: &str) -
 pub fn workspace_of(_r: &Runner, method: &str, params: &Value) -> Option<Result<Uuid>> {
     match method {
         // Catalog lookups carry the workspace they are made from, so the hub can scope them.
-        "search" | "search_mcp_registry" | "list_skills_catalog" | "get_skill_sources" => {
-            Some(opt::<Uuid>(params, "workspace_id").context("pass `workspace_id` to search through the hub"))
-        }
-        "set_skill_sources" => Some(Err(anyhow!("skill sources are set on the runner's own machine"))),
+        "search" | "search_mcp_registry" | "list_skills_catalog" | "get_skill_sources" => Some(
+            opt::<Uuid>(params, "workspace_id")
+                .context("pass `workspace_id` to search through the hub"),
+        ),
+        "set_skill_sources" => Some(Err(anyhow!(
+            "skill sources are set on the runner's own machine"
+        ))),
         _ => None,
     }
 }
@@ -150,7 +194,10 @@ pub fn start(r: &Arc<Runner>) {
         loop {
             match events.recv().await {
                 Ok(e) => {
-                    if matches!(e.event, ThreadEvent::UserMessage { .. } | ThreadEvent::AssistantText { .. }) {
+                    if matches!(
+                        e.event,
+                        ThreadEvent::UserMessage { .. } | ThreadEvent::AssistantText { .. }
+                    ) {
                         k.mark(Item::Thread(e.thread_id));
                     }
                 }
@@ -176,11 +223,17 @@ pub fn start(r: &Arc<Runner>) {
         loop {
             match notices.recv().await {
                 Ok(n) => {
-                    let id = n.payload.get("id").and_then(|v| v.as_str()).and_then(|s| s.parse::<Uuid>().ok());
+                    let id = n
+                        .payload
+                        .get("id")
+                        .and_then(|v| v.as_str())
+                        .and_then(|s| s.parse::<Uuid>().ok());
                     match (n.kind.as_str(), id) {
                         ("issue-changed", Some(id)) => k.mark(Item::Issue(n.workspace_id, id)),
                         ("issue-deleted", Some(id)) => k.mark(Item::IssueGone(n.workspace_id, id)),
-                        ("artifact-changed", Some(id)) => k.mark(Item::Artifact(n.workspace_id, id)),
+                        ("artifact-changed", Some(id)) => {
+                            k.mark(Item::Artifact(n.workspace_id, id))
+                        }
                         _ => {}
                     }
                 }
@@ -194,7 +247,9 @@ pub fn start(r: &Arc<Runner>) {
     tokio::spawn(async move {
         loop {
             tokio::time::sleep(Duration::from_secs(2)).await;
-            let items: Vec<Item> = std::mem::take(&mut *kb_of(&me).dirty.lock().unwrap()).into_iter().collect();
+            let items: Vec<Item> = std::mem::take(&mut *kb_of(&me).dirty.lock().unwrap())
+                .into_iter()
+                .collect();
             if items.is_empty() {
                 continue;
             }
@@ -243,16 +298,23 @@ pub fn start(r: &Arc<Runner>) {
 /// `kind` names the source (`doc`, `sheet`, `note`, …); `id` is unique within it.
 pub fn index(r: &Runner, workspace_id: Uuid, kind: &str, id: &str, title: &str, text: &str) {
     let kb = kb_of(r);
-    let Ok(ix) = kb.open(workspace_id) else { return };
+    let Ok(ix) = kb.open(workspace_id) else {
+        return;
+    };
     let doc = Doc {
         key: format!("{kind}:{id}"),
         kind: kind.to_string(),
         id: id.to_string(),
-        loc: SearchLocation::Doc { kind: kind.to_string(), id: id.to_string() },
+        loc: SearchLocation::Doc {
+            kind: kind.to_string(),
+            id: id.to_string(),
+        },
         hash: fnv(&[title.as_bytes(), text.as_bytes()]),
     };
     let semantic = r.hooks.embed().is_some();
-    if let Err(e) = ix.upsert(&kb, doc, semantic, || Some((title.to_string(), text.to_string()))) {
+    if let Err(e) = ix.upsert(&kb, doc, semantic, || {
+        Some((title.to_string(), text.to_string()))
+    }) {
         tracing::warn!("knowledge index {kind}:{id}: {e:#}");
     }
     kb.after_write(&ix);
@@ -261,7 +323,9 @@ pub fn index(r: &Runner, workspace_id: Uuid, kind: &str, id: &str, title: &str, 
 /// Remove something from the index again.
 pub fn unindex(r: &Runner, workspace_id: Uuid, kind: &str, id: &str) {
     let kb = kb_of(r);
-    let Ok(ix) = kb.open(workspace_id) else { return };
+    let Ok(ix) = kb.open(workspace_id) else {
+        return;
+    };
     ix.remove(&kb, &format!("{kind}:{id}"));
     kb.after_write(&ix);
 }
@@ -346,11 +410,23 @@ impl Kb {
             return;
         }
         let text = truncate_chars(text, MAX_STORED).to_string();
-        q.insert((ws, key.to_string()), EmbedJob { hash, title: title.to_string(), text });
+        q.insert(
+            (ws, key.to_string()),
+            EmbedJob {
+                hash,
+                title: title.to_string(),
+                text,
+            },
+        );
     }
 
     fn pending_for(&self, ws: Uuid) -> usize {
-        self.pending.lock().unwrap().keys().filter(|(w, _)| *w == ws).count()
+        self.pending
+            .lock()
+            .unwrap()
+            .keys()
+            .filter(|(w, _)| *w == ws)
+            .count()
     }
 }
 
@@ -418,7 +494,10 @@ impl WsIndex {
                 Index::open_or_create(MmapDirectory::open(&idx_dir)?, schema)?
             }
         };
-        let reader = index.reader_builder().reload_policy(ReloadPolicy::Manual).try_into()?;
+        let reader = index
+            .reader_builder()
+            .reload_policy(ReloadPolicy::Manual)
+            .try_into()?;
         let writer = match index.writer_with_num_threads(1, 20_000_000) {
             Ok(w) => Some(Mutex::new(w)),
             Err(e) => {
@@ -427,7 +506,11 @@ impl WsIndex {
                 None
             }
         };
-        let manifest = if writer.is_some() { store::load(&dir.join("manifest.json")).unwrap_or_default() } else { HashMap::new() };
+        let manifest = if writer.is_some() {
+            store::load(&dir.join("manifest.json")).unwrap_or_default()
+        } else {
+            HashMap::new()
+        };
         let vectors = Vectors::load(&dir.join("vectors.bin")).unwrap_or_default();
         Ok(Self {
             ws,
@@ -445,11 +528,26 @@ impl WsIndex {
 
     /// Add or replace one item. `make` is only called when it changed (or
     /// still needs an embedding); it returns the title and text.
-    fn upsert(&self, kb: &Kb, doc: Doc, semantic: bool, make: impl FnOnce() -> Option<(String, String)>) -> Result<bool> {
-        let Some(w) = &self.writer else { return Ok(false) };
+    fn upsert(
+        &self,
+        kb: &Kb,
+        doc: Doc,
+        semantic: bool,
+        make: impl FnOnce() -> Option<(String, String)>,
+    ) -> Result<bool> {
+        let Some(w) = &self.writer else {
+            return Ok(false);
+        };
         let unchanged = self.manifest.lock().unwrap().get(&doc.key) == Some(&doc.hash);
         if unchanged {
-            if semantic && !self.vectors.lock().unwrap().has(&doc.key, doc.hash) && !kb.pending.lock().unwrap().contains_key(&(self.ws, doc.key.clone())) {
+            if semantic
+                && !self.vectors.lock().unwrap().has(&doc.key, doc.hash)
+                && !kb
+                    .pending
+                    .lock()
+                    .unwrap()
+                    .contains_key(&(self.ws, doc.key.clone()))
+            {
                 if let Some((title, text)) = make() {
                     kb.enqueue(self.ws, &doc.key, doc.hash, &title, &text);
                 }
@@ -473,7 +571,10 @@ impl WsIndex {
             w.delete_term(Term::from_field_text(self.f.key, &doc.key));
             w.add_document(d)?;
         }
-        self.manifest.lock().unwrap().insert(doc.key.clone(), doc.hash);
+        self.manifest
+            .lock()
+            .unwrap()
+            .insert(doc.key.clone(), doc.hash);
         self.dirty.store(true, Ordering::SeqCst);
         if semantic && !text.trim().is_empty() {
             kb.enqueue(self.ws, &doc.key, doc.hash, &title, &text);
@@ -483,9 +584,14 @@ impl WsIndex {
 
     fn remove(&self, kb: &Kb, key: &str) {
         let Some(w) = &self.writer else { return };
-        w.lock().unwrap().delete_term(Term::from_field_text(self.f.key, key));
+        w.lock()
+            .unwrap()
+            .delete_term(Term::from_field_text(self.f.key, key));
         self.manifest.lock().unwrap().remove(key);
-        kb.pending.lock().unwrap().remove(&(self.ws, key.to_string()));
+        kb.pending
+            .lock()
+            .unwrap()
+            .remove(&(self.ws, key.to_string()));
         if self.vectors.lock().unwrap().remove(key) {
             self.vectors_dirty.store(true, Ordering::SeqCst);
         }
@@ -495,7 +601,13 @@ impl WsIndex {
     /// Keys of one kind the manifest knows, for pruning what disappeared.
     fn keys_of(&self, kind: &str) -> Vec<String> {
         let prefix = format!("{kind}:");
-        self.manifest.lock().unwrap().keys().filter(|k| k.starts_with(&prefix)).cloned().collect()
+        self.manifest
+            .lock()
+            .unwrap()
+            .keys()
+            .filter(|k| k.starts_with(&prefix))
+            .cloned()
+            .collect()
     }
 
     fn flush(&self) -> Result<()> {
@@ -508,7 +620,10 @@ impl WsIndex {
             }
         }
         if self.vectors_dirty.swap(false, Ordering::SeqCst) {
-            self.vectors.lock().unwrap().save(&self.dir.join("vectors.bin"))?;
+            self.vectors
+                .lock()
+                .unwrap()
+                .save(&self.dir.join("vectors.bin"))?;
         }
         Ok(())
     }
@@ -526,20 +641,68 @@ impl WsIndex {
             let mut clauses: Vec<(Occur, Box<dyn Query>)> = Vec::new();
             for (i, tok) in tokens.iter().enumerate() {
                 let mut alts: Vec<(Occur, Box<dyn Query>)> = vec![
-                    (Occur::Should, Box::new(BoostQuery::new(Box::new(TermQuery::new(Term::from_field_text(self.f.title, tok), IndexRecordOption::WithFreqs)), 2.0))),
-                    (Occur::Should, Box::new(TermQuery::new(Term::from_field_text(self.f.body, tok), IndexRecordOption::WithFreqs))),
+                    (
+                        Occur::Should,
+                        Box::new(BoostQuery::new(
+                            Box::new(TermQuery::new(
+                                Term::from_field_text(self.f.title, tok),
+                                IndexRecordOption::WithFreqs,
+                            )),
+                            2.0,
+                        )),
+                    ),
+                    (
+                        Occur::Should,
+                        Box::new(TermQuery::new(
+                            Term::from_field_text(self.f.body, tok),
+                            IndexRecordOption::WithFreqs,
+                        )),
+                    ),
                 ];
                 // The word being typed matches as a prefix.
                 if i == tokens.len() - 1 {
-                    alts.push((Occur::Should, Box::new(BoostQuery::new(Box::new(PhrasePrefixQuery::new(vec![Term::from_field_text(self.f.title, tok)])), 1.2))));
-                    alts.push((Occur::Should, Box::new(BoostQuery::new(Box::new(PhrasePrefixQuery::new(vec![Term::from_field_text(self.f.body, tok)])), 0.4))));
+                    alts.push((
+                        Occur::Should,
+                        Box::new(BoostQuery::new(
+                            Box::new(PhrasePrefixQuery::new(vec![Term::from_field_text(
+                                self.f.title,
+                                tok,
+                            )])),
+                            1.2,
+                        )),
+                    ));
+                    alts.push((
+                        Occur::Should,
+                        Box::new(BoostQuery::new(
+                            Box::new(PhrasePrefixQuery::new(vec![Term::from_field_text(
+                                self.f.body,
+                                tok,
+                            )])),
+                            0.4,
+                        )),
+                    ));
                 }
-                clauses.push((if conjunction { Occur::Must } else { Occur::Should }, Box::new(BooleanQuery::new(alts))));
+                clauses.push((
+                    if conjunction {
+                        Occur::Must
+                    } else {
+                        Occur::Should
+                    },
+                    Box::new(BooleanQuery::new(alts)),
+                ));
             }
             if !kinds.is_empty() {
                 let ks: Vec<(Occur, Box<dyn Query>)> = kinds
                     .iter()
-                    .map(|k| (Occur::Should, Box::new(TermQuery::new(Term::from_field_text(self.f.kind, k), IndexRecordOption::Basic)) as Box<dyn Query>))
+                    .map(|k| {
+                        (
+                            Occur::Should,
+                            Box::new(TermQuery::new(
+                                Term::from_field_text(self.f.kind, k),
+                                IndexRecordOption::Basic,
+                            )) as Box<dyn Query>,
+                        )
+                    })
                     .collect();
                 clauses.push((Occur::Must, Box::new(BooleanQuery::new(ks))));
             }
@@ -554,7 +717,10 @@ impl WsIndex {
 
     fn find_key(&self, key: &str) -> Result<Option<TantivyDocument>> {
         let searcher = self.reader.searcher();
-        let q = TermQuery::new(Term::from_field_text(self.f.key, key), IndexRecordOption::Basic);
+        let q = TermQuery::new(
+            Term::from_field_text(self.f.key, key),
+            IndexRecordOption::Basic,
+        );
         let top = searcher.search(&q, &TopDocs::with_limit(1).order_by_score())?;
         match top.first() {
             Some((_, a)) => Ok(Some(searcher.doc(*a)?)),
@@ -562,7 +728,13 @@ impl WsIndex {
         }
     }
 
-    fn search(&self, query: &str, kinds: &[String], limit: usize, qvec: Option<&[f32]>) -> Result<Vec<SearchHit>> {
+    fn search(
+        &self,
+        query: &str,
+        kinds: &[String],
+        limit: usize,
+        qvec: Option<&[f32]>,
+    ) -> Result<Vec<SearchHit>> {
         let tokens = tokenize(query);
         if tokens.is_empty() {
             return Ok(Vec::new());
@@ -605,7 +777,12 @@ impl WsIndex {
                 kind: str_field(&d, self.f.kind),
                 id: str_field(&d, self.f.id),
                 title: str_field(&d, self.f.title),
-                snippet: make_snippet(&text, &tokens, chunk_of.get(&key).map(|c| c.0 as usize), 180),
+                snippet: make_snippet(
+                    &text,
+                    &tokens,
+                    chunk_of.get(&key).map(|c| c.0 as usize),
+                    180,
+                ),
                 score,
                 workspace_id: self.ws,
                 location: loc,
@@ -616,7 +793,10 @@ impl WsIndex {
 }
 
 fn str_field(d: &TantivyDocument, f: Field) -> String {
-    d.get_first(f).and_then(|v| v.as_str()).unwrap_or_default().to_string()
+    d.get_first(f)
+        .and_then(|v| v.as_str())
+        .unwrap_or_default()
+        .to_string()
 }
 
 // ---- vectors --------------------------------------------------------------------------------------------
@@ -651,7 +831,9 @@ impl Vectors {
 
     fn replace(&mut self, key: &str, hash: u64, chunks: &[(usize, usize)], vecs: Vec<Vec<f32>>) {
         self.remove(key);
-        let Some(dim) = vecs.first().map(|v| v.len()) else { return };
+        let Some(dim) = vecs.first().map(|v| v.len()) else {
+            return;
+        };
         if self.dim != dim {
             // Another model: older vectors are not comparable.
             self.entries.clear();
@@ -661,7 +843,13 @@ impl Vectors {
             if v.len() != dim {
                 continue;
             }
-            self.entries.push(VecEntry { key: key.to_string(), hash, start: *start as u32, len: *len as u32, v: quantize(&v) });
+            self.entries.push(VecEntry {
+                key: key.to_string(),
+                hash,
+                start: *start as u32,
+                len: *len as u32,
+                v: quantize(&v),
+            });
         }
     }
 
@@ -673,7 +861,13 @@ impl Vectors {
         let q = normalize(q.to_vec());
         let mut best: HashMap<&str, (f32, u32, u32)> = HashMap::new();
         for e in &self.entries {
-            if !kinds.is_empty() && !kinds.iter().any(|k| e.key.len() > k.len() && e.key.starts_with(k.as_str()) && e.key.as_bytes()[k.len()] == b':') {
+            if !kinds.is_empty()
+                && !kinds.iter().any(|k| {
+                    e.key.len() > k.len()
+                        && e.key.starts_with(k.as_str())
+                        && e.key.as_bytes()[k.len()] == b':'
+                })
+            {
                 continue;
             }
             let s: f32 = e.v.iter().zip(&q).map(|(a, b)| *a as f32 * b).sum::<f32>() / 127.0;
@@ -685,9 +879,15 @@ impl Vectors {
                 *slot = (s, e.start, e.len);
             }
         }
-        let mut v: Vec<_> = best.into_iter().map(|(k, (s, st, l))| (s, k.to_string(), st, l)).collect();
+        let mut v: Vec<_> = best
+            .into_iter()
+            .map(|(k, (s, st, l))| (s, k.to_string(), st, l))
+            .collect();
         v.sort_by(|a, b| b.0.total_cmp(&a.0));
-        v.into_iter().take(n).map(|(_, k, s, l)| (k, s, l)).collect()
+        v.into_iter()
+            .take(n)
+            .map(|(_, k, s, l)| (k, s, l))
+            .collect()
     }
 
     fn save(&self, path: &Path) -> Result<()> {
@@ -741,7 +941,13 @@ impl Vectors {
             let len = u32::from_le_bytes(u32b);
             let mut v = vec![0u8; dim];
             c.read_exact(&mut v)?;
-            entries.push(VecEntry { key: String::from_utf8(k)?, hash, start, len, v: v.into_iter().map(|x| x as i8).collect() });
+            entries.push(VecEntry {
+                key: String::from_utf8(k)?,
+                hash,
+                start,
+                len,
+                v: v.into_iter().map(|x| x as i8).collect(),
+            });
         }
         Ok(Self { dim, entries })
     }
@@ -756,7 +962,10 @@ fn normalize(mut v: Vec<f32>) -> Vec<f32> {
 }
 
 fn quantize(v: &[f32]) -> Vec<i8> {
-    normalize(v.to_vec()).into_iter().map(|x| (x * 127.0).round().clamp(-127.0, 127.0) as i8).collect()
+    normalize(v.to_vec())
+        .into_iter()
+        .map(|x| (x * 127.0).round().clamp(-127.0, 127.0) as i8)
+        .collect()
 }
 
 /// Reciprocal rank fusion of ranked key lists: best first, with the fused score.
@@ -772,7 +981,10 @@ fn rrf(lists: &[Vec<String>]) -> Vec<(String, f32)> {
             *e += 1.0 / (RRF_K + rank as f32 + 1.0);
         }
     }
-    let mut out: Vec<(String, f32)> = order.into_iter().map(|k| (k.to_string(), score[k])).collect();
+    let mut out: Vec<(String, f32)> = order
+        .into_iter()
+        .map(|k| (k.to_string(), score[k]))
+        .collect();
     // Stable: ties keep the order of the first list.
     out.sort_by(|a, b| b.1.total_cmp(&a.1));
     out
@@ -792,7 +1004,10 @@ fn chunk(text: &str, size: usize, overlap: usize) -> Vec<(usize, usize)> {
         let mut end = (start + size).min(n);
         if end < n {
             // Back up to a space, but not further than a quarter chunk.
-            if let Some(ws) = (start + size * 3 / 4..end).rev().find(|&i| chars[i].is_whitespace()) {
+            if let Some(ws) = (start + size * 3 / 4..end)
+                .rev()
+                .find(|&i| chars[i].is_whitespace())
+            {
                 end = ws + 1;
             }
         }
@@ -816,19 +1031,29 @@ fn slice_chars(text: &str, start: usize, len: usize) -> String {
 
 /// Pick a few embedding jobs and run them. Returns whether anything happened.
 async fn embed_some(r: &Arc<Runner>) -> bool {
-    let Some(embed) = r.hooks.embed() else { return false };
+    let Some(embed) = r.hooks.embed() else {
+        return false;
+    };
     let kb = kb_of(r);
     let jobs: Vec<((Uuid, String), EmbedJob)> = {
         let mut q = kb.pending.lock().unwrap();
         let keys: Vec<_> = q.keys().take(4).cloned().collect();
-        keys.into_iter().filter_map(|k| q.remove(&k).map(|j| (k, j))).collect()
+        keys.into_iter()
+            .filter_map(|k| q.remove(&k).map(|j| (k, j)))
+            .collect()
     };
     if jobs.is_empty() {
         return false;
     }
     for ((ws, key), job) in jobs {
-        let chunks: Vec<_> = chunk(&job.text, CHUNK, OVERLAP).into_iter().take(MAX_CHUNKS).collect();
-        let texts: Vec<String> = chunks.iter().map(|(s, l)| format!("{}\n{}", job.title, slice_chars(&job.text, *s, *l))).collect();
+        let chunks: Vec<_> = chunk(&job.text, CHUNK, OVERLAP)
+            .into_iter()
+            .take(MAX_CHUNKS)
+            .collect();
+        let texts: Vec<String> = chunks
+            .iter()
+            .map(|(s, l)| format!("{}\n{}", job.title, slice_chars(&job.text, *s, *l)))
+            .collect();
         if texts.is_empty() {
             continue;
         }
@@ -837,7 +1062,10 @@ async fn embed_some(r: &Arc<Runner>) -> bool {
                 if let Ok(ix) = kb.open(ws) {
                     // Still current? It may have changed while we waited.
                     if ix.manifest.lock().unwrap().get(&key) == Some(&job.hash) {
-                        ix.vectors.lock().unwrap().replace(&key, job.hash, &chunks, vecs);
+                        ix.vectors
+                            .lock()
+                            .unwrap()
+                            .replace(&key, job.hash, &chunks, vecs);
                         ix.vectors_dirty.store(true, Ordering::SeqCst);
                     }
                 }
@@ -862,7 +1090,12 @@ async fn query_vector(r: &Arc<Runner>, query: &str) -> Option<Vec<f32>> {
     if let Some(v) = kb.qcache.lock().unwrap().get(&q) {
         return Some(v.clone());
     }
-    let v = tokio::time::timeout(Duration::from_millis(1500), embed(vec![query.to_string()])).await.ok()?.ok()?.into_iter().next()?;
+    let v = tokio::time::timeout(Duration::from_millis(1500), embed(vec![query.to_string()]))
+        .await
+        .ok()?
+        .ok()?
+        .into_iter()
+        .next()?;
     let mut c = kb.qcache.lock().unwrap();
     if c.len() > 128 {
         c.clear();
@@ -926,7 +1159,10 @@ fn make_snippet(text: &str, tokens: &[String], around: Option<usize>, max: usize
         if !l[i].is_alphanumeric() || (i > 0 && l[i - 1].is_alphanumeric()) {
             return None;
         }
-        toks.iter().filter(|t| l.len() - i >= t.len() && l[i..i + t.len()] == t[..]).map(|t| t.len()).max()
+        toks.iter()
+            .filter(|t| l.len() - i >= t.len() && l[i..i + t.len()] == t[..])
+            .map(|t| t.len())
+            .max()
     };
     let first = (0..lower.len()).find(|&i| match_at(&lower, i).is_some());
     let mut start = match (first, around) {
@@ -936,13 +1172,20 @@ fn make_snippet(text: &str, tokens: &[String], around: Option<usize>, max: usize
     };
     // Begin at a word.
     if start > 0 {
-        while start < chars.len() && start > 0 && !chars[start - 1].is_whitespace() && first.is_none_or(|p| start < p) {
+        while start < chars.len()
+            && start > 0
+            && !chars[start - 1].is_whitespace()
+            && first.is_none_or(|p| start < p)
+        {
             start += 1;
         }
     }
     let mut end = (start + max).min(chars.len());
     if end < chars.len() {
-        if let Some(ws) = (start + max * 3 / 4..end).rev().find(|&i| chars[i].is_whitespace()) {
+        if let Some(ws) = (start + max * 3 / 4..end)
+            .rev()
+            .find(|&i| chars[i].is_whitespace())
+        {
             end = ws;
         }
     }
@@ -969,7 +1212,12 @@ fn make_snippet(text: &str, tokens: &[String], around: Option<usize>, max: usize
     let wl: Vec<char> = window.iter().map(|c| lower1(*c)).collect();
     let mut highlights = Vec::new();
     let mut i = 0;
-    let utf16 = |upto: usize| window[..upto].iter().map(|c| c.len_utf16() as u32).sum::<u32>();
+    let utf16 = |upto: usize| {
+        window[..upto]
+            .iter()
+            .map(|c| c.len_utf16() as u32)
+            .sum::<u32>()
+    };
     while i < wl.len() {
         if let Some(len) = match_at(&wl, i) {
             highlights.push((utf16(i), utf16(i + len)));
@@ -978,13 +1226,20 @@ fn make_snippet(text: &str, tokens: &[String], around: Option<usize>, max: usize
             i += 1;
         }
     }
-    SearchSnippet { text: window.into_iter().collect(), highlights }
+    SearchSnippet {
+        text: window.into_iter().collect(),
+        highlights,
+    }
 }
 
 // ---- indexing sources -----------------------------------------------------------------------------------
 
 fn local_workspaces(r: &Runner) -> Vec<Uuid> {
-    r.workspaces().into_iter().filter(|w| w.role.is_none()).map(|w| w.id).collect()
+    r.workspaces()
+        .into_iter()
+        .filter(|w| w.role.is_none())
+        .map(|w| w.id)
+        .collect()
 }
 
 fn thread_text(r: &Runner, thread_id: Uuid) -> String {
@@ -1003,15 +1258,26 @@ fn thread_text(r: &Runner, thread_id: Uuid) -> String {
     out
 }
 
-fn index_thread(r: &Runner, kb: &Kb, ix: &WsIndex, t: &bouvio_protocol::Thread, semantic: bool) -> Result<()> {
+fn index_thread(
+    r: &Runner,
+    kb: &Kb,
+    ix: &WsIndex,
+    t: &bouvio_protocol::Thread,
+    semantic: bool,
+) -> Result<()> {
     let doc = Doc {
         key: format!("thread:{}", t.id),
         kind: "thread".into(),
         id: t.id.to_string(),
         loc: SearchLocation::Thread { thread_id: t.id },
-        hash: fnv(&[t.title.as_bytes(), &t.updated_at.timestamp_millis().to_le_bytes()]),
+        hash: fnv(&[
+            t.title.as_bytes(),
+            &t.updated_at.timestamp_millis().to_le_bytes(),
+        ]),
     };
-    ix.upsert(kb, doc, semantic, || Some((t.title.clone(), thread_text(r, t.id))))?;
+    ix.upsert(kb, doc, semantic, || {
+        Some((t.title.clone(), thread_text(r, t.id)))
+    })?;
     Ok(())
 }
 
@@ -1032,7 +1298,9 @@ fn index_issue(kb: &Kb, ix: &WsIndex, i: &bouvio_protocol::Issue, semantic: bool
 fn under_root(root: Option<&Path>, path: &Path) -> bool {
     let Some(root) = root else { return false };
     match path.strip_prefix(root) {
-        Ok(rel) => !rel.components().any(|c| c.as_os_str().to_string_lossy().starts_with('.')),
+        Ok(rel) => !rel
+            .components()
+            .any(|c| c.as_os_str().to_string_lossy().starts_with('.')),
         Err(_) => false,
     }
 }
@@ -1043,10 +1311,15 @@ fn artifact_text(a: &Artifact) -> Option<String> {
     if meta.len() > 20 * 1024 * 1024 {
         return None;
     }
-    let ext = path.extension().map(|e| e.to_string_lossy().to_lowercase()).unwrap_or_default();
+    let ext = path
+        .extension()
+        .map(|e| e.to_string_lossy().to_lowercase())
+        .unwrap_or_default();
     match a.kind {
         ArtifactKind::Markdown | ArtifactKind::Code => std::fs::read_to_string(path).ok(),
-        ArtifactKind::Html => std::fs::read_to_string(path).ok().map(|h| html_to_markdown(&h, None).1),
+        ArtifactKind::Html => std::fs::read_to_string(path)
+            .ok()
+            .map(|h| html_to_markdown(&h, None).1),
         ArtifactKind::Data | ArtifactKind::Pdf => {
             let bytes = std::fs::read(path).ok()?;
             match ext.as_str() {
@@ -1059,29 +1332,56 @@ fn artifact_text(a: &Artifact) -> Option<String> {
 }
 
 fn index_artifact(r: &Runner, kb: &Kb, ix: &WsIndex, a: &Artifact, semantic: bool) -> Result<bool> {
-    let root = r.workspace(a.workspace_id).and_then(|w| w.root).map(PathBuf::from);
+    let root = r
+        .workspace(a.workspace_id)
+        .and_then(|w| w.root)
+        .map(PathBuf::from);
     let path = Path::new(&a.path);
-    let text_kind = matches!(a.kind, ArtifactKind::Markdown | ArtifactKind::Code | ArtifactKind::Html | ArtifactKind::Data | ArtifactKind::Pdf);
+    let text_kind = matches!(
+        a.kind,
+        ArtifactKind::Markdown
+            | ArtifactKind::Code
+            | ArtifactKind::Html
+            | ArtifactKind::Data
+            | ArtifactKind::Pdf
+    );
     if !text_kind || !path.exists() || under_root(root.as_deref(), path) {
         return Ok(false);
     }
     let meta = std::fs::metadata(path)?;
-    let mtime = meta.modified().ok().and_then(|m| m.duration_since(std::time::UNIX_EPOCH).ok()).map(|d| d.as_millis() as u64).unwrap_or(0);
+    let mtime = meta
+        .modified()
+        .ok()
+        .and_then(|m| m.duration_since(std::time::UNIX_EPOCH).ok())
+        .map(|d| d.as_millis() as u64)
+        .unwrap_or(0);
     let doc = Doc {
         key: format!("artifact:{}", a.id),
         kind: "artifact".into(),
         id: a.id.to_string(),
-        loc: SearchLocation::Artifact { artifact_id: a.id, path: a.path.clone() },
-        hash: fnv(&[a.title.as_bytes(), a.path.as_bytes(), &meta.len().to_le_bytes(), &mtime.to_le_bytes()]),
+        loc: SearchLocation::Artifact {
+            artifact_id: a.id,
+            path: a.path.clone(),
+        },
+        hash: fnv(&[
+            a.title.as_bytes(),
+            a.path.as_bytes(),
+            &meta.len().to_le_bytes(),
+            &mtime.to_le_bytes(),
+        ]),
     };
-    ix.upsert(kb, doc, semantic, || artifact_text(a).map(|t| (a.title.clone(), t)))?;
+    ix.upsert(kb, doc, semantic, || {
+        artifact_text(a).map(|t| (a.title.clone(), t))
+    })?;
     Ok(true)
 }
 
 const SKIP_EXT: &[&str] = &[
-    "png", "jpg", "jpeg", "gif", "webp", "avif", "ico", "bmp", "tiff", "psd", "mp4", "webm", "mov", "mp3", "wav", "ogg", "m4a", "flac", "zip", "gz", "tgz",
-    "bz2", "xz", "7z", "rar", "tar", "jar", "exe", "dll", "so", "dylib", "a", "o", "obj", "class", "wasm", "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx",
-    "odt", "ods", "woff", "woff2", "ttf", "otf", "eot", "bin", "dat", "db", "sqlite", "lock", "map", "pyc", "node",
+    "png", "jpg", "jpeg", "gif", "webp", "avif", "ico", "bmp", "tiff", "psd", "mp4", "webm", "mov",
+    "mp3", "wav", "ogg", "m4a", "flac", "zip", "gz", "tgz", "bz2", "xz", "7z", "rar", "tar", "jar",
+    "exe", "dll", "so", "dylib", "a", "o", "obj", "class", "wasm", "pdf", "doc", "docx", "xls",
+    "xlsx", "ppt", "pptx", "odt", "ods", "woff", "woff2", "ttf", "otf", "eot", "bin", "dat", "db",
+    "sqlite", "lock", "map", "pyc", "node",
 ];
 
 fn is_text(bytes: &[u8]) -> bool {
@@ -1106,7 +1406,10 @@ fn scan_files(kb: &Kb, ix: &WsIndex, root: &Path, semantic: bool) -> HashSet<Str
             continue;
         }
         let path = e.path();
-        let ext = path.extension().map(|x| x.to_string_lossy().to_lowercase()).unwrap_or_default();
+        let ext = path
+            .extension()
+            .map(|x| x.to_string_lossy().to_lowercase())
+            .unwrap_or_default();
         if SKIP_EXT.contains(&ext.as_str()) {
             continue;
         }
@@ -1114,10 +1417,17 @@ fn scan_files(kb: &Kb, ix: &WsIndex, root: &Path, semantic: bool) -> HashSet<Str
         if meta.len() > MAX_FILE || meta.len() == 0 {
             continue;
         }
-        let Ok(rel) = path.strip_prefix(root) else { continue };
+        let Ok(rel) = path.strip_prefix(root) else {
+            continue;
+        };
         let rel = rel.to_string_lossy().replace('\\', "/");
         let key = format!("file:{rel}");
-        let mtime = meta.modified().ok().and_then(|m| m.duration_since(std::time::UNIX_EPOCH).ok()).map(|d| d.as_nanos() as u64).unwrap_or(0);
+        let mtime = meta
+            .modified()
+            .ok()
+            .and_then(|m| m.duration_since(std::time::UNIX_EPOCH).ok())
+            .map(|d| d.as_nanos() as u64)
+            .unwrap_or(0);
         let doc = Doc {
             key: key.clone(),
             kind: "file".into(),
@@ -1160,7 +1470,12 @@ fn full_reindex(r: &Runner, ws: Uuid) -> Result<KnowledgeIndexStatus> {
             seen.insert(format!("artifact:{}", a.id));
         }
     }
-    if let Some(root) = workspace.root.as_deref().map(PathBuf::from).filter(|p| p.is_dir()) {
+    if let Some(root) = workspace
+        .root
+        .as_deref()
+        .map(PathBuf::from)
+        .filter(|p| p.is_dir())
+    {
         seen.extend(scan_files(&kb, &ix, &root, semantic));
     }
     for kind in ["thread", "issue", "artifact", "file"] {
@@ -1216,7 +1531,12 @@ fn index_item(r: &Runner, it: Item) -> Result<()> {
 
 fn status(r: &Runner, ws: Uuid) -> KnowledgeIndexStatus {
     let kb = kb_of(r);
-    let Ok(ix) = kb.open(ws) else { return KnowledgeIndexStatus { workspace_id: ws, ..Default::default() } };
+    let Ok(ix) = kb.open(ws) else {
+        return KnowledgeIndexStatus {
+            workspace_id: ws,
+            ..Default::default()
+        };
+    };
     let vectors = ix.vectors.lock().unwrap().entries.len() as u32;
     let last_scan = *ix.last_scan.lock().unwrap();
     KnowledgeIndexStatus {
@@ -1249,8 +1569,15 @@ async fn search(r: &Arc<Runner>, params: &Value) -> Result<Vec<SearchHit>> {
         return Ok(Vec::new());
     }
     let kb = kb_of(r);
-    let has_vectors = wss.iter().any(|w| kb.open(*w).is_ok_and(|ix| !ix.vectors.lock().unwrap().entries.is_empty()));
-    let qvec = if has_vectors && opt::<bool>(params, "semantic").unwrap_or(true) { query_vector(r, &query).await } else { None };
+    let has_vectors = wss.iter().any(|w| {
+        kb.open(*w)
+            .is_ok_and(|ix| !ix.vectors.lock().unwrap().entries.is_empty())
+    });
+    let qvec = if has_vectors && opt::<bool>(params, "semantic").unwrap_or(true) {
+        query_vector(r, &query).await
+    } else {
+        None
+    };
     tokio::task::spawn_blocking(move || {
         let mut all = Vec::new();
         for w in wss {
@@ -1268,7 +1595,10 @@ async fn search(r: &Arc<Runner>, params: &Value) -> Result<Vec<SearchHit>> {
 
 /// Turn a file's bytes into Markdown, by its extension.
 fn convert(name: &str, bytes: &[u8]) -> Result<String> {
-    let ext = Path::new(name).extension().map(|e| e.to_string_lossy().to_lowercase()).unwrap_or_default();
+    let ext = Path::new(name)
+        .extension()
+        .map(|e| e.to_string_lossy().to_lowercase())
+        .unwrap_or_default();
     match ext.as_str() {
         "pdf" => pdf_to_markdown(bytes),
         "docx" => docx_to_markdown(bytes),
@@ -1290,7 +1620,12 @@ fn pdf_to_markdown(bytes: &[u8]) -> Result<String> {
     // Join wrapped lines into paragraphs; blank lines separate them.
     let mut out = String::new();
     for para in text.split("\n\n") {
-        let p = para.lines().map(str::trim).filter(|l| !l.is_empty()).collect::<Vec<_>>().join(" ");
+        let p = para
+            .lines()
+            .map(str::trim)
+            .filter(|l| !l.is_empty())
+            .collect::<Vec<_>>()
+            .join(" ");
         if !p.is_empty() {
             out.push_str(&p);
             out.push_str("\n\n");
@@ -1300,7 +1635,10 @@ fn pdf_to_markdown(bytes: &[u8]) -> Result<String> {
 }
 
 fn md_cell(s: &str) -> String {
-    s.replace('|', "\\|").replace(['\n', '\r'], " ").trim().to_string()
+    s.replace('|', "\\|")
+        .replace(['\n', '\r'], " ")
+        .trim()
+        .to_string()
 }
 
 /// Rows to a Markdown table; the first row is the header.
@@ -1311,7 +1649,9 @@ fn md_table(rows: &[Vec<String>]) -> String {
     }
     let mut out = String::new();
     for (i, row) in rows.iter().enumerate() {
-        let cells: Vec<String> = (0..width).map(|j| md_cell(row.get(j).map(String::as_str).unwrap_or(""))).collect();
+        let cells: Vec<String> = (0..width)
+            .map(|j| md_cell(row.get(j).map(String::as_str).unwrap_or("")))
+            .collect();
         out.push_str(&format!("| {} |\n", cells.join(" | ")));
         if i == 0 {
             out.push_str(&format!("|{}\n", " --- |".repeat(width)));
@@ -1322,11 +1662,14 @@ fn md_table(rows: &[Vec<String>]) -> String {
 
 fn sheets_to_markdown(bytes: &[u8]) -> Result<String> {
     use calamine::Reader;
-    let mut wb = calamine::open_workbook_auto_from_rs(Cursor::new(bytes.to_vec())).map_err(|e| anyhow!("could not read this spreadsheet: {e}"))?;
+    let mut wb = calamine::open_workbook_auto_from_rs(Cursor::new(bytes.to_vec()))
+        .map_err(|e| anyhow!("could not read this spreadsheet: {e}"))?;
     let names = wb.sheet_names();
     let mut out = String::new();
     for name in &names {
-        let Ok(range) = wb.worksheet_range(name) else { continue };
+        let Ok(range) = wb.worksheet_range(name) else {
+            continue;
+        };
         let rows: Vec<Vec<String>> = range
             .rows()
             .take(5000)
@@ -1396,7 +1739,9 @@ fn docx_to_markdown(bytes: &[u8]) -> Result<String> {
     use quick_xml::events::Event;
     let mut zip = zip::ZipArchive::new(Cursor::new(bytes)).context("not a .docx file")?;
     let mut xml = String::new();
-    zip.by_name("word/document.xml").context("not a .docx file")?.read_to_string(&mut xml)?;
+    zip.by_name("word/document.xml")
+        .context("not a .docx file")?
+        .read_to_string(&mut xml)?;
 
     let mut reader = quick_xml::Reader::from_str(&xml);
     let mut out: Vec<String> = Vec::new();
@@ -1410,11 +1755,17 @@ fn docx_to_markdown(bytes: &[u8]) -> Result<String> {
     let mut cell: Vec<String> = Vec::new();
 
     let attr = |e: &quick_xml::events::BytesStart, name: &str| -> Option<String> {
-        e.attributes().with_checks(false).flatten().find(|a| a.key.as_ref() == name).map(|a| a.value.into_owned())
+        e.attributes()
+            .with_checks(false)
+            .flatten()
+            .find(|a| a.key.as_ref() == name)
+            .map(|a| a.value.into_owned())
     };
 
     loop {
-        let ev = reader.read_event().map_err(|e| anyhow!("broken .docx: {e}"))?;
+        let ev = reader
+            .read_event()
+            .map_err(|e| anyhow!("broken .docx: {e}"))?;
         match ev {
             Event::Start(ref e) | Event::Empty(ref e) => {
                 let empty = matches!(ev, Event::Empty(_));
@@ -1426,7 +1777,9 @@ fn docx_to_markdown(bytes: &[u8]) -> Result<String> {
                     }
                     "w:pStyle" => style = attr(e, "w:val"),
                     "w:numPr" => list_level = Some(list_level.unwrap_or(0)),
-                    "w:ilvl" => list_level = attr(e, "w:val").and_then(|v| v.parse().ok()).or(Some(0)),
+                    "w:ilvl" => {
+                        list_level = attr(e, "w:val").and_then(|v| v.parse().ok()).or(Some(0))
+                    }
                     "w:t" if !empty => in_text = true,
                     "w:tab" => para.push('\t'),
                     "w:br" | "w:cr" => para.push(if table_depth > 0 { ' ' } else { '\n' }),
@@ -1465,12 +1818,21 @@ fn docx_to_markdown(bytes: &[u8]) -> Result<String> {
                             cell.push(text);
                         }
                     } else if !text.is_empty() {
-                        let s = style.as_deref().unwrap_or("").to_ascii_lowercase().replace(' ', "");
+                        let s = style
+                            .as_deref()
+                            .unwrap_or("")
+                            .to_ascii_lowercase()
+                            .replace(' ', "");
                         let line = if s == "title" {
                             format!("# {text}")
-                        } else if let Some(n) = s.strip_prefix("heading").and_then(|n| n.parse::<usize>().ok()) {
+                        } else if let Some(n) = s
+                            .strip_prefix("heading")
+                            .and_then(|n| n.parse::<usize>().ok())
+                        {
                             format!("{} {text}", "#".repeat((n + 1).clamp(2, 6)))
-                        } else if let Some(l) = list_level.or(if s.contains("list") { Some(0) } else { None }) {
+                        } else if let Some(l) =
+                            list_level.or(if s.contains("list") { Some(0) } else { None })
+                        {
                             format!("{}- {text}", "  ".repeat(l))
                         } else {
                             text
@@ -1497,7 +1859,8 @@ fn docx_to_markdown(bytes: &[u8]) -> Result<String> {
     let mut md = String::new();
     for (i, line) in out.iter().enumerate() {
         if i > 0 {
-            let both_list = line.trim_start().starts_with("- ") && out[i - 1].trim_start().starts_with("- ");
+            let both_list =
+                line.trim_start().starts_with("- ") && out[i - 1].trim_start().starts_with("- ");
             md.push_str(if both_list { "\n" } else { "\n\n" });
         }
         md.push_str(line);
@@ -1509,8 +1872,8 @@ fn docx_to_markdown(bytes: &[u8]) -> Result<String> {
 // ---- HTML to Markdown -----------------------------------------------------------------------------------
 
 const DROP_TAGS: &[&str] = &[
-    "script", "style", "noscript", "nav", "aside", "footer", "header", "form", "button", "svg", "iframe", "template", "select", "input", "textarea", "canvas", "dialog",
-    "menu",
+    "script", "style", "noscript", "nav", "aside", "footer", "header", "form", "button", "svg",
+    "iframe", "template", "select", "input", "textarea", "canvas", "dialog", "menu",
 ];
 
 /// The main content of a page as Markdown, with its title.
@@ -1523,8 +1886,16 @@ fn html_to_markdown(html: &str, base: Option<&reqwest::Url>) -> (String, String)
     let title = doc
         .select(&sel("meta[property='og:title']"))
         .find_map(|m| m.value().attr("content").map(str::to_string))
-        .or_else(|| doc.select(&sel("title")).next().map(|t| t.text().collect::<String>()))
-        .or_else(|| doc.select(&sel("h1")).next().map(|t| t.text().collect::<String>()))
+        .or_else(|| {
+            doc.select(&sel("title"))
+                .next()
+                .map(|t| t.text().collect::<String>())
+        })
+        .or_else(|| {
+            doc.select(&sel("h1"))
+                .next()
+                .map(|t| t.text().collect::<String>())
+        })
         .map(|t| collapse(&t))
         .unwrap_or_default();
 
@@ -1533,11 +1904,19 @@ fn html_to_markdown(html: &str, base: Option<&reqwest::Url>) -> (String, String)
         .select(&sel("article"))
         .max_by_key(|e| text_len(*e))
         .filter(|e| text_len(*e) > 200)
-        .or_else(|| doc.select(&sel("main, [role=main]")).max_by_key(|e| text_len(*e)))
+        .or_else(|| {
+            doc.select(&sel("main, [role=main]"))
+                .max_by_key(|e| text_len(*e))
+        })
         .or_else(|| {
             doc.select(&sel("div, section, td"))
                 .map(|e| {
-                    let direct: usize = e.children().filter_map(ElementRef::wrap).filter(|c| c.value().name() == "p").map(text_len).sum();
+                    let direct: usize = e
+                        .children()
+                        .filter_map(ElementRef::wrap)
+                        .filter(|c| c.value().name() == "p")
+                        .map(text_len)
+                        .sum();
                     (direct, e)
                 })
                 .filter(|(n, _)| *n > 0)
@@ -1547,14 +1926,29 @@ fn html_to_markdown(html: &str, base: Option<&reqwest::Url>) -> (String, String)
         .or_else(|| doc.select(&sel("body")).next())
         .unwrap_or_else(|| doc.root_element());
 
-    let mut md = Md { base, out: String::new() };
+    let mut md = Md {
+        base,
+        out: String::new(),
+    };
     md.block(root);
     let mut body = tidy(&md.out);
     // Avoid repeating the title as the first heading.
     if !title.is_empty() {
-        let first = body.lines().next().unwrap_or("").trim_start_matches('#').trim().to_string();
+        let first = body
+            .lines()
+            .next()
+            .unwrap_or("")
+            .trim_start_matches('#')
+            .trim()
+            .to_string();
         if first == title {
-            body = body.lines().skip(1).collect::<Vec<_>>().join("\n").trim_start().to_string();
+            body = body
+                .lines()
+                .skip(1)
+                .collect::<Vec<_>>()
+                .join("\n")
+                .trim_start()
+                .to_string();
         }
     }
     (title, body)
@@ -1612,7 +2006,10 @@ impl Md<'_> {
         for child in el.children() {
             if let Some(c) = ElementRef::wrap(child) {
                 let name = c.value().name();
-                if DROP_TAGS.contains(&name) || c.value().attr("hidden").is_some() || c.value().attr("aria-hidden") == Some("true") {
+                if DROP_TAGS.contains(&name)
+                    || c.value().attr("hidden").is_some()
+                    || c.value().attr("aria-hidden") == Some("true")
+                {
                     continue;
                 }
                 if is_block(name) {
@@ -1648,9 +2045,16 @@ impl Md<'_> {
                 self.para(&format!("```\n{}\n```", code.trim_end()));
             }
             "blockquote" => {
-                let mut inner = Md { base: self.base, out: String::new() };
+                let mut inner = Md {
+                    base: self.base,
+                    out: String::new(),
+                };
                 inner.block(c);
-                let q = tidy(&inner.out).lines().map(|l| format!("> {l}")).collect::<Vec<_>>().join("\n");
+                let q = tidy(&inner.out)
+                    .lines()
+                    .map(|l| format!("> {l}"))
+                    .collect::<Vec<_>>()
+                    .join("\n");
                 self.para(&q);
             }
             "ul" | "ol" => {
@@ -1664,7 +2068,10 @@ impl Md<'_> {
             "hr" => self.para("---"),
             "br" => self.out.push('\n'),
             "figure" | "picture" => {
-                let mut inner = Md { base: self.base, out: String::new() };
+                let mut inner = Md {
+                    base: self.base,
+                    out: String::new(),
+                };
                 inner.block(c);
                 let s = inner.out;
                 self.para(&s);
@@ -1677,7 +2084,12 @@ impl Md<'_> {
         use scraper::ElementRef;
         let ordered = el.value().name() == "ol";
         let mut out = Vec::new();
-        for (i, li) in el.children().filter_map(ElementRef::wrap).filter(|c| c.value().name() == "li").enumerate() {
+        for (i, li) in el
+            .children()
+            .filter_map(ElementRef::wrap)
+            .filter(|c| c.value().name() == "li")
+            .enumerate()
+        {
             let mut text = String::new();
             let mut nested = Vec::new();
             for ch in li.children() {
@@ -1691,8 +2103,16 @@ impl Md<'_> {
                     text.push_str(&squash(t));
                 }
             }
-            let marker = if ordered { format!("{}.", i + 1) } else { "-".into() };
-            out.push(format!("{}{marker} {}", "  ".repeat(depth), collapse(&text)));
+            let marker = if ordered {
+                format!("{}.", i + 1)
+            } else {
+                "-".into()
+            };
+            out.push(format!(
+                "{}{marker} {}",
+                "  ".repeat(depth),
+                collapse(&text)
+            ));
             out.extend(nested);
         }
         out.join("\n")
@@ -1701,7 +2121,15 @@ impl Md<'_> {
     fn table_rows(&self, table: scraper::ElementRef) -> Vec<Vec<String>> {
         let tr = scraper::Selector::parse("tr").expect("valid selector");
         let cells = scraper::Selector::parse("th, td").expect("valid selector");
-        table.select(&tr).map(|r| r.select(&cells).map(|c| collapse(&self.inline_children(c))).collect()).filter(|r: &Vec<String>| !r.is_empty()).collect()
+        table
+            .select(&tr)
+            .map(|r| {
+                r.select(&cells)
+                    .map(|c| collapse(&self.inline_children(c)))
+                    .collect()
+            })
+            .filter(|r: &Vec<String>| !r.is_empty())
+            .collect()
     }
 
     fn inline_children(&self, el: scraper::ElementRef) -> String {
@@ -1733,7 +2161,11 @@ impl Md<'_> {
         match name {
             "a" => {
                 let t = inner();
-                match c.value().attr("href").filter(|h| !h.starts_with("javascript:") && !h.starts_with('#')) {
+                match c
+                    .value()
+                    .attr("href")
+                    .filter(|h| !h.starts_with("javascript:") && !h.starts_with('#'))
+                {
                     Some(h) if !t.trim().is_empty() => format!("[{}]({})", t.trim(), self.url(h)),
                     _ => t,
                 }
@@ -1743,7 +2175,11 @@ impl Md<'_> {
             "code" | "kbd" => format!("`{}`", c.text().collect::<String>()),
             "br" => "\n".into(),
             "img" => match c.value().attr("src") {
-                Some(src) if !src.starts_with("data:") => format!("![{}]({})", c.value().attr("alt").unwrap_or(""), self.url(src)),
+                Some(src) if !src.starts_with("data:") => format!(
+                    "![{}]({})",
+                    c.value().attr("alt").unwrap_or(""),
+                    self.url(src)
+                ),
                 _ => String::new(),
             },
             n if DROP_TAGS.contains(&n) => String::new(),
@@ -1756,8 +2192,32 @@ impl Md<'_> {
 fn is_block(name: &str) -> bool {
     matches!(
         name,
-        "p" | "div" | "section" | "article" | "main" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "ul" | "ol" | "pre" | "blockquote" | "table" | "hr" | "figure" | "picture"
-            | "figcaption" | "dl" | "dt" | "dd" | "details" | "summary" | "center" | "address"
+        "p" | "div"
+            | "section"
+            | "article"
+            | "main"
+            | "h1"
+            | "h2"
+            | "h3"
+            | "h4"
+            | "h5"
+            | "h6"
+            | "ul"
+            | "ol"
+            | "pre"
+            | "blockquote"
+            | "table"
+            | "hr"
+            | "figure"
+            | "picture"
+            | "figcaption"
+            | "dl"
+            | "dt"
+            | "dd"
+            | "details"
+            | "summary"
+            | "center"
+            | "address"
     )
 }
 
@@ -1782,11 +2242,23 @@ fn squash(s: &str) -> String {
 fn collapse_keep_edges(s: &str) -> String {
     let lead = s.starts_with(char::is_whitespace);
     let trail = s.ends_with(char::is_whitespace);
-    let mid = s.split(' ').filter(|x| !x.is_empty()).collect::<Vec<_>>().join(" ");
+    let mid = s
+        .split(' ')
+        .filter(|x| !x.is_empty())
+        .collect::<Vec<_>>()
+        .join(" ");
     if mid.is_empty() {
-        return if lead || trail { " ".into() } else { String::new() };
+        return if lead || trail {
+            " ".into()
+        } else {
+            String::new()
+        };
     }
-    format!("{}{mid}{}", if lead { " " } else { "" }, if trail { " " } else { "" })
+    format!(
+        "{}{mid}{}",
+        if lead { " " } else { "" },
+        if trail { " " } else { "" }
+    )
 }
 
 // ---- imports and clips --------------------------------------------------------------------------------
@@ -1798,7 +2270,12 @@ enum Source {
 }
 
 fn imports_dir(r: &Runner, ws: Uuid) -> PathBuf {
-    match r.workspace(ws).and_then(|w| w.root).map(PathBuf::from).filter(|p| p.is_dir()) {
+    match r
+        .workspace(ws)
+        .and_then(|w| w.root)
+        .map(PathBuf::from)
+        .filter(|p| p.is_dir())
+    {
         Some(root) => root.join(".bouvio").join("imports"),
         None => kb_of(r).dir.join(ws.to_string()).join("imports"),
     }
@@ -1826,10 +2303,21 @@ fn slug(name: &str) -> String {
 }
 
 fn yaml_str(s: &str) -> String {
-    format!("\"{}\"", s.replace('\\', "\\\\").replace('"', "\\\"").replace('\n', " "))
+    format!(
+        "\"{}\"",
+        s.replace('\\', "\\\\")
+            .replace('"', "\\\"")
+            .replace('\n', " ")
+    )
 }
 
-async fn import(r: &Arc<Runner>, ws: Uuid, name: &str, bytes: Vec<u8>, source: Source) -> Result<Artifact> {
+async fn import(
+    r: &Arc<Runner>,
+    ws: Uuid,
+    name: &str,
+    bytes: Vec<u8>,
+    source: Source,
+) -> Result<Artifact> {
     if r.workspace(ws).is_none() {
         bail!("unknown workspace");
     }
@@ -1838,11 +2326,21 @@ async fn import(r: &Arc<Runner>, ws: Uuid, name: &str, bytes: Vec<u8>, source: S
     }
     let n = name.to_string();
     let md = tokio::task::spawn_blocking(move || convert(&n, &bytes)).await??;
-    let stem = Path::new(name).file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_else(|| name.to_string());
+    let stem = Path::new(name)
+        .file_stem()
+        .map(|s| s.to_string_lossy().into_owned())
+        .unwrap_or_else(|| name.to_string());
     save_markdown(r, ws, &stem, name, &md, source).await
 }
 
-async fn save_markdown(r: &Arc<Runner>, ws: Uuid, stem: &str, title: &str, md: &str, source: Source) -> Result<Artifact> {
+async fn save_markdown(
+    r: &Arc<Runner>,
+    ws: Uuid,
+    stem: &str,
+    title: &str,
+    md: &str,
+    source: Source,
+) -> Result<Artifact> {
     let dir = imports_dir(r, ws);
     tokio::fs::create_dir_all(&dir).await?;
     let path = dir.join(format!("{}.md", slug(stem)));
@@ -1851,9 +2349,22 @@ async fn save_markdown(r: &Arc<Runner>, ws: Uuid, stem: &str, title: &str, md: &
         Source::Upload(n) => ("source", n.as_str()),
         Source::Url(u) => ("url", u.as_str()),
     };
-    let when = if matches!(source, Source::Url(_)) { "clipped" } else { "imported" };
-    let front = format!("---\ntitle: {}\n{key}: {}\n{when}: {}\n---\n\n", yaml_str(title), yaml_str(src), Utc::now().to_rfc3339());
-    let body = if md.trim_start().starts_with("# ") { md.to_string() } else { format!("# {title}\n\n{md}") };
+    let when = if matches!(source, Source::Url(_)) {
+        "clipped"
+    } else {
+        "imported"
+    };
+    let front = format!(
+        "---\ntitle: {}\n{key}: {}\n{when}: {}\n---\n\n",
+        yaml_str(title),
+        yaml_str(src),
+        Utc::now().to_rfc3339()
+    );
+    let body = if md.trim_start().starts_with("# ") {
+        md.to_string()
+    } else {
+        format!("# {title}\n\n{md}")
+    };
     tokio::fs::write(&path, format!("{front}{body}")).await?;
 
     let p = path.to_string_lossy().into_owned();
@@ -1862,18 +2373,23 @@ async fn save_markdown(r: &Arc<Runner>, ws: Uuid, stem: &str, title: &str, md: &
             let size = std::fs::metadata(&path).map(|m| m.len()).unwrap_or(0);
             let a = r
                 .artifacts
-                .update(|x| x.id == existing.id, |x| {
-                    x.size = size;
-                    x.title = title.to_string();
-                    x.created_at = Utc::now();
-                })?
+                .update(
+                    |x| x.id == existing.id,
+                    |x| {
+                        x.size = size;
+                        x.title = title.to_string();
+                        x.created_at = Utc::now();
+                    },
+                )?
                 .unwrap_or(existing);
             r.notice(ws, "artifact-changed", &a);
             a
         }
         None => {
             let a = r.add_artifact(ws, None, &path, None, None)?;
-            r.artifacts.update(|x| x.id == a.id, |x| x.title = title.to_string())?.unwrap_or(a)
+            r.artifacts
+                .update(|x| x.id == a.id, |x| x.title = title.to_string())?
+                .unwrap_or(a)
         }
     };
     // Index it now: whoever imported it will search for it next.
@@ -1887,12 +2403,17 @@ async fn save_markdown(r: &Arc<Runner>, ws: Uuid, stem: &str, title: &str, md: &
                 key: format!("artifact:{}", a2.id),
                 kind: "artifact".into(),
                 id: a2.id.to_string(),
-                loc: SearchLocation::Artifact { artifact_id: a2.id, path: a2.path.clone() },
+                loc: SearchLocation::Artifact {
+                    artifact_id: a2.id,
+                    path: a2.path.clone(),
+                },
                 hash: 0,
             };
             // Hash 0 forces the write; the scan replaces it with the file's own hash later.
             ix.manifest.lock().unwrap().remove(&doc.key);
-            let _ = ix.upsert(&kb, doc, semantic, || artifact_text(&a2).map(|t| (a2.title.clone(), t)));
+            let _ = ix.upsert(&kb, doc, semantic, || {
+                artifact_text(&a2).map(|t| (a2.title.clone(), t))
+            });
             let _ = ix.flush();
         }
     })
@@ -1913,42 +2434,78 @@ fn http() -> &'static reqwest::Client {
 }
 
 async fn clip_url(r: &Arc<Runner>, ws: Uuid, url: &str) -> Result<Artifact> {
-    let url = reqwest::Url::parse(url.trim()).or_else(|_| reqwest::Url::parse(&format!("https://{}", url.trim()))).context("not a web address")?;
+    let url = reqwest::Url::parse(url.trim())
+        .or_else(|_| reqwest::Url::parse(&format!("https://{}", url.trim())))
+        .context("not a web address")?;
     if !matches!(url.scheme(), "http" | "https") {
         bail!("only http and https pages can be clipped");
     }
     let res = http().get(url.clone()).send().await?.error_for_status()?;
     let final_url = res.url().clone();
-    let ctype = res.headers().get(reqwest::header::CONTENT_TYPE).and_then(|v| v.to_str().ok()).unwrap_or("").to_ascii_lowercase();
+    let ctype = res
+        .headers()
+        .get(reqwest::header::CONTENT_TYPE)
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("")
+        .to_ascii_lowercase();
     if res.content_length().is_some_and(|n| n > 30 * 1024 * 1024) {
         bail!("page is larger than 30 MB");
     }
     let bytes = res.bytes().await?;
-    let name = final_url.path_segments().and_then(|mut s| s.next_back()).filter(|s| !s.is_empty()).unwrap_or("page").to_string();
+    let name = final_url
+        .path_segments()
+        .and_then(|mut s| s.next_back())
+        .filter(|s| !s.is_empty())
+        .unwrap_or("page")
+        .to_string();
     if ctype.contains("pdf") || name.to_ascii_lowercase().ends_with(".pdf") {
         let b = bytes.to_vec();
         let md = tokio::task::spawn_blocking(move || pdf_to_markdown(&b)).await??;
-        let stem = Path::new(&name).file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or(name.clone());
+        let stem = Path::new(&name)
+            .file_stem()
+            .map(|s| s.to_string_lossy().into_owned())
+            .unwrap_or(name.clone());
         return save_markdown(r, ws, &stem, &name, &md, Source::Url(final_url.to_string())).await;
     }
     let html = String::from_utf8_lossy(&bytes).into_owned();
     let base = final_url.clone();
-    let (title, md) = tokio::task::spawn_blocking(move || html_to_markdown(&html, Some(&base))).await?;
+    let (title, md) =
+        tokio::task::spawn_blocking(move || html_to_markdown(&html, Some(&base))).await?;
     if md.trim().is_empty() {
         bail!("found no readable text on that page");
     }
-    let title = if title.is_empty() { final_url.host_str().unwrap_or("page").to_string() } else { title };
-    save_markdown(r, ws, &title, &title, &md, Source::Url(final_url.to_string())).await
+    let title = if title.is_empty() {
+        final_url.host_str().unwrap_or("page").to_string()
+    } else {
+        title
+    };
+    save_markdown(
+        r,
+        ws,
+        &title,
+        &title,
+        &md,
+        Source::Url(final_url.to_string()),
+    )
+    .await
 }
 
 // ---- MCP registry ----------------------------------------------------------------------------------------
 
 async fn search_mcp_registry(query: &str) -> Result<Vec<McpCatalogEntry>> {
-    let mut req = http().get(MCP_REGISTRY).query(&[("limit", "40"), ("version", "latest")]);
+    let mut req = http()
+        .get(MCP_REGISTRY)
+        .query(&[("limit", "40"), ("version", "latest")]);
     if !query.trim().is_empty() {
         req = req.query(&[("search", query.trim())]);
     }
-    let v: Value = req.send().await.context("MCP registry unreachable")?.error_for_status()?.json().await?;
+    let v: Value = req
+        .send()
+        .await
+        .context("MCP registry unreachable")?
+        .error_for_status()?
+        .json()
+        .await?;
     Ok(map_registry(&v))
 }
 
@@ -1966,7 +2523,10 @@ fn map_registry(v: &Value) -> Vec<McpCatalogEntry> {
 fn args_of(v: Option<&Value>) -> Vec<String> {
     let mut out = Vec::new();
     for a in v.and_then(|a| a.as_array()).into_iter().flatten() {
-        let value = a.get("value").or_else(|| a.get("default")).and_then(|x| x.as_str());
+        let value = a
+            .get("value")
+            .or_else(|| a.get("default"))
+            .and_then(|x| x.as_str());
         match a.get("type").and_then(|t| t.as_str()) {
             Some("named") => {
                 if let (Some(n), Some(val)) = (a.get("name").and_then(|x| x.as_str()), value) {
@@ -1986,24 +2546,52 @@ fn args_of(v: Option<&Value>) -> Vec<String> {
 
 fn map_registry_entry(s: &Value) -> Option<McpCatalogEntry> {
     let name = s.get("name")?.as_str()?.to_string();
-    let short_name = name.rsplit('/').next().unwrap_or(&name).trim_start_matches("mcp-server-").to_string();
+    let short_name = name
+        .rsplit('/')
+        .next()
+        .unwrap_or(&name)
+        .trim_start_matches("mcp-server-")
+        .to_string();
     let mut e = McpCatalogEntry {
         short_name,
-        description: s.get("description").and_then(|d| d.as_str()).unwrap_or("").to_string(),
-        version: s.get("version").and_then(|d| d.as_str()).map(str::to_string),
-        repository: s.get("repository").and_then(|r| r.get("url")).and_then(|u| u.as_str()).filter(|u| !u.is_empty()).map(str::to_string),
+        description: s
+            .get("description")
+            .and_then(|d| d.as_str())
+            .unwrap_or("")
+            .to_string(),
+        version: s
+            .get("version")
+            .and_then(|d| d.as_str())
+            .map(str::to_string),
+        repository: s
+            .get("repository")
+            .and_then(|r| r.get("url"))
+            .and_then(|u| u.as_str())
+            .filter(|u| !u.is_empty())
+            .map(str::to_string),
         name,
         runtime: None,
         command: None,
         args: Vec::new(),
         env: Vec::new(),
     };
-    let packages = s.get("packages").and_then(|p| p.as_array()).cloned().unwrap_or_default();
-    let stdio = |p: &&Value| p.get("transport").and_then(|t| t.get("type")).and_then(|t| t.as_str()).is_none_or(|t| t == "stdio");
-    let pkg = packages
-        .iter()
-        .filter(stdio)
-        .find(|p| matches!(p.get("registryType").and_then(|t| t.as_str()), Some("npm" | "pypi" | "oci")));
+    let packages = s
+        .get("packages")
+        .and_then(|p| p.as_array())
+        .cloned()
+        .unwrap_or_default();
+    let stdio = |p: &&Value| {
+        p.get("transport")
+            .and_then(|t| t.get("type"))
+            .and_then(|t| t.as_str())
+            .is_none_or(|t| t == "stdio")
+    };
+    let pkg = packages.iter().filter(stdio).find(|p| {
+        matches!(
+            p.get("registryType").and_then(|t| t.as_str()),
+            Some("npm" | "pypi" | "oci")
+        )
+    });
     if let Some(pkg) = pkg {
         let id = pkg.get("identifier").and_then(|i| i.as_str()).unwrap_or("");
         let version = pkg.get("version").and_then(|i| i.as_str());
@@ -2015,10 +2603,19 @@ fn map_registry_entry(s: &Value) -> Option<McpCatalogEntry> {
             .filter_map(|v| {
                 Some(McpEnvVar {
                     name: v.get("name")?.as_str()?.to_string(),
-                    description: v.get("description").and_then(|d| d.as_str()).map(str::to_string),
-                    required: v.get("isRequired").and_then(|d| d.as_bool()).unwrap_or(false),
+                    description: v
+                        .get("description")
+                        .and_then(|d| d.as_str())
+                        .map(str::to_string),
+                    required: v
+                        .get("isRequired")
+                        .and_then(|d| d.as_bool())
+                        .unwrap_or(false),
                     secret: v.get("isSecret").and_then(|d| d.as_bool()).unwrap_or(false),
-                    default: v.get("default").and_then(|d| d.as_str()).map(str::to_string),
+                    default: v
+                        .get("default")
+                        .and_then(|d| d.as_str())
+                        .map(str::to_string),
                 })
             })
             .collect();
@@ -2028,7 +2625,11 @@ fn map_registry_entry(s: &Value) -> Option<McpCatalogEntry> {
             Some("npm") => {
                 e.runtime = Some("npx".into());
                 e.command = Some("npx".into());
-                e.args = if runtime_args.is_empty() { vec!["-y".into()] } else { runtime_args };
+                e.args = if runtime_args.is_empty() {
+                    vec!["-y".into()]
+                } else {
+                    runtime_args
+                };
                 e.args.push(match version {
                     Some(v) => format!("{id}@{v}"),
                     None => id.to_string(),
@@ -2059,7 +2660,17 @@ fn map_registry_entry(s: &Value) -> Option<McpCatalogEntry> {
         .and_then(|r| r.as_array())
         .into_iter()
         .flatten()
-        .filter(|r| !r.get("headers").and_then(|h| h.as_array()).is_some_and(|h| h.iter().any(|x| x.get("isRequired").and_then(|b| b.as_bool()).unwrap_or(false))))
+        .filter(|r| {
+            !r.get("headers")
+                .and_then(|h| h.as_array())
+                .is_some_and(|h| {
+                    h.iter().any(|x| {
+                        x.get("isRequired")
+                            .and_then(|b| b.as_bool())
+                            .unwrap_or(false)
+                    })
+                })
+        })
         .find_map(|r| r.get("url").and_then(|u| u.as_str()))
     {
         // A hosted server without required headers: bridge it over stdio.
@@ -2070,7 +2681,11 @@ fn map_registry_entry(s: &Value) -> Option<McpCatalogEntry> {
     Some(e)
 }
 
-fn install_mcp(r: &Runner, ws: Uuid, server: McpServer) -> Result<bouvio_protocol::WorkspaceSettings> {
+fn install_mcp(
+    r: &Runner,
+    ws: Uuid,
+    server: McpServer,
+) -> Result<bouvio_protocol::WorkspaceSettings> {
     if server.name.trim().is_empty() || server.command.trim().is_empty() {
         bail!("a server needs a name and a command");
     }
@@ -2099,8 +2714,12 @@ fn remove_mcp(r: &Runner, ws: Uuid, name: &str) -> Result<bouvio_protocol::Works
 fn front_matter(md: &str) -> HashMap<String, String> {
     let mut out = HashMap::new();
     let md = md.trim_start_matches('\u{feff}');
-    let Some(rest) = md.strip_prefix("---") else { return out };
-    let Some(end) = rest.find("\n---") else { return out };
+    let Some(rest) = md.strip_prefix("---") else {
+        return out;
+    };
+    let Some(end) = rest.find("\n---") else {
+        return out;
+    };
     let mut current: Option<String> = None;
     for line in rest[..end].lines() {
         if line.starts_with([' ', '\t']) {
@@ -2113,13 +2732,19 @@ fn front_matter(md: &str) -> HashMap<String, String> {
             }
             continue;
         }
-        let Some((k, v)) = line.split_once(':') else { continue };
+        let Some((k, v)) = line.split_once(':') else {
+            continue;
+        };
         let k = k.trim().to_string();
         let mut v = v.trim();
         if matches!(v, ">" | "|" | ">-" | "|-") {
             v = "";
         }
-        let v = v.strip_prefix('"').and_then(|x| x.strip_suffix('"')).or_else(|| v.strip_prefix('\'').and_then(|x| x.strip_suffix('\''))).unwrap_or(v);
+        let v = v
+            .strip_prefix('"')
+            .and_then(|x| x.strip_suffix('"'))
+            .or_else(|| v.strip_prefix('\'').and_then(|x| x.strip_suffix('\'')))
+            .unwrap_or(v);
         out.insert(k.clone(), v.to_string());
         current = Some(k);
     }
@@ -2129,16 +2754,29 @@ fn front_matter(md: &str) -> HashMap<String, String> {
 /// `owner/repo`, `github.com/owner/repo/tree/<ref>/<path>` or `owner/repo/<path>`.
 fn parse_source(s: &str) -> Option<(String, String, String)> {
     let s = s.trim().trim_end_matches('/');
-    let s = s.strip_prefix("https://").or_else(|| s.strip_prefix("http://")).unwrap_or(s);
+    let s = s
+        .strip_prefix("https://")
+        .or_else(|| s.strip_prefix("http://"))
+        .unwrap_or(s);
     let s = s.strip_prefix("www.").unwrap_or(s);
     let s = s.strip_prefix("github.com/").unwrap_or(s);
     let parts: Vec<&str> = s.split('/').filter(|p| !p.is_empty()).collect();
-    if parts.len() < 2 || parts[..2].iter().any(|p| !p.chars().all(|c| c.is_alphanumeric() || "-_.".contains(c))) {
+    if parts.len() < 2
+        || parts[..2]
+            .iter()
+            .any(|p| !p.chars().all(|c| c.is_alphanumeric() || "-_.".contains(c)))
+    {
         return None;
     }
     let repo = format!("{}/{}", parts[0], parts[1].trim_end_matches(".git"));
     let (git_ref, path) = match parts.get(2) {
-        Some(&"tree") | Some(&"blob") => (parts.get(3).map(|s| s.to_string()).unwrap_or_else(|| "HEAD".into()), parts.get(4..).map(|p| p.join("/")).unwrap_or_default()),
+        Some(&"tree") | Some(&"blob") => (
+            parts
+                .get(3)
+                .map(|s| s.to_string())
+                .unwrap_or_else(|| "HEAD".into()),
+            parts.get(4..).map(|p| p.join("/")).unwrap_or_default(),
+        ),
         _ => ("HEAD".into(), parts[2..].join("/")),
     };
     Some((repo, git_ref, path))
@@ -2149,7 +2787,11 @@ fn skill_sources(r: &Runner) -> Vec<String> {
 }
 
 fn set_skill_sources(r: &Runner, sources: Vec<String>) -> Result<Vec<String>> {
-    let clean: Vec<String> = sources.into_iter().map(|s| s.trim().to_string()).filter(|s| !s.is_empty()).collect();
+    let clean: Vec<String> = sources
+        .into_iter()
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty())
+        .collect();
     if let Some(bad) = clean.iter().find(|s| parse_source(s).is_none()) {
         bail!("not a GitHub repository: {bad}");
     }
@@ -2159,8 +2801,15 @@ fn set_skill_sources(r: &Runner, sources: Vec<String>) -> Result<Vec<String>> {
 }
 
 async fn github_json(url: &str) -> Result<Value> {
-    let res = http().get(url).header("Accept", "application/vnd.github+json").send().await.context("GitHub unreachable")?;
-    if res.status() == reqwest::StatusCode::FORBIDDEN || res.status() == reqwest::StatusCode::TOO_MANY_REQUESTS {
+    let res = http()
+        .get(url)
+        .header("Accept", "application/vnd.github+json")
+        .send()
+        .await
+        .context("GitHub unreachable")?;
+    if res.status() == reqwest::StatusCode::FORBIDDEN
+        || res.status() == reqwest::StatusCode::TOO_MANY_REQUESTS
+    {
         bail!("GitHub's rate limit for anonymous requests is reached; try again within the hour");
     }
     Ok(res.error_for_status()?.json().await?)
@@ -2174,7 +2823,10 @@ async fn repo_files(kb: &Kb, repo: &str, git_ref: &str) -> Result<Vec<String>> {
             return Ok(files.clone());
         }
     }
-    let v = github_json(&format!("https://api.github.com/repos/{repo}/git/trees/{git_ref}?recursive=1")).await?;
+    let v = github_json(&format!(
+        "https://api.github.com/repos/{repo}/git/trees/{git_ref}?recursive=1"
+    ))
+    .await?;
     let files: Vec<String> = v
         .get("tree")
         .and_then(|t| t.as_array())
@@ -2183,13 +2835,27 @@ async fn repo_files(kb: &Kb, repo: &str, git_ref: &str) -> Result<Vec<String>> {
         .filter(|e| e.get("type").and_then(|t| t.as_str()) == Some("blob"))
         .filter_map(|e| e.get("path").and_then(|p| p.as_str()).map(str::to_string))
         .collect();
-    kb.trees.lock().unwrap().insert(id, (Instant::now(), files.clone()));
+    kb.trees
+        .lock()
+        .unwrap()
+        .insert(id, (Instant::now(), files.clone()));
     Ok(files)
 }
 
 fn raw_url(repo: &str, git_ref: &str, path: &str) -> String {
-    let enc: Vec<String> = path.split('/').map(|s| s.replace('%', "%25").replace(' ', "%20").replace('#', "%23").replace('?', "%3F")).collect();
-    format!("https://raw.githubusercontent.com/{repo}/{git_ref}/{}", enc.join("/"))
+    let enc: Vec<String> = path
+        .split('/')
+        .map(|s| {
+            s.replace('%', "%25")
+                .replace(' ', "%20")
+                .replace('#', "%23")
+                .replace('?', "%3F")
+        })
+        .collect();
+    format!(
+        "https://raw.githubusercontent.com/{repo}/{git_ref}/{}",
+        enc.join("/")
+    )
 }
 
 /// Folders holding a SKILL.md, under `prefix`.
@@ -2204,7 +2870,10 @@ fn skill_dirs(files: &[String], prefix: &str) -> Vec<String> {
     if files.iter().any(|f| f == "SKILL.md") && prefix.is_empty() {
         dirs.push(String::new());
     }
-    if !prefix.is_empty() && files.iter().any(|f| *f == format!("{prefix}/SKILL.md")) && !dirs.contains(&prefix.to_string()) {
+    if !prefix.is_empty()
+        && files.iter().any(|f| *f == format!("{prefix}/SKILL.md"))
+        && !dirs.contains(&prefix.to_string())
+    {
         dirs.push(prefix.to_string());
     }
     dirs.sort();
@@ -2216,18 +2885,35 @@ async fn catalog_of(kb: &Kb, repo: &str, git_ref: &str, prefix: &str) -> Result<
     let files = repo_files(kb, repo, git_ref).await?;
     let dirs = skill_dirs(&files, prefix);
     let entries = futures::stream::iter(dirs.into_iter().take(200).map(|dir| async move {
-        let file = if dir.is_empty() { "SKILL.md".to_string() } else { format!("{dir}/SKILL.md") };
+        let file = if dir.is_empty() {
+            "SKILL.md".to_string()
+        } else {
+            format!("{dir}/SKILL.md")
+        };
         let md = match http().get(raw_url(repo, git_ref, &file)).send().await {
             Ok(r) => r.text().await.unwrap_or_default(),
             Err(_) => String::new(),
         };
         let fm = front_matter(&md);
-        let folder = dir.rsplit('/').next().filter(|s| !s.is_empty()).unwrap_or_else(|| repo.rsplit('/').next().unwrap_or(repo)).to_string();
+        let folder = dir
+            .rsplit('/')
+            .next()
+            .filter(|s| !s.is_empty())
+            .unwrap_or_else(|| repo.rsplit('/').next().unwrap_or(repo))
+            .to_string();
         SkillEntry {
-            name: fm.get("name").filter(|n| !n.is_empty()).cloned().unwrap_or(folder),
+            name: fm
+                .get("name")
+                .filter(|n| !n.is_empty())
+                .cloned()
+                .unwrap_or(folder),
             description: fm.get("description").cloned().unwrap_or_default(),
             url: format!("https://github.com/{repo}/tree/{git_ref}/{dir}"),
-            source: SkillSource { repo: repo.to_string(), path: dir, git_ref: git_ref.to_string() },
+            source: SkillSource {
+                repo: repo.to_string(),
+                path: dir,
+                git_ref: git_ref.to_string(),
+            },
         }
     }))
     .buffer_unordered(8)
@@ -2246,7 +2932,9 @@ async fn list_skills_catalog(r: &Arc<Runner>, refresh: bool) -> Result<Vec<Skill
             }
         }
         // A cache on disk survives restarts, so the GitHub limit is rarely hit.
-        let disk: Option<(DateTime<Utc>, Vec<SkillEntry>)> = std::fs::read(&cache_file).ok().and_then(|b| serde_json::from_slice(&b).ok());
+        let disk: Option<(DateTime<Utc>, Vec<SkillEntry>)> = std::fs::read(&cache_file)
+            .ok()
+            .and_then(|b| serde_json::from_slice(&b).ok());
         if let Some((at, list)) = disk {
             let age = (Utc::now() - at).to_std().unwrap_or(CATALOG_TTL);
             if age < CATALOG_TTL {
@@ -2268,19 +2956,33 @@ async fn list_skills_catalog(r: &Arc<Runner>, refresh: bool) -> Result<Vec<Skill
     if all.is_empty() && !errors.is_empty() {
         bail!("{}", errors.join("; "));
     }
-    all.sort_by(|a, b| a.source.repo.cmp(&b.source.repo).then(a.name.to_lowercase().cmp(&b.name.to_lowercase())));
+    all.sort_by(|a, b| {
+        a.source
+            .repo
+            .cmp(&b.source.repo)
+            .then(a.name.to_lowercase().cmp(&b.name.to_lowercase()))
+    });
     *kb.catalog.lock().unwrap() = Some((Instant::now(), all.clone()));
     let _ = store::save(&cache_file, &(Utc::now(), &all));
     Ok(all)
 }
 
 fn skills_dir(r: &Runner, ws: Uuid) -> Result<PathBuf> {
-    let root = r.workspace(ws).context("unknown workspace")?.root.context("skills install into a workspace folder; this workspace has none")?;
+    let root = r
+        .workspace(ws)
+        .context("unknown workspace")?
+        .root
+        .context("skills install into a workspace folder; this workspace has none")?;
     Ok(PathBuf::from(root).join(".claude").join("skills"))
 }
 
 fn valid_name(name: &str) -> bool {
-    !name.is_empty() && name != "." && name != ".." && name.chars().all(|c| c.is_alphanumeric() || "-_.".contains(c))
+    !name.is_empty()
+        && name != "."
+        && name != ".."
+        && name
+            .chars()
+            .all(|c| c.is_alphanumeric() || "-_.".contains(c))
 }
 
 fn safe_rel(rel: &str) -> bool {
@@ -2289,7 +2991,12 @@ fn safe_rel(rel: &str) -> bool {
 }
 
 async fn install_skill(r: &Arc<Runner>, ws: Uuid, src: &SkillSource) -> Result<InstalledSkill> {
-    if parse_source(&src.repo).is_none_or(|(repo, _, _)| repo != src.repo) || !src.git_ref.chars().all(|c| c.is_alphanumeric() || "-_./".contains(c)) {
+    if parse_source(&src.repo).is_none_or(|(repo, _, _)| repo != src.repo)
+        || !src
+            .git_ref
+            .chars()
+            .all(|c| c.is_alphanumeric() || "-_./".contains(c))
+    {
         bail!("not a GitHub repository: {}", src.repo);
     }
     let base = skills_dir(r, ws)?;
@@ -2299,7 +3006,11 @@ async fn install_skill(r: &Arc<Runner>, ws: Uuid, src: &SkillSource) -> Result<I
     let wanted: Vec<(String, String)> = files
         .iter()
         .filter_map(|f| {
-            let rel = if prefix.is_empty() { Some(f.as_str()) } else { f.strip_prefix(&format!("{prefix}/")) }?;
+            let rel = if prefix.is_empty() {
+                Some(f.as_str())
+            } else {
+                f.strip_prefix(&format!("{prefix}/"))
+            }?;
             safe_rel(rel).then(|| (f.clone(), rel.to_string()))
         })
         .take(300)
@@ -2307,7 +3018,11 @@ async fn install_skill(r: &Arc<Runner>, ws: Uuid, src: &SkillSource) -> Result<I
     if !wanted.iter().any(|(_, rel)| rel == "SKILL.md") {
         bail!("no SKILL.md in {}/{}", src.repo, prefix);
     }
-    let folder = prefix.rsplit('/').next().filter(|s| !s.is_empty()).unwrap_or_else(|| src.repo.rsplit('/').next().unwrap_or("skill"));
+    let folder = prefix
+        .rsplit('/')
+        .next()
+        .filter(|s| !s.is_empty())
+        .unwrap_or_else(|| src.repo.rsplit('/').next().unwrap_or("skill"));
     let name = slug(folder);
     if !valid_name(&name) {
         bail!("cannot install a skill named {folder}");
@@ -2315,7 +3030,11 @@ async fn install_skill(r: &Arc<Runner>, ws: Uuid, src: &SkillSource) -> Result<I
     // Download everything first so a failure leaves the old copy alone.
     let mut downloaded = Vec::new();
     for (path, rel) in wanted {
-        let res = http().get(raw_url(&src.repo, &src.git_ref, &path)).send().await?.error_for_status()?;
+        let res = http()
+            .get(raw_url(&src.repo, &src.git_ref, &path))
+            .send()
+            .await?
+            .error_for_status()?;
         if res.content_length().is_some_and(|n| n > 5 * 1024 * 1024) {
             continue;
         }
@@ -2333,7 +3052,11 @@ async fn install_skill(r: &Arc<Runner>, ws: Uuid, src: &SkillSource) -> Result<I
         tokio::fs::write(&p, &bytes).await?;
     }
     let installed = read_installed(&dir).context("installed skill has no SKILL.md")?;
-    r.notice(ws, "knowledge-skills", json!({ "installed": installed.name }));
+    r.notice(
+        ws,
+        "knowledge-skills",
+        json!({ "installed": installed.name }),
+    );
     Ok(installed)
 }
 
@@ -2342,15 +3065,27 @@ fn read_installed(dir: &Path) -> Option<InstalledSkill> {
     let fm = front_matter(&md);
     let folder = dir.file_name()?.to_string_lossy().into_owned();
     Some(InstalledSkill {
-        name: fm.get("name").filter(|n| !n.is_empty()).cloned().unwrap_or_else(|| folder.clone()),
+        name: fm
+            .get("name")
+            .filter(|n| !n.is_empty())
+            .cloned()
+            .unwrap_or_else(|| folder.clone()),
         description: fm.get("description").cloned().unwrap_or_default(),
         path: dir.to_string_lossy().into_owned(),
     })
 }
 
 fn list_installed_skills(r: &Runner, ws: Uuid) -> Vec<InstalledSkill> {
-    let Ok(base) = skills_dir(r, ws) else { return Vec::new() };
-    let mut out: Vec<InstalledSkill> = std::fs::read_dir(base).into_iter().flatten().flatten().filter(|e| e.path().is_dir()).filter_map(|e| read_installed(&e.path())).collect();
+    let Ok(base) = skills_dir(r, ws) else {
+        return Vec::new();
+    };
+    let mut out: Vec<InstalledSkill> = std::fs::read_dir(base)
+        .into_iter()
+        .flatten()
+        .flatten()
+        .filter(|e| e.path().is_dir())
+        .filter_map(|e| read_installed(&e.path()))
+        .collect();
     out.sort_by_key(|s| s.name.to_lowercase());
     out
 }
@@ -2363,9 +3098,14 @@ fn remove_skill(r: &Runner, ws: Uuid, name: &str) -> Result<()> {
         .flatten()
         .flatten()
         .map(|e| e.path())
-        .find(|p| p.file_name().is_some_and(|f| f == name) || read_installed(p).is_some_and(|s| s.name == name))
+        .find(|p| {
+            p.file_name().is_some_and(|f| f == name)
+                || read_installed(p).is_some_and(|s| s.name == name)
+        })
         .context("no such skill")?;
-    if !dir.starts_with(&base) || !valid_name(&dir.file_name().unwrap_or_default().to_string_lossy()) {
+    if !dir.starts_with(&base)
+        || !valid_name(&dir.file_name().unwrap_or_default().to_string_lossy())
+    {
         bail!("no such skill");
     }
     std::fs::remove_dir_all(&dir)?;
@@ -2399,18 +3139,58 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let r = Runner::open(dir.path()).unwrap();
         let ws = r.create_workspace("Bouvio".into(), None).unwrap();
-        index(&r, ws.id, "doc", "d1", "Launch plan", "We ship the sign-up form on Friday after the review.");
-        index(&r, ws.id, "note", "n1", "Groceries", "Milk, bread and coffee beans.");
-        index(&r, ws.id, "doc", "d2", "Retro", "The signup flow broke twice; add tests for the form.");
+        index(
+            &r,
+            ws.id,
+            "doc",
+            "d1",
+            "Launch plan",
+            "We ship the sign-up form on Friday after the review.",
+        );
+        index(
+            &r,
+            ws.id,
+            "note",
+            "n1",
+            "Groceries",
+            "Milk, bread and coffee beans.",
+        );
+        index(
+            &r,
+            ws.id,
+            "doc",
+            "d2",
+            "Retro",
+            "The signup flow broke twice; add tests for the form.",
+        );
         let ix = kb_of(&r).open(ws.id).unwrap();
         assert_eq!(ix.num_docs(), 3);
 
         let hits = ix.search("sign-up form", &[], 10, None).unwrap();
         assert_eq!(hits[0].id, "d1");
-        assert_eq!(hits[0].location, SearchLocation::Doc { kind: "doc".into(), id: "d1".into() });
+        assert_eq!(
+            hits[0].location,
+            SearchLocation::Doc {
+                kind: "doc".into(),
+                id: "d1".into()
+            }
+        );
         let s = &hits[0].snippet;
-        let marked: Vec<String> = s.highlights.iter().map(|(a, b)| s.text.chars().skip(*a as usize).take((*b - *a) as usize).collect()).collect();
-        assert!(marked.contains(&"sign".to_string()) && marked.contains(&"form".to_string()), "{marked:?}");
+        let marked: Vec<String> = s
+            .highlights
+            .iter()
+            .map(|(a, b)| {
+                s.text
+                    .chars()
+                    .skip(*a as usize)
+                    .take((*b - *a) as usize)
+                    .collect()
+            })
+            .collect();
+        assert!(
+            marked.contains(&"sign".to_string()) && marked.contains(&"form".to_string()),
+            "{marked:?}"
+        );
 
         // The last word is a prefix while typing.
         let hits = ix.search("coff", &[], 10, None).unwrap();
@@ -2418,12 +3198,22 @@ mod tests {
         assert_eq!(hits[0].id, "n1");
 
         // Kinds filter, and a fallback to any word when not all match.
-        assert!(ix.search("form", &["note".into()], 10, None).unwrap().is_empty());
+        assert!(ix
+            .search("form", &["note".into()], 10, None)
+            .unwrap()
+            .is_empty());
         let any = ix.search("bread review", &[], 10, None).unwrap();
         assert_eq!(any.len(), 2);
 
         // Re-indexing the same content is a no-op; changing it replaces it.
-        index(&r, ws.id, "doc", "d1", "Launch plan", "We ship the sign-up form on Friday after the review.");
+        index(
+            &r,
+            ws.id,
+            "doc",
+            "d1",
+            "Launch plan",
+            "We ship the sign-up form on Friday after the review.",
+        );
         assert_eq!(ix.num_docs(), 3);
         index(&r, ws.id, "doc", "d1", "Launch plan", "Moved to Monday.");
         assert_eq!(ix.num_docs(), 3);
@@ -2441,20 +3231,44 @@ mod tests {
         std::fs::create_dir_all(root.join("src")).unwrap();
         std::fs::create_dir_all(root.join("build")).unwrap();
         std::fs::write(root.join(".gitignore"), "build/\n").unwrap();
-        std::fs::write(root.join("src/billing.rs"), "fn invoice_total() { /* quarterly invoices */ }").unwrap();
+        std::fs::write(
+            root.join("src/billing.rs"),
+            "fn invoice_total() { /* quarterly invoices */ }",
+        )
+        .unwrap();
         std::fs::write(root.join("build/out.txt"), "quarterly invoices generated").unwrap();
         std::fs::write(root.join("logo.bin"), [0u8, 1, 2, 3]).unwrap();
 
         let r = Runner::open(dir.path().join("data")).unwrap();
-        let ws = r.create_workspace("Repo".into(), Some(root.to_string_lossy().into())).unwrap();
-        r.create_issue(ws.id, "Quarterly invoices are off by one".into(), "Totals skip the last day.".into(), None, None).unwrap();
+        let ws = r
+            .create_workspace("Repo".into(), Some(root.to_string_lossy().into()))
+            .unwrap();
+        r.create_issue(
+            ws.id,
+            "Quarterly invoices are off by one".into(),
+            "Totals skip the last day.".into(),
+            None,
+            None,
+        )
+        .unwrap();
         let s = full_reindex(&r, ws.id).unwrap();
-        assert_eq!(s.docs, 2, "issue + one file; build/ is ignored, binaries skipped");
+        assert_eq!(
+            s.docs, 2,
+            "issue + one file; build/ is ignored, binaries skipped"
+        );
 
-        let hits = search(&r, &json!({ "workspace_id": ws.id, "query": "quarterly invoices" })).await.unwrap();
+        let hits = search(
+            &r,
+            &json!({ "workspace_id": ws.id, "query": "quarterly invoices" }),
+        )
+        .await
+        .unwrap();
         let kinds: HashSet<_> = hits.iter().map(|h| h.kind.as_str()).collect();
         assert_eq!(kinds, HashSet::from(["issue", "file"]));
-        assert!(hits.iter().any(|h| h.location == SearchLocation::File { path: "src/billing.rs".into() }));
+        assert!(hits.iter().any(|h| h.location
+            == SearchLocation::File {
+                path: "src/billing.rs".into()
+            }));
 
         // Removed files leave the index on the next scan.
         std::fs::remove_file(root.join("src/billing.rs")).unwrap();
@@ -2462,7 +3276,9 @@ mod tests {
         assert_eq!(s.docs, 1);
 
         // Searching every workspace finds the issue too.
-        let hits = search(&r, &json!({ "query": "invoices", "kinds": ["issue"] })).await.unwrap();
+        let hits = search(&r, &json!({ "query": "invoices", "kinds": ["issue"] }))
+            .await
+            .unwrap();
         assert_eq!(hits.len(), 1);
         assert_eq!(hits[0].workspace_id, ws.id);
     }
@@ -2479,7 +3295,8 @@ mod tests {
                     .iter()
                     .map(|t| {
                         let t = t.to_lowercase();
-                        let mut v: Vec<f32> = topics.iter().map(|w| t.matches(w).count() as f32).collect();
+                        let mut v: Vec<f32> =
+                            topics.iter().map(|w| t.matches(w).count() as f32).collect();
                         // cats and kittens are the same topic here
                         let pets = v[0] + v[1];
                         v[0] = pets;
@@ -2493,16 +3310,30 @@ mod tests {
         *r.hooks.embed.lock().unwrap() = Some(embed);
         let ws = r.create_workspace("W".into(), None).unwrap();
         index(&r, ws.id, "note", "a", "Pets", "My kitten sleeps all day.");
-        index(&r, ws.id, "note", "b", "Bills", "Pay the invoice before Friday, money is tight.");
+        index(
+            &r,
+            ws.id,
+            "note",
+            "b",
+            "Bills",
+            "Pay the invoice before Friday, money is tight.",
+        );
         assert_eq!(kb_of(&r).pending_for(ws.id), 2);
         while embed_some(&r).await {}
         let ix = kb_of(&r).open(ws.id).unwrap();
         assert_eq!(ix.vectors.lock().unwrap().entries.len(), 2);
         ix.flush().unwrap();
-        assert!(dir.path().join("knowledge").join(ws.id.to_string()).join("vectors.bin").exists());
+        assert!(dir
+            .path()
+            .join("knowledge")
+            .join(ws.id.to_string())
+            .join("vectors.bin")
+            .exists());
 
         // "cat" never appears as a word, but the vectors know it means the kitten note.
-        let hits = search(&r, &json!({ "workspace_id": ws.id, "query": "cat" })).await.unwrap();
+        let hits = search(&r, &json!({ "workspace_id": ws.id, "query": "cat" }))
+            .await
+            .unwrap();
         assert_eq!(hits.len(), 1);
         assert_eq!(hits[0].id, "a");
         assert!(hits[0].snippet.text.contains("kitten"));
@@ -2518,9 +3349,15 @@ mod tests {
         let ws = r.create_workspace("Big".into(), None).unwrap();
         let kb = kb_of(&r);
         kb.background.store(true, Ordering::SeqCst);
-        let words = ["agent", "thread", "invoice", "deploy", "search", "board", "issue", "runner", "hub", "design", "token", "review"];
+        let words = [
+            "agent", "thread", "invoice", "deploy", "search", "board", "issue", "runner", "hub",
+            "design", "token", "review",
+        ];
         for i in 0..20_000usize {
-            let text: String = (0..300).map(|j| words[(i * 7 + j * 13) % words.len()]).collect::<Vec<_>>().join(" ");
+            let text: String = (0..300)
+                .map(|j| words[(i * 7 + j * 13) % words.len()])
+                .collect::<Vec<_>>()
+                .join(" ");
             index(&r, ws.id, "doc", &i.to_string(), &format!("Doc {i}"), &text);
         }
         let ix = kb.open(ws.id).unwrap();
@@ -2564,7 +3401,9 @@ mod tests {
             assert!(w[1].0 > s0, "chunks advance");
         }
         // Chunks start at words.
-        assert!(chunks.iter().all(|(s, _)| text.chars().nth(*s) == Some('w')));
+        assert!(chunks
+            .iter()
+            .all(|(s, _)| text.chars().nth(*s) == Some('w')));
         assert!(chunk("", 800, 150).is_empty());
         assert_eq!(chunk("short", 800, 150), vec![(0, 5)]);
     }
@@ -2574,7 +3413,12 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let mut v = Vectors::default();
         v.replace("doc:a", 1, &[(0, 10)], vec![vec![1.0, 0.0, 0.0]]);
-        v.replace("note:b", 2, &[(0, 10), (10, 10)], vec![vec![0.0, 1.0, 0.0], vec![0.7, 0.7, 0.0]]);
+        v.replace(
+            "note:b",
+            2,
+            &[(0, 10), (10, 10)],
+            vec![vec![0.0, 1.0, 0.0], vec![0.7, 0.7, 0.0]],
+        );
         v.save(&dir.path().join("v.bin")).unwrap();
         let v = Vectors::load(&dir.path().join("v.bin")).unwrap();
         assert_eq!(v.entries.len(), 3);
@@ -2587,10 +3431,24 @@ mod tests {
 
     #[test]
     fn snippet_marks_words() {
-        let text = format!("{} The Sign-up form fails on Safari. {}", "lorem ipsum ".repeat(40), "dolor ".repeat(40));
+        let text = format!(
+            "{} The Sign-up form fails on Safari. {}",
+            "lorem ipsum ".repeat(40),
+            "dolor ".repeat(40)
+        );
         let s = make_snippet(&text, &["form".into(), "safari".into()], None, 120);
         assert!(s.text.starts_with('…') && s.text.ends_with('…'));
-        let marked: Vec<String> = s.highlights.iter().map(|(a, b)| s.text.chars().skip(*a as usize).take((*b - *a) as usize).collect()).collect();
+        let marked: Vec<String> = s
+            .highlights
+            .iter()
+            .map(|(a, b)| {
+                s.text
+                    .chars()
+                    .skip(*a as usize)
+                    .take((*b - *a) as usize)
+                    .collect()
+            })
+            .collect();
         assert_eq!(marked, vec!["form", "Safari"]);
         // Not inside other words.
         let s = make_snippet("platform form", &["form".into()], None, 120);
@@ -2646,8 +3504,13 @@ mod tests {
         assert_eq!(md, "| Item | Cost |\n| --- | --- |\n| Hosting | 12.5 |\n\n");
 
         let csv = "Name,Note\r\n\"Doe, Jane\",\"said \"\"hi\"\"\"\nBob,\"two\nlines\"\n\n";
-        assert_eq!(csv_to_markdown(csv, ','), "| Name | Note |\n| --- | --- |\n| Doe, Jane | said \"hi\" |\n| Bob | two lines |\n");
-        assert!(convert("a.tsv", b"a\tb\n1\t2\n").unwrap().contains("| 1 | 2 |"));
+        assert_eq!(
+            csv_to_markdown(csv, ','),
+            "| Name | Note |\n| --- | --- |\n| Doe, Jane | said \"hi\" |\n| Bob | two lines |\n"
+        );
+        assert!(convert("a.tsv", b"a\tb\n1\t2\n")
+            .unwrap()
+            .contains("| 1 | 2 |"));
         assert!(convert("x.zip", &[0, 1, 2, 0]).is_err());
     }
 
@@ -2669,18 +3532,36 @@ mod tests {
         let base = reqwest::Url::parse("https://example.com/blog/post").unwrap();
         let (title, md) = html_to_markdown(html, Some(&base));
         assert_eq!(title, "Fast search | Blog");
-        assert!(!md.contains("Subscribe") && !md.contains("Copyright") && !md.contains("var x") && !md.contains("About"), "{md}");
+        assert!(
+            !md.contains("Subscribe")
+                && !md.contains("Copyright")
+                && !md.contains("var x")
+                && !md.contains("About"),
+            "{md}"
+        );
         assert!(md.contains("Search should feel **instant**, under *50 ms*. See [BM25](https://example.com/docs/bm25)."), "{md}");
         assert!(md.contains("## How"), "{md}");
-        assert!(md.contains("- Keep an index\n- Fuse ranks\n  - with RRF"), "{md}");
+        assert!(
+            md.contains("- Keep an index\n- Fuse ranks\n  - with RRF"),
+            "{md}"
+        );
         assert!(md.contains("```\nlet k = 60;\n```"), "{md}");
-        assert!(md.contains("| Size | Time |\n| --- | --- |\n| 10k | 4 ms |"), "{md}");
-        assert!(md.contains("Inline `code` and an image ![chart](https://example.com/a.png)."), "{md}");
+        assert!(
+            md.contains("| Size | Time |\n| --- | --- |\n| 10k | 4 ms |"),
+            "{md}"
+        );
+        assert!(
+            md.contains("Inline `code` and an image ![chart](https://example.com/a.png)."),
+            "{md}"
+        );
 
         // Without an article: the block with the most paragraph text wins.
         let html = "<body><div class=menu><p>Menu</p></div><div><p>First long paragraph of the story.</p><p>Second paragraph.</p></div></body>";
         let (_, md) = html_to_markdown(html, None);
-        assert_eq!(md, "First long paragraph of the story.\n\nSecond paragraph.\n");
+        assert_eq!(
+            md,
+            "First long paragraph of the story.\n\nSecond paragraph.\n"
+        );
     }
 
     #[test]
@@ -2706,7 +3587,10 @@ mod tests {
         assert!(n.env[0].required && n.env[0].secret);
         assert_eq!(list[1].args, vec!["thing-mcp"]);
         assert_eq!(list[1].runtime.as_deref(), Some("uvx"));
-        assert_eq!(list[2].args, vec!["run", "-i", "--rm", "-e", "KEY", "ghcr.io/x/box:1"]);
+        assert_eq!(
+            list[2].args,
+            vec!["run", "-i", "--rm", "-e", "KEY", "ghcr.io/x/box:1"]
+        );
         assert_eq!(list[3].args, vec!["-y", "mcp-remote", "https://x.dev/mcp"]);
         assert!(list[4].command.is_none());
     }
@@ -2716,11 +3600,25 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let r = Runner::open(dir.path()).unwrap();
         let ws = r.create_workspace("W".into(), None).unwrap();
-        let s = McpServer { name: "notes".into(), command: "npx".into(), args: vec!["-y".into(), "notes".into()], env: vec![("TOKEN".into(), "x".into())] };
+        let s = McpServer {
+            name: "notes".into(),
+            command: "npx".into(),
+            args: vec!["-y".into(), "notes".into()],
+            env: vec![("TOKEN".into(), "x".into())],
+        };
         install_mcp(&r, ws.id, s.clone()).unwrap();
         install_mcp(&r, ws.id, s).unwrap();
         assert_eq!(r.settings(ws.id).mcp_servers.len(), 1);
-        assert!(install_mcp(&r, ws.id, McpServer { name: "bouvio".into(), command: "x".into(), ..Default::default() }).is_err());
+        assert!(install_mcp(
+            &r,
+            ws.id,
+            McpServer {
+                name: "bouvio".into(),
+                command: "x".into(),
+                ..Default::default()
+            }
+        )
+        .is_err());
         remove_mcp(&r, ws.id, "notes").unwrap();
         assert!(r.settings(ws.id).mcp_servers.is_empty());
     }
@@ -2735,17 +3633,38 @@ mod tests {
         assert_eq!(fm["description"], "spans lines");
         assert!(front_matter("# no front matter").is_empty());
 
-        assert_eq!(parse_source("acme/skills"), Some(("acme/skills".into(), "HEAD".into(), String::new())));
+        assert_eq!(
+            parse_source("acme/skills"),
+            Some(("acme/skills".into(), "HEAD".into(), String::new()))
+        );
         assert_eq!(
             parse_source("https://github.com/acme/skills/tree/main/team/review"),
             Some(("acme/skills".into(), "main".into(), "team/review".into()))
         );
-        assert_eq!(parse_source("acme/skills/extra"), Some(("acme/skills".into(), "HEAD".into(), "extra".into())));
+        assert_eq!(
+            parse_source("acme/skills/extra"),
+            Some(("acme/skills".into(), "HEAD".into(), "extra".into()))
+        );
         assert_eq!(parse_source("nope"), None);
 
-        let files: Vec<String> = ["README.md", "skills/pdf/SKILL.md", "skills/pdf/scripts/fill.py", "skills/xlsx/SKILL.md", "template/SKILL.md"].iter().map(|s| s.to_string()).collect();
-        assert_eq!(skill_dirs(&files, ""), vec!["skills/pdf", "skills/xlsx", "template"]);
-        assert_eq!(skill_dirs(&files, "skills"), vec!["skills/pdf", "skills/xlsx"]);
+        let files: Vec<String> = [
+            "README.md",
+            "skills/pdf/SKILL.md",
+            "skills/pdf/scripts/fill.py",
+            "skills/xlsx/SKILL.md",
+            "template/SKILL.md",
+        ]
+        .iter()
+        .map(|s| s.to_string())
+        .collect();
+        assert_eq!(
+            skill_dirs(&files, ""),
+            vec!["skills/pdf", "skills/xlsx", "template"]
+        );
+        assert_eq!(
+            skill_dirs(&files, "skills"),
+            vec!["skills/pdf", "skills/xlsx"]
+        );
         assert_eq!(skill_dirs(&files, "skills/pdf"), vec!["skills/pdf"]);
         assert!(safe_rel("scripts/fill.py") && !safe_rel("../x") && !safe_rel("/etc/passwd"));
     }
@@ -2756,9 +3675,15 @@ mod tests {
         let root = dir.path().join("ws");
         let skill = root.join(".claude/skills/review");
         std::fs::create_dir_all(&skill).unwrap();
-        std::fs::write(skill.join("SKILL.md"), "---\nname: code-review\ndescription: Reviews diffs\n---\n").unwrap();
+        std::fs::write(
+            skill.join("SKILL.md"),
+            "---\nname: code-review\ndescription: Reviews diffs\n---\n",
+        )
+        .unwrap();
         let r = Runner::open(dir.path().join("data")).unwrap();
-        let ws = r.create_workspace("W".into(), Some(root.to_string_lossy().into())).unwrap();
+        let ws = r
+            .create_workspace("W".into(), Some(root.to_string_lossy().into()))
+            .unwrap();
         let list = list_installed_skills(&r, ws.id);
         assert_eq!(list.len(), 1);
         assert_eq!(list[0].name, "code-review");
@@ -2772,20 +3697,51 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let r = Runner::open(dir.path()).unwrap();
         let ws = r.create_workspace("Notes".into(), None).unwrap();
-        let b64 = base64::engine::general_purpose::STANDARD.encode("Region,Revenue\nNorth,120\nSouth,80\n");
-        let v = call(&r, "import_bytes", &json!({ "workspace_id": ws.id, "name": "Q3 sales.csv", "base64": b64 }), "me").await.unwrap().unwrap();
+        let b64 = base64::engine::general_purpose::STANDARD
+            .encode("Region,Revenue\nNorth,120\nSouth,80\n");
+        let v = call(
+            &r,
+            "import_bytes",
+            &json!({ "workspace_id": ws.id, "name": "Q3 sales.csv", "base64": b64 }),
+            "me",
+        )
+        .await
+        .unwrap()
+        .unwrap();
         let a: Artifact = serde_json::from_value(v).unwrap();
         assert_eq!(a.kind, ArtifactKind::Markdown);
         assert_eq!(a.title, "Q3 sales.csv");
         assert!(a.path.ends_with("q3-sales.md"));
         let text = std::fs::read_to_string(&a.path).unwrap();
-        assert!(text.starts_with("---\ntitle: \"Q3 sales.csv\"\nsource: \"Q3 sales.csv\"\n"), "{text}");
+        assert!(
+            text.starts_with("---\ntitle: \"Q3 sales.csv\"\nsource: \"Q3 sales.csv\"\n"),
+            "{text}"
+        );
         assert!(text.contains("| North | 120 |"));
-        let hits = search(&r, &json!({ "workspace_id": ws.id, "query": "revenue north" })).await.unwrap();
+        let hits = search(
+            &r,
+            &json!({ "workspace_id": ws.id, "query": "revenue north" }),
+        )
+        .await
+        .unwrap();
         assert_eq!(hits.len(), 1);
-        assert_eq!(hits[0].location, SearchLocation::Artifact { artifact_id: a.id, path: a.path.clone() });
+        assert_eq!(
+            hits[0].location,
+            SearchLocation::Artifact {
+                artifact_id: a.id,
+                path: a.path.clone()
+            }
+        );
         // Importing again replaces the same artifact.
-        call(&r, "import_bytes", &json!({ "workspace_id": ws.id, "name": "Q3 sales.csv", "base64": b64 }), "me").await.unwrap().unwrap();
+        call(
+            &r,
+            "import_bytes",
+            &json!({ "workspace_id": ws.id, "name": "Q3 sales.csv", "base64": b64 }),
+            "me",
+        )
+        .await
+        .unwrap()
+        .unwrap();
         assert_eq!(r.list_artifacts(ws.id).len(), 1);
     }
 }

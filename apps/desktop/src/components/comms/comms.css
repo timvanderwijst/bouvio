@@ -95,6 +95,7 @@
   position: absolute; top: calc(100% + 6px); right: 0; z-index: 60; display: grid; grid-template-columns: repeat(6, 32px); gap: 2px; padding: 6px;
   background: var(--sheet); border-radius: var(--r-md); box-shadow: 0 0 0 1px var(--line), var(--shadow-lg); animation: pop var(--t-fast) var(--e);
 }
+.cm-emoji.up { top: auto; bottom: calc(100% + 6px); }
 .cm-emoji button { width: 32px; height: 32px; border-radius: var(--r-sm); font-size: 18px; line-height: 1; transition: background var(--t-fast) var(--e), transform var(--t-fast) var(--e); }
 .cm-emoji button:hover, .cm-emoji button:focus-visible { background: var(--hover); transform: scale(1.12); outline: none; }
 

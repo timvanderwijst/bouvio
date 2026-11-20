@@ -67,8 +67,8 @@
     for (let n = el; n && n.nodeType === 1 && n !== document.documentElement; n = n.parentElement) {
       const t = n.tagName.toLowerCase();
       if (n.id && !generated(n.id)) {
-        parts.unshift("#" + esc(n.id));
-        if (unique(parts.join(" > "))) return parts.join(" > ");
+        const withId = ["#" + esc(n.id), ...parts].join(" > ");
+        if (unique(withId)) return withId;
       }
       for (const a of ["data-testid", "data-test", "data-cy", "name", "aria-label"]) {
         const v = n.getAttribute(a);

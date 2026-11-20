@@ -74,7 +74,7 @@ export const en: Record<string, string> = {
   "comms.inbox.mentioned": "{name} mentioned you in #{channel}",
   "comms.inbox.waiting": "Waiting for you · {ws}",
   "comms.inbox.failed": "Stopped with an error · {ws}",
-  "comms.inbox.finished": "Finished after {minutes} min · {ws}",
+  "comms.inbox.finishedAfter": "Finished after {minutes} min · {ws}",
 
   "comms.notify.title": "Notifications",
   "comms.notify.approvals": "Approvals",
@@ -170,7 +170,7 @@ export const nl: Record<string, string> = {
   "comms.inbox.mentioned": "{name} noemde je in #{channel}",
   "comms.inbox.waiting": "Wacht op jou · {ws}",
   "comms.inbox.failed": "Gestopt met een fout · {ws}",
-  "comms.inbox.finished": "Klaar na {minutes} min · {ws}",
+  "comms.inbox.finishedAfter": "Klaar na {minutes} min · {ws}",
 
   "comms.notify.title": "Meldingen",
   "comms.notify.approvals": "Goedkeuringen",

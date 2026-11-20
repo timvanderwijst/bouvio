@@ -18,14 +18,26 @@ use uuid::Uuid;
 #[serde(tag = "type", rename_all = "snake_case")]
 #[ts(export, export_to = "../../../apps/desktop/src/protocol/")]
 pub enum SearchLocation {
-    Thread { thread_id: Uuid },
-    Issue { issue_id: Uuid },
+    Thread {
+        thread_id: Uuid,
+    },
+    Issue {
+        issue_id: Uuid,
+    },
     /// A file in the workspace folder, relative to its root.
-    File { path: String },
+    File {
+        path: String,
+    },
     /// A file agents made or someone imported; `path` is absolute on the runner.
-    Artifact { artifact_id: Uuid, path: String },
+    Artifact {
+        artifact_id: Uuid,
+        path: String,
+    },
     /// Something another area indexed: a doc, a sheet, a note.
-    Doc { kind: String, id: String },
+    Doc {
+        kind: String,
+        id: String,
+    },
 }
 
 /// A piece of the matching text with the matched words marked.

@@ -241,11 +241,11 @@ export function startInbox() {
         kind: "finished",
         ws: th.workspace_id,
         title: th.title,
-        body: t("comms.inbox.finished", { minutes, ws: wsName(th.workspace_id) }),
+        body: t("comms.inbox.finishedAfter", { minutes, ws: wsName(th.workspace_id) }),
         at: env.at,
         thread: th.id,
       });
-      if (useNotifyPrefs.getState().longRuns) osNotify(t("comms.notify.finished", { title: th.title }), t("comms.inbox.finished", { minutes, ws: wsName(th.workspace_id) }));
+      if (useNotifyPrefs.getState().longRuns) osNotify(t("comms.notify.finished", { title: th.title }), t("comms.inbox.finishedAfter", { minutes, ws: wsName(th.workspace_id) }));
     }
   });
 

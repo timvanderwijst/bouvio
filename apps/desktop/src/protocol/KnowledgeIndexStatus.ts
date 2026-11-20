@@ -10,7 +10,7 @@ docs: number,
  */
 vectors: number, 
 /**
- * Chunks still waiting for an embedding.
+ * Items still waiting for an embedding.
  */
 pending: number, 
 /**

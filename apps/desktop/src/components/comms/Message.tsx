@@ -1,5 +1,5 @@
 import { Check, Copy, MessageSquare, Pin, PinOff, SmilePlus } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useT } from "../../i18n";
 import { ago } from "../../lib/format";
 import type { ChatMessage } from "../../protocol/ChatMessage";
@@ -11,6 +11,14 @@ export const EMOJI = ["👍", "❤️", "😂", "🎉", "🙏", "👀", "🔥", 
 
 export function EmojiPicker({ onPick, onClose }: { onPick: (e: string) => void; onClose: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
+  const [up, setUp] = useState(false);
+  useLayoutEffect(() => {
+    // Open upwards when there is no room below inside the scrolling list.
+    const el = ref.current;
+    const box = el?.closest(".cm-scroll")?.getBoundingClientRect();
+    const r = el?.getBoundingClientRect();
+    if (box && r && r.bottom > box.bottom) setUp(true);
+  }, []);
   useEffect(() => {
     const close = (e: MouseEvent) => !ref.current?.contains(e.target as Node) && onClose();
     const esc = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -23,7 +31,7 @@ export function EmojiPicker({ onPick, onClose }: { onPick: (e: string) => void; 
     };
   }, [onClose]);
   return (
-    <div ref={ref} className="cm-emoji" role="dialog">
+    <div ref={ref} className={`cm-emoji ${up ? "up" : ""}`} role="dialog">
       {EMOJI.map((e) => (
         <button
           key={e}

@@ -5,6 +5,7 @@ import { ago } from "../../lib/format";
 import type { ApiCollection } from "../../protocol/ApiCollection";
 import type { ApiEnvironment } from "../../protocol/ApiEnvironment";
 import type { ApiRequest } from "../../protocol/ApiRequest";
+import type { ApiVariable } from "../../protocol/ApiVariable";
 import type { HttpHeader } from "../../protocol/HttpHeader";
 import type { HttpResponse } from "../../protocol/HttpResponse";
 import { rpc, useStore } from "../../store";
@@ -184,7 +185,7 @@ export function ApiTab() {
 
 const statusClass = (s: number | null) => (s === null ? "fail" : s < 300 ? "ok" : s < 400 ? "info" : s < 500 ? "warn" : "fail");
 
-function KeyValues<T extends { enabled?: boolean }>({
+function KeyValues<T extends object>({
   rows,
   keyOf,
   valueOf,
@@ -207,18 +208,19 @@ function KeyValues<T extends { enabled?: boolean }>({
     <div className="dv-kv">
       {all.map((r, i) => {
         const last = i === rows.length;
+        const enabled = (r as { enabled?: boolean }).enabled;
         const set = (k: string, v: string) => {
           const next = make(k, v, r);
           onChange(last ? [...rows, next] : rows.map((x, j) => (j === i ? next : x)));
         };
         return (
-          <div key={i} className={`dv-kv-row ${r.enabled === false ? "off" : ""}`}>
+          <div key={i} className={`dv-kv-row ${enabled === false ? "off" : ""}`}>
             {"enabled" in r ? (
               <input
                 type="checkbox"
                 aria-label={t("dev.api.enabled")}
                 disabled={last}
-                checked={r.enabled !== false}
+                checked={enabled !== false}
                 onChange={(e) => onChange(rows.map((x, j) => (j === i ? { ...x, enabled: e.target.checked } : x)))}
               />
             ) : (
@@ -401,7 +403,7 @@ function EnvDialog({ col, onClose, onSave }: { col: ApiCollection; onClose: () =
                 <Trash2 size={13} />
               </button>
             </div>
-            <KeyValues
+            <KeyValues<ApiVariable>
               rows={env.variables}
               keyOf={(v) => v.key}
               valueOf={(v) => v.value}

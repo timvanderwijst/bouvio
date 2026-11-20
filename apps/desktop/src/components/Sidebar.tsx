@@ -9,6 +9,7 @@ import { PixelAvatar } from "./PixelAvatar";
 import { StatusIcon } from "./StatusIcon";
 import { BouvioMark } from "./Rail";
 import { extPages } from "../ext/areas";
+import { HuddleSidebarRow } from "./comms";
 import type { ExtPage } from "../ext/types";
 
 export function Sidebar() {
@@ -111,10 +112,11 @@ export function Sidebar() {
             <UserPlus size={14} />
           </button>
         </div>
-        <button className={`sb-row ${view.kind === "page" && view.page === "chat" ? "active" : ""}`} onClick={() => go({ kind: "page", page: "chat" })}>
+        <button className={`sb-row ${view.kind === "ext" && view.id === "comms.chat" ? "active" : ""}`} onClick={() => go({ kind: "ext", id: "comms.chat" })}>
           <Hash size={15} />
           <span>{t("ws.general")}</span>
         </button>
+        <HuddleSidebarRow />
         <PeopleRows />
       </div>
 

@@ -6,6 +6,10 @@ use std::time::Duration;
 use axum::extract::ws::{Message, WebSocket, WebSocketUpgrade};
 use axum::extract::{Query, State};
 use axum::response::Response;
+/// Runner methods and notices that reveal what the host's keys spend.
+const COST_METHODS: &[&str] = &["cost_summary", "list_budgets"];
+const COST_NOTICES: &[&str] = &["personal-budgets", "personal-eval"];
+
 use bouvio_protocol::{required_role, ChatMessage, ClientMsg, HubUser, Presence, Role, ServerMsg};
 use chrono::Utc;
 use futures_util::{SinkExt, StreamExt};
@@ -147,14 +151,24 @@ impl Ctx<'_> {
                         "only the connection hosting {workspace_id} may publish to it"
                     ));
                 }
+                let costly = kind == "notice" && payload["kind"].as_str().is_some_and(|k| COST_NOTICES.contains(&k));
                 let msg = ServerMsg::Event {
                     workspace_id,
                     kind,
                     payload,
                 };
-                self.hub()
-                    .broadcast(workspace_id, &msg, Except::Conn(self.conn))
-                    .await;
+                if costly {
+                    // Spend reaches only the people allowed to see it.
+                    if let Ok(members) = db::members(&self.st.db, workspace_id).await {
+                        for m in members.iter().filter(|m| m.role >= Role::Admin || m.see_costs) {
+                            self.hub().send_user(m.user.id, &msg, Some(self.conn));
+                        }
+                    }
+                } else {
+                    self.hub()
+                        .broadcast(workspace_id, &msg, Except::Conn(self.conn))
+                        .await;
+                }
             }
             ClientMsg::Chat {
                 workspace_id,
@@ -228,6 +242,13 @@ impl Ctx<'_> {
         }
     }
 
+    async fn sees_costs(&self, ws: Uuid) -> bool {
+        db::members(&self.st.db, ws)
+            .await
+            .map(|m| m.iter().any(|m| m.user.id == self.user.id && m.see_costs))
+            .unwrap_or(false)
+    }
+
     async fn rpc(&self, id: u64, ws: Uuid, method: String, params: serde_json::Value) {
         let hub = self.hub();
         let Some(role) = self.role(ws).await else {
@@ -241,6 +262,10 @@ impl Ctx<'_> {
                 role_str(role)
             );
             return hub.send(self.conn, &rpc_err(id, err));
+        }
+        // What the host's keys cost is visible only to admins and to members given `see_costs`.
+        if COST_METHODS.contains(&method.as_str()) && role < Role::Admin && !self.sees_costs(ws).await {
+            return hub.send(self.conn, &rpc_err(id, "forbidden: costs are not shared with you"));
         }
         let Some(host) = hub.host_of(ws) else {
             return hub.send(self.conn, &rpc_err(id, "host offline"));
