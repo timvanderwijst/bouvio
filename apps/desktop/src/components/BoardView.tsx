@@ -11,8 +11,15 @@ import { Menu } from "./Menu";
 import { Empty } from "./Panel";
 import { personColor } from "./Sidebar";
 import { ArtifactPreview } from "./Studio";
+import { useProxiedUrl } from "./dev";
 
 const uid = () => crypto.randomUUID();
+
+/** The frame goes through the dev proxy, so the element picker works on boards too. */
+function ProxiedFrame({ threadId, label, fallback }: { threadId: string; label: string; fallback: string }) {
+  const url = useProxiedUrl(threadId);
+  return <iframe className="frame-iframe" title={label} src={url ?? fallback} />;
+}
 
 /** A live frame: the app running on a thread's branch, or a page, or an artifact. */
 function FrameBody({ item, reloads, servers, onStart }: { item: CanvasItem; reloads: number; servers: Record<string, DevServer>; onStart: (threadId: string) => void }) {
@@ -26,7 +33,7 @@ function FrameBody({ item, reloads, servers, onStart }: { item: CanvasItem; relo
     return a ? <ArtifactPreview artifact={a} /> : <Empty text={f.label} />;
   }
   const dev = f.threadId ? servers[f.threadId] : undefined;
-  if (dev?.running) return <iframe key={reloads} className="frame-iframe" title={f.label} src={dev.url} />;
+  if (dev?.running) return <ProxiedFrame key={reloads} threadId={f.threadId!} label={f.label} fallback={dev.url} />;
   return (
     <div className="frame-idle">
       <span className="mono">{f.branch}</span>

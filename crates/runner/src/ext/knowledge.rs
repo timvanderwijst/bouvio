@@ -806,6 +806,8 @@ fn str_field(d: &TantivyDocument, f: Field) -> String {
 struct Vectors {
     dim: usize,
     entries: Vec<VecEntry>,
+    /// Content hash each embedded item had, for a quick "still current?".
+    hashes: HashMap<String, u64>,
 }
 
 struct VecEntry {
@@ -820,13 +822,15 @@ const VEC_MAGIC: &[u8; 6] = b"BVEC1\n";
 
 impl Vectors {
     fn has(&self, key: &str, hash: u64) -> bool {
-        self.entries.iter().any(|e| e.key == key && e.hash == hash)
+        self.hashes.get(key) == Some(&hash)
     }
 
     fn remove(&mut self, key: &str) -> bool {
-        let before = self.entries.len();
+        if self.hashes.remove(key).is_none() {
+            return false;
+        }
         self.entries.retain(|e| e.key != key);
-        before != self.entries.len()
+        true
     }
 
     fn replace(&mut self, key: &str, hash: u64, chunks: &[(usize, usize)], vecs: Vec<Vec<f32>>) {
@@ -837,8 +841,10 @@ impl Vectors {
         if self.dim != dim {
             // Another model: older vectors are not comparable.
             self.entries.clear();
+            self.hashes.clear();
             self.dim = dim;
         }
+        self.hashes.insert(key.to_string(), hash);
         for ((start, len), v) in chunks.iter().zip(vecs) {
             if v.len() != dim {
                 continue;
@@ -949,7 +955,12 @@ impl Vectors {
                 v: v.into_iter().map(|x| x as i8).collect(),
             });
         }
-        Ok(Self { dim, entries })
+        let hashes = entries.iter().map(|e| (e.key.clone(), e.hash)).collect();
+        Ok(Self {
+            dim,
+            entries,
+            hashes,
+        })
     }
 }
 

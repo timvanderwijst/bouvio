@@ -239,7 +239,14 @@ export function SearchPage({ sub }: { sub?: string }) {
       </div>
 
       {preview && <PreviewPane preview={preview} onClose={() => setPreview(null)} />}
-      {clip && <ClipDialog onClose={() => setClip(false)} />}
+      {clip && (
+        <ClipDialog
+          onClose={() => {
+            setClip(false);
+            if (sub === "clip") useStore.getState().go({ kind: "ext", id: "knowledge.search" });
+          }}
+        />
+      )}
     </div>
   );
 }
