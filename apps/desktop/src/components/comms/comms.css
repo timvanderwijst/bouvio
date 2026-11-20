@@ -35,7 +35,7 @@
 
 .cm-scroll { flex: 1; overflow-y: auto; min-height: 0; user-select: text; }
 .cm-list { max-width: 820px; margin: 0 auto; padding: 16px 20px 12px; display: flex; flex-direction: column; }
-.cm-list.thread { padding: 12px 8px; }
+.cm-list.is-thread { padding: 12px 8px; }
 .cm-start { color: var(--mute); font-size: 12.5px; padding: 8px 0 4px 52px; }
 
 /* ---------- messages ---------- */

@@ -110,7 +110,7 @@ export const en = {
   "settings.agents": "Agents on this computer",
   "settings.notFound": "Not found",
   "settings.ready": "Ready",
-  "settings.needsKeys": "Needs API keys (phase 2)",
+  "settings.needsKeys": "Your API keys or local models",
 
   "palette.placeholder": "Search threads, captains, workspaces and actions",
   "palette.actions": "Actions",

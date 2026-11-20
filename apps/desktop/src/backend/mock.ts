@@ -31,7 +31,7 @@ const uid = () => crypto.randomUUID();
 const ago = (min: number) => new Date(Date.now() - min * 60_000).toISOString();
 
 const ws: Workspace[] = [
-  { id: uid(), name: "Bouvio", kind: "personal", root: "~/code/bouvio", created_at: ago(9000), role: null, host: null },
+  { id: uid(), name: "Bouvio", kind: "shared", root: "~/code/bouvio", created_at: ago(9000), role: null, host: null },
   { id: uid(), name: "wyst.nl", kind: "personal", root: "~/code/wyst", created_at: ago(20000), role: null, host: null },
   { id: uid(), name: "Q1 planning", kind: "personal", root: null, created_at: ago(3000), role: null, host: null },
 ];

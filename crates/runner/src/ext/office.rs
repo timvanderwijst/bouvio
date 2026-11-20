@@ -33,7 +33,7 @@ use std::time::Duration;
 use uuid::Uuid;
 use yrs::types::ToJson;
 use yrs::updates::decoder::Decode;
-use yrs::{Any, Array, ArrayRef, GetString, In, Map, MapPrelim, ReadTxn, StateVector, Transact, Update, Xml, XmlElementPrelim, XmlFragment, XmlOut, XmlTextPrelim};
+use yrs::{Any, Array, WriteTxn, ArrayRef, GetString, In, Map, MapPrelim, ReadTxn, StateVector, Transact, Update, Xml, XmlElementPrelim, XmlFragment, XmlOut, XmlTextPrelim};
 
 /// Fold the update log into the snapshot once it is this big.
 const COMPACT_AT: u64 = 256 * 1024;
@@ -142,12 +142,12 @@ impl Live {
     }
 
     /// Change the doc on the runner's side (seeding, form rows); returns the update.
-    fn edit(&self, f: impl FnOnce(&yrs::Doc, &mut yrs::TransactionMut)) -> Result<Vec<u8>> {
+    fn edit(&self, f: impl FnOnce(&mut yrs::TransactionMut)) -> Result<Vec<u8>> {
         let doc = self.doc.lock().unwrap();
         let before = doc.transact().state_vector();
         {
             let mut txn = doc.transact_mut();
-            f(&doc, &mut txn);
+            f(&mut txn);
         }
         let update = doc.transact().encode_diff_v1(&before);
         self.file.append(&update)?;
@@ -290,8 +290,8 @@ fn handle(r: &Arc<Runner>, method: &str, params: &Value, actor: &str) -> Result<
             let row_id = Uuid::new_v4().to_string();
             let (_, live) = o.open(db.id)?;
             let rid = row_id.clone();
-            let update = live.edit(move |doc, txn| {
-                let rows = doc.get_or_insert_array("rows");
+            let update = live.edit(move |txn| {
+                let rows = txn.get_or_insert_array("rows");
                 let mut row: Vec<(String, In)> = vec![("id".into(), In::Any(Any::from(rid))), ("created".into(), In::Any(Any::from(Utc::now().to_rfc3339())))];
                 row.extend(values.into_iter().map(|(k, v)| (k, In::Any(v))));
                 rows.push_back(txn, row.into_iter().collect::<MapPrelim>());
@@ -385,7 +385,7 @@ fn create_doc(r: &Runner, o: &Office, ws: Uuid, kind: DocKind, title: String, te
     o.meta.put(doc.clone(), |d| d.id)?;
     let (_, live) = o.open(doc.id)?;
     let fields = parent_id.map(|db| database_fields(o, db)).unwrap_or_default();
-    live.edit(|d, txn| seed(d, txn, kind, template.as_deref(), &fields))?;
+    live.edit(|txn| seed(txn, kind, template.as_deref(), &fields))?;
     live.snapshot()?;
     r.notice(ws, "office-doc", &doc);
     Ok(doc)
@@ -409,10 +409,10 @@ fn field(id: &str, name: &str, kind: &str, order: i64, options: &[(&str, &str)])
     (id.to_string(), any(f))
 }
 
-fn seed(doc: &yrs::Doc, txn: &mut yrs::TransactionMut, kind: DocKind, template: Option<&str>, form_fields: &[(String, Value)]) {
+fn seed(txn: &mut yrs::TransactionMut, kind: DocKind, template: Option<&str>, form_fields: &[(String, Value)]) {
     match kind {
         DocKind::Doc => {
-            let content = doc.get_or_insert_xml_fragment("content");
+            let content = txn.get_or_insert_xml_fragment("content");
             let blocks: &[(&str, &str)] = match template {
                 Some("meeting-notes") => &[
                     ("p", "Date · Attendees"),
@@ -445,7 +445,7 @@ fn seed(doc: &yrs::Doc, txn: &mut yrs::TransactionMut, kind: DocKind, template: 
             }
         }
         DocKind::Sheet => {
-            let cells = doc.get_or_insert_map("cells");
+            let cells = txn.get_or_insert_map("cells");
             if template == Some("budget") {
                 let rows: &[(&str, &str, &str)] = &[("Category", "Planned", "Actual"), ("Hosting", "40", "36"), ("Domains", "15", "15"), ("Design", "600", "720"), ("Ads", "300", "180"), ("Tools", "120", "95")];
                 for (i, (a, b, c)) in rows.iter().enumerate() {
@@ -470,21 +470,21 @@ fn seed(doc: &yrs::Doc, txn: &mut yrs::TransactionMut, kind: DocKind, template: 
                     cells.insert(txn, format!("{c}{t}"), any(json!({ "v": "", "f": format!("=SUM({c}2:{c}{last})"), "fmt": { "n": "eur", "b": true } })));
                 }
                 cells.insert(txn, format!("E{t}"), any(json!({ "v": "", "f": format!("=ROUND(C{t}/B{t},4)"), "fmt": { "n": "percent", "b": true } })));
-                let cols = doc.get_or_insert_map("cols");
+                let cols = txn.get_or_insert_map("cols");
                 cols.insert(txn, "A", any(json!(160)));
             }
         }
         DocKind::Slides => {
-            let slides = doc.get_or_insert_array("slides");
+            let slides = txn.get_or_insert_array("slides");
             let slide = slides.push_back(txn, map_of(json!({ "id": short_id(), "layout": "title" })));
             let blocks = slide.insert(txn, "blocks", yrs::ArrayPrelim::default());
             blocks.push_back(txn, map_of(json!({ "id": short_id(), "type": "title", "x": 8, "y": 34, "w": 84, "h": 18, "text": "", "size": 6 })));
             blocks.push_back(txn, map_of(json!({ "id": short_id(), "type": "text", "x": 8, "y": 54, "w": 84, "h": 12, "text": "", "size": 3 })));
         }
         DocKind::Database => {
-            let schema = doc.get_or_insert_map("schema");
-            let rows = doc.get_or_insert_array("rows");
-            let views = doc.get_or_insert_array("views");
+            let schema = txn.get_or_insert_map("schema");
+            let rows = txn.get_or_insert_array("rows");
+            let views = txn.get_or_insert_array("views");
             let mut table = json!({ "id": short_id(), "name": "Table", "type": "table", "filters": [], "sorts": [] });
             let mut extra: Vec<Value> = Vec::new();
             match template {
@@ -545,9 +545,9 @@ fn seed(doc: &yrs::Doc, txn: &mut yrs::TransactionMut, kind: DocKind, template: 
             }
         }
         DocKind::Form => {
-            let form = doc.get_or_insert_map("form");
+            let form = txn.get_or_insert_map("form");
             form.insert(txn, "description", "");
-            let questions = doc.get_or_insert_array("questions");
+            let questions = txn.get_or_insert_array("questions");
             for (id, f) in form_fields {
                 if matches!(f["type"].as_str(), Some("person")) {
                     continue;
@@ -700,7 +700,7 @@ fn validate_answers(form: &PublicForm, db: &Live, answers: &serde_json::Map<Stri
                     Value::String(s) => s.split(',').map(|x| x.trim().to_string()).filter(|x| !x.is_empty()).collect(),
                     _ => bail!("{} must be a list", q.label),
                 };
-                let ids = names.iter().map(|n| pick(&q.id, n).map(|id| Any::from(id))).collect::<Result<Vec<_>>>()?;
+                let ids = names.iter().map(|n| pick(&q.id, n).map(Any::from)).collect::<Result<Vec<_>>>()?;
                 Any::from(ids)
             }
             _ => Any::from(text()?),
@@ -804,7 +804,7 @@ fn strings(v: &Any, out: &mut String) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use yrs::{Text, WriteTxn};
+    use yrs::Text;
 
     fn text_update(doc: &yrs::Doc, at: u32, s: &str) -> Vec<u8> {
         let before = doc.transact().state_vector();
@@ -901,15 +901,15 @@ mod tests {
 
         let o = office(&r).unwrap();
         let (_, live) = o.open(db.id).unwrap();
-        let doc = live.doc.lock().unwrap();
-        let txn = doc.transact();
-        let rows = txn.get_array("rows").unwrap();
-        assert_eq!(rows.len(&txn), 4);
-        let last = serde_json::to_value(rows.get(&txn, 3).unwrap().to_json(&txn)).unwrap();
-        assert_eq!(last["name"], "Fix login");
-        assert_eq!(last["status"], "status-1");
-        drop(txn);
-        drop(doc);
+        {
+            let doc = live.doc.lock().unwrap();
+            let txn = doc.transact();
+            let rows = txn.get_array("rows").unwrap();
+            assert_eq!(rows.len(&txn), 4);
+            let last = serde_json::to_value(rows.get(&txn, 3).unwrap().to_json(&txn)).unwrap();
+            assert_eq!(last["name"], "Fix login");
+            assert_eq!(last["status"], "status-1");
+        }
 
         // Another workspace cannot reach the form.
         assert!(call(&r, "get_form_public", &json!({ "workspace_id": Uuid::new_v4(), "form_id": form.id }), "x").await.unwrap().is_err());

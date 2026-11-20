@@ -537,13 +537,13 @@
   box-shadow: inset 0 0 0 1.5px var(--ref);
   font-weight: 600;
 }
-.dv-ref.thread {
+.dv-ref.is-thread {
   font-family: var(--font-ui);
   font-weight: 500;
   padding-left: 4px;
   cursor: pointer;
 }
-.dv-ref.thread:hover {
+.dv-ref.is-thread:hover {
   background: color-mix(in srgb, var(--ref) 22%, transparent);
 }
 .dv-more {

@@ -1,5 +1,5 @@
 import { ArrowLeft, Share2 } from "lucide-react";
-import { useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { useT } from "../../i18n";
 import type { Doc } from "../../protocol/Doc";
 import { rpc, useStore } from "../../store";
@@ -36,13 +36,13 @@ export function DocPage({ sub }: { sub?: string }) {
   const session = useSession(doc?.id);
   const peers = usePeers(session);
   const go = useStore((s) => s.go);
-  const [actions, setActions] = useState<DocAction[]>([]);
-  const [tools, setTools] = useState<ReactNode>(null);
-
-  useEffect(() => {
-    setActions([]);
-    setTools(null);
-  }, [sub]);
+  // Kept per doc, so a previous editor's actions never show on the next one.
+  const [bar, setBar] = useState<{ id?: string; actions: DocAction[]; tools: ReactNode }>({ actions: [], tools: null });
+  const id = doc?.id;
+  const setActions = useCallback((a: DocAction[]) => setBar((b) => ({ id, actions: a, tools: b.id === id ? b.tools : null })), [id]);
+  const setTools = useCallback((n: ReactNode) => setBar((b) => ({ id, tools: n, actions: b.id === id ? b.actions : [] })), [id]);
+  const actions = bar.id === id ? bar.actions : [];
+  const tools = bar.id === id ? bar.tools : null;
 
   if (!doc) return <div className="office-doc">{docs === undefined ? null : <Empty text={t("office.notFound")} />}</div>;
 

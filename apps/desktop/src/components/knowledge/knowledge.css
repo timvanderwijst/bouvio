@@ -293,3 +293,4 @@
   .kn-search.with-preview .kn-col { display: none; }
   .kn-col { padding: 24px 16px 0; }
 }
+.kn-input:focus-visible { outline: none; }

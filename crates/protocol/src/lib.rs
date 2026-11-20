@@ -579,7 +579,7 @@ pub fn required_role(method: &str) -> Role {
         // Databases on the host's machine: not for every viewer.
         "list_db_connections" | "list_db_tables" | "get_db_rows" => Role::Operator,
         m if m.starts_with("list_") || m.starts_with("get_") || m.starts_with("read_") || m.starts_with("search") => Role::Viewer,
-        "update_board" | "doc_update" | "add_review_comment" | "resolve_review_comment" | "form_submit" => Role::Commenter,
+        "update_board" | "doc_update" | "doc_awareness" | "add_review_comment" | "resolve_review_comment" | "form_submit" => Role::Commenter,
         "send_message" => Role::Prompter,
         "workspace_settings_set" | "install_mcp" | "remove_mcp" | "create_automation" | "update_automation" | "delete_automation" | "export_workspace" | "set_budget" => Role::Admin,
         _ => Role::Operator,

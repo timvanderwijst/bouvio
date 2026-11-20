@@ -6,6 +6,7 @@
 const F: typeof import("./formula") = await import("./formula" + ".ts");
 const C: typeof import("./cron") = await import("./cron" + ".ts");
 const D: typeof import("./dbview") = await import("./dbview" + ".ts");
+const M: typeof import("./markdown") = await import("./markdown" + ".ts");
 
 let failed = 0;
 let passed = 0;
@@ -128,6 +129,18 @@ const view = { id: "v", name: "T", type: "table" as const, filters: [{ field: "s
 eq(D.applyView(rows, schema as never, view).map((r) => r.id), ["3", "1"], "filter and sort");
 eq(D.applyView(rows, schema as never, { ...view, filters: [], sorts: [{ field: "name", desc: false }] }).map((r) => r.id), ["2", "1", "3"], "sort text");
 eq(D.applyView(rows, schema as never, { ...view, filters: [{ field: "name", op: "contains", value: "MM" }], sorts: [] }).map((r) => r.id), ["3"], "contains");
+
+// markdown export
+const pm = {
+  type: "doc",
+  content: [
+    { type: "heading", attrs: { level: 2 }, content: [{ type: "text", text: "Plan" }] },
+    { type: "paragraph", content: [{ type: "text", text: "bold", marks: [{ type: "bold" }] }, { type: "text", text: " and " }, { type: "text", text: "link", marks: [{ type: "link", attrs: { href: "https://x.y" } }] }] },
+    { type: "taskList", content: [{ type: "taskItem", attrs: { checked: true }, content: [{ type: "paragraph", content: [{ type: "text", text: "done" }] }] }] },
+    { type: "orderedList", attrs: { start: 1 }, content: [{ type: "listItem", content: [{ type: "paragraph", content: [{ type: "text", text: "one" }] }] }] },
+  ],
+};
+eq(M.toMarkdown(pm, "T"), "# T\n\n## Plan\n\n**bold** and [link](https://x.y)\n\n- [x] done\n\n1. one\n", "markdown");
 
 console.log(`${passed} passed, ${failed} failed`);
 if (failed) throw new Error(`${failed} failed`);

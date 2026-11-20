@@ -320,7 +320,7 @@ export function SheetEditor({ doc, session, setActions }: EditorProps) {
   const rangeLabel = multi ? `${addr(range.c0, range.r0)}:${addr(range.c1, range.r1)}` : activeAddr;
 
   return (
-    <div className="sheet">
+    <div className="sheet-ed">
       <div className="sheet-tools">
         <button className={`icon-btn ${active?.fmt?.b ? "on" : ""}`} title={tr("office.fmt.bold")} onClick={() => setFmt({ b: !active?.fmt?.b })}>
           <Bold size={15} />
@@ -368,7 +368,7 @@ export function SheetEditor({ doc, session, setActions }: EditorProps) {
                 style={{ left: lefts[c], width: widths[c], height: ROW_H }}
                 onMouseDown={(e) => {
                   setAnchor({ c, r: 0 });
-                  setSel({ c, r: e.shiftKey ? sel.r : ROWS - 1 });
+                  setSel({ c: e.shiftKey ? sel.c : c, r: ROWS - 1 });
                   scrollRef.current?.focus();
                 }}
               >
@@ -428,6 +428,9 @@ export function SheetEditor({ doc, session, setActions }: EditorProps) {
           }}
         >
           <div className="sheet-inner" style={{ width: lefts[COLS], height: ROWS * ROW_H }}>
+            {Array.from({ length: c1 - c0 + 1 }, (_, i) => c0 + i).map((c) => (
+              <div key={c} className="sheet-vline" style={{ left: lefts[c + 1] - 1, top: r0 * ROW_H, height: (r1 - r0 + 1) * ROW_H }} />
+            ))}
             {visibleCells}
             <div className={`sheet-sel ${multi ? "multi" : ""}`} style={selBox} />
             <div className="sheet-active" style={{ left: lefts[sel.c], top: sel.r * ROW_H, width: widths[sel.c], height: ROW_H }} />
@@ -439,6 +442,7 @@ export function SheetEditor({ doc, session, setActions }: EditorProps) {
                 value={edit.text}
                 spellCheck={false}
                 onChange={(e) => setEdit({ text: e.target.value, inBar: false })}
+                onFocus={(e) => e.target.setSelectionRange(e.target.value.length, e.target.value.length)}
                 onBlur={() => edit && commit(edit.text)}
                 onKeyDown={(e) => {
                   e.stopPropagation();

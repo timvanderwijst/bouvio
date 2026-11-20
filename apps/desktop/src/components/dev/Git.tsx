@@ -55,7 +55,7 @@ function RefBadge({ name, color, thread, head }: { name: string; color: string; 
     const c = captains.find((x) => x.id === thread.captain_id);
     return (
       <span
-        className={`dv-ref thread ${head ? "head" : ""}`}
+        className={`dv-ref is-thread ${head ? "head" : ""}`}
         style={{ ["--ref" as string]: color }}
         title={name}
         role="link"

@@ -16,7 +16,6 @@ export function Sidebar() {
   const t = useT();
   const view = useStore((s) => s.view);
   const go = useStore((s) => s.go);
-  const setPalette = useStore((s) => s.setPalette);
   const workspaces = useStore((s) => s.workspaces);
   const workspaceId = useStore((s) => s.workspaceId);
   const ws = workspaces.find((w) => w.id === workspaceId);
@@ -27,21 +26,55 @@ export function Sidebar() {
 
   const data = useWsData();
   const openIssues = (data.issues ?? []).filter((i) => i.status === "todo" || i.status === "in_progress").length;
-  const pages: { page: Page; icon: typeof List; label: string; count?: number }[] = [
+  // Daily things stay in view; the rest folds under "More" so captains keep their place.
+  const primaryBuiltIn: { page: Page; icon: typeof List; label: string; count?: number }[] = [
     { page: "issues", icon: CircleDashed, label: t("ws.issues"), count: openIssues || undefined },
     { page: "pullRequests", icon: GitPullRequest, label: t("ws.pullRequests") },
-    { page: "automations", icon: Workflow, label: t("ws.automations") },
     { page: "studio", icon: Palette, label: t("ws.studio") },
+  ];
+  const moreBuiltIn: typeof primaryBuiltIn = [
+    { page: "automations", icon: Workflow, label: t("ws.automations") },
     { page: "files", icon: FolderTree, label: t("ws.files") },
     { page: "knowledge", icon: BookOpen, label: t("ws.knowledge") },
   ];
+  // Search lives behind the search icon and Ctrl+K.
+  const ext = extPages("workspace").filter((p) => p.id !== "knowledge.search");
+  const extPrimary = ext.filter((p) => (p.order ?? 100) < 50);
+  const extMore = ext.filter((p) => (p.order ?? 100) >= 50);
+  const inMore =
+    (view.kind === "page" && moreBuiltIn.some((p) => p.page === view.page)) || (view.kind === "ext" && extMore.some((p) => p.id === view.id));
+  const [moreOpen, setMoreOpen] = useState(() => {
+    try {
+      return localStorage.getItem("bouvio.sb.more") === "1";
+    } catch {
+      return false;
+    }
+  });
+  const toggleMore = () => {
+    const next = !moreOpen;
+    setMoreOpen(next);
+    try {
+      localStorage.setItem("bouvio.sb.more", next ? "1" : "0");
+    } catch {}
+  };
+  const builtInRow = (p: (typeof primaryBuiltIn)[number]) => (
+    <button
+      key={p.page}
+      className={`sb-row ${(view.kind === "page" && view.page === p.page) || (p.page === "studio" && view.kind === "board") ? "active" : ""}`}
+      onClick={() => go({ kind: "page", page: p.page })}
+    >
+      <p.icon size={15} />
+      <span className="truncate">{p.label}</span>
+      {p.count ? <span className="sb-count">{p.count}</span> : null}
+    </button>
+  );
 
   return (
     <aside className="sidebar">
       <div className="sb-top">
         <WorkspaceSwitcher />
         <div className="sb-top-actions">
-          <button className="icon-btn" onClick={() => setPalette(true)} aria-label="Search" title="Ctrl K">
+          <button className="icon-btn" onClick={() => go({ kind: "ext", id: "knowledge.search" })} aria-label="Search" title="Search">
             <Search size={15} />
           </button>
         </div>
@@ -56,33 +89,24 @@ export function Sidebar() {
           <List size={15} />
           <span>{t("ws.threads")}</span>
         </button>
-        {extPages("workspace")
-          .filter((p) => (p.order ?? 100) < 50)
-          .map((p) => (
-            <ExtNav key={p.id} page={p} />
-          ))}
-        {pages.map((p) => (
-          <button
-            key={p.page}
-            className={`sb-row ${(view.kind === "page" && view.page === p.page) || (p.page === "studio" && view.kind === "board") ? "active" : ""}`}
-            onClick={() => go({ kind: "page", page: p.page })}
-          >
-            <p.icon size={15} />
-            <span className="truncate">{p.label}</span>
-            {p.count ? <span className="sb-count">{p.count}</span> : null}
-          </button>
+        {extPrimary.map((p) => (
+          <ExtNav key={p.id} page={p} />
         ))}
-      </nav>
-
-      {extPages("workspace").some((p) => (p.order ?? 100) >= 50) && (
-        <nav className="sb-nav sb-more">
-          {extPages("workspace")
-            .filter((p) => (p.order ?? 100) >= 50)
-            .map((p) => (
+        {primaryBuiltIn.map(builtInRow)}
+        <button className={`sb-row sb-more-toggle ${inMore && !moreOpen ? "active" : ""}`} onClick={toggleMore} aria-expanded={moreOpen}>
+          <ChevronDown size={15} className={moreOpen ? "" : "rot"} />
+          <span>{t("ws.more")}</span>
+        </button>
+        {(moreOpen || inMore) && (
+          <div className="sb-more-list">
+            {moreBuiltIn.map(builtInRow)}
+            {extMore.map((p) => (
               <ExtNav key={p.id} page={p} />
             ))}
-        </nav>
-      )}
+          </div>
+        )}
+      </nav>
+
       <div className="sb-scroll">
         <div className="sb-section">
           <button className="sb-heading" onClick={() => setCaptainsOpen((o) => !o)}>

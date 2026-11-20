@@ -17,6 +17,13 @@ Bouvio runs the agents you already have (Claude Code, Codex) and models from you
 | **Knowledge** | Workspace instructions, editable memory, MCP servers per workspace. |
 | **Multiplayer** | Hub with email codes and Google/GitHub sign-in, invites with roles (viewer → admin), chat, presence, relay of RPCs to the hosting runner. |
 | **Everywhere** | Hover rail (left edge or `Ctrl+\`), `Ctrl+K`, light and dark, English and Dutch, voice input. |
+| **Local AI** | Ollama and LM Studio models in the agent loop, whisper.cpp for voice input, Piper for speech, ComfyUI for images, local embeddings. No keys, no subscription. |
+| **Office** | Docs, Sheets (with a formula engine), Slides, databases with table, board, calendar and gallery views, a calendar, and public forms. All live and collaborative over Yjs. |
+| **Knowledge** | Search over threads, issues, files, docs and imports (full text plus meaning), PDF/Word/Excel import, a web clipper, the MCP registry and a skills catalogue. |
+| **Communication** | Chat with channels, threads, reactions and pins; `@Captain` in chat runs that captain; huddles with voice, video and screen share (WebRTC, TURN on your own VPS); an inbox and OS notifications. |
+| **Developer tools** | Browser preview with an element picker, line-by-line review sent to the agent, CI checks through `gh`, a database viewer, an API client and a git graph. |
+| **Overview** | A morning brief, personal tasks and notes, costs with monthly budgets, replay of any run, and evals that compare agents and models. |
+| **Platform** | A web/PWA client served by the hub, auto-updates from GitHub Releases, plugins, workspace backup and import, and templates. |
 
 ## Layout
 
@@ -63,11 +70,17 @@ On the VPS, next to the hub or anywhere else:
 cargo run --release -p bouvio-runner-cli -- serve --hub https://hub.example.com --token <your hub token>
 ```
 
+## Docs
+
+- [Plugins](docs/plugins.md)
+- [Releases and updates](docs/releases.md)
+
 ## Checks
 
 ```bash
 cargo test --workspace
 pnpm -r typecheck
+pnpm --filter @bouvio/desktop test:web
 ```
 
 ## License

@@ -464,7 +464,7 @@ function ThreadPanel({
         </button>
       </header>
       <div className="cm-scroll">
-        <div className="cm-list thread">
+        <div className="cm-list is-thread">
           {parent && (
             <MessageRow m={parent} cont={false} me={me} targets={targets} names={names} canReact={canWrite} canPin={canPin} inThread onReact={(e) => onReact(parent.id, e)} onPin={(p) => onPin(parent.id, p)} />
           )}

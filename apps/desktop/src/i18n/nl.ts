@@ -111,7 +111,7 @@ export const nl: Partial<Record<MessageKey, string>> = {
   "settings.agents": "Agents op deze computer",
   "settings.notFound": "Niet gevonden",
   "settings.ready": "Klaar",
-  "settings.needsKeys": "Heeft API-keys nodig (fase 2)",
+  "settings.needsKeys": "Je API-keys of lokale modellen",
 
   "palette.placeholder": "Zoek threads, captains, workspaces en acties",
   "palette.actions": "Acties",

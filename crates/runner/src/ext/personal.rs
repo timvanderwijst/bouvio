@@ -571,7 +571,7 @@ pub fn check_budget(r: &Runner, thread: &bouvio_protocol::Thread) -> Result<()> 
         let who = if b.scope == BudgetScope::Captain { b.id } else { None };
         let spent = spent_since(r, thread.workspace_id, who, since);
         if spent >= b.monthly_usd {
-            bail!("Budget reached for {} (€{spent:.2} of €{:.2} this month). Raise it in Costs.", budget_label(r, b), b.monthly_usd);
+            bail!("Budget reached for {} (${spent:.2} of ${:.2} this month). Raise it in Costs.", budget_label(r, b), b.monthly_usd);
         }
     }
     Ok(())
@@ -1257,14 +1257,14 @@ mod tests {
 
         set_budget(&r, ws.id, BudgetScope::Captain, Some(cap.id), 1.0).unwrap();
         let err = check_budget(&r, &a).unwrap_err().to_string();
-        assert_eq!(err, "Budget reached for Runner (€1.20 of €1.00 this month). Raise it in Costs.");
+        assert_eq!(err, "Budget reached for Runner ($1.20 of $1.00 this month). Raise it in Costs.");
         // Another thread without that captain is not affected by its budget.
         assert!(check_budget(&r, &b).is_ok());
 
         set_budget(&r, ws.id, BudgetScope::Workspace, None, 5.0).unwrap();
         assert!(check_budget(&r, &b).is_ok());
         set_budget(&r, ws.id, BudgetScope::Workspace, None, 1.2).unwrap();
-        assert!(check_budget(&r, &b).unwrap_err().to_string().starts_with("Budget reached for Bouvio (€1.20 of €1.20"));
+        assert!(check_budget(&r, &b).unwrap_err().to_string().starts_with("Budget reached for Bouvio ($1.20 of $1.20"));
 
         // Zero removes; send_message goes through again.
         set_budget(&r, ws.id, BudgetScope::Workspace, None, 0.0).unwrap();
