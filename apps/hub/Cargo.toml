@@ -27,6 +27,10 @@ sha2 = "0.10"
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
 lettre = { version = "0.11", default-features = false, features = ["tokio1", "tokio1-rustls", "rustls-native-certs", "ring", "builder", "smtp-transport"] }
 futures-util = { version = "0.3", default-features = false, features = ["sink", "std"] }
+hmac = "0.12"
+sha1 = "0.10"
+base64 = "0.22"
+mime_guess = "2"
 
 [dev-dependencies]
 tokio-tungstenite = "0.26"

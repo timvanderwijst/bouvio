@@ -67,6 +67,9 @@ pub(crate) fn cost(provider: ProviderKind, model: &str, u: &Usage) -> Option<f64
     if let Some(c) = u.cost {
         return Some(c);
     }
+    if provider == ProviderKind::Local {
+        return Some(0.0);
+    }
     let (pin, pout) = price(provider, model)?;
     let input = u.input as f64 * pin + u.cache_write as f64 * pin * 1.25 + u.cache_read as f64 * pin * 0.1;
     Some((input + u.output as f64 * pout) / 1_000_000.0)
@@ -104,5 +107,6 @@ mod tests {
         assert_eq!(cost(ProviderKind::OpenRouter, "x/y", &Usage::default()), None);
         let u = Usage { input: 1_000_000, output: 1_000_000, ..Default::default() };
         assert!(close(cost(O, "gpt-4.1", &u).unwrap(), 10.0));
+        assert_eq!(cost(ProviderKind::Local, "qwen3:8b", &u), Some(0.0));
     }
 }

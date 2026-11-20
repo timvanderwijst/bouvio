@@ -11,15 +11,15 @@ use std::time::Duration;
 const TIMEOUT: Duration = Duration::from_secs(15);
 
 /// OpenRouter's catalog works without a key; Anthropic, OpenAI and Google are
-/// listed only when a key exists. A provider that fails is skipped, never the
-/// whole list. OpenRouter models without tool support are left out, since the
+/// listed only when a key exists; local models when a local server runs. A
+/// provider that fails is skipped, never the whole list. OpenRouter models without tool support are left out, since the
 /// agent needs tools.
 pub async fn list_models(keys: &dyn KeyStore) -> Vec<ModelInfo> {
     let or_key = keys.get(ProviderKind::OpenRouter);
     let an_key = keys.get(ProviderKind::Anthropic);
     let oa_key = keys.get(ProviderKind::OpenAi);
     let go_key = keys.get(ProviderKind::Google);
-    let (a, b, c, d) = futures::join!(
+    let (a, b, c, d, local) = futures::join!(
         openrouter(or_key.as_deref()),
         async {
             match &an_key {
@@ -39,8 +39,9 @@ pub async fn list_models(keys: &dyn KeyStore) -> Vec<ModelInfo> {
                 None => Ok(vec![]),
             }
         },
+        crate::local::list_chat_models(),
     );
-    let mut all = Vec::new();
+    let mut all = local;
     for (p, r) in [
         (ProviderKind::OpenRouter, a),
         (ProviderKind::Anthropic, b),

@@ -1,9 +1,9 @@
 //! Shared workspaces, members, invites and chat history over REST.
 
-use axum::extract::{Path, Query, State};
+use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::Json;
-use bouvio_protocol::{ChatMessage, HubUser, Member, Role};
+use bouvio_protocol::{HubUser, Member, Role};
 use chrono::DateTime;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -36,7 +36,12 @@ fn entry(st: &AppState, ws: WorkspaceRow, role: Role) -> WorkspaceEntry {
 }
 
 /// The caller's role, if it is at least `min`. Non-members get a 404 so ids don't leak.
-async fn require_role(st: &AppState, ws: Uuid, user: Uuid, min: Role) -> ApiResult<Role> {
+pub(crate) async fn require_role(
+    st: &AppState,
+    ws: Uuid,
+    user: Uuid,
+    min: Role,
+) -> ApiResult<Role> {
     match db::role_of(&st.db, ws, user).await? {
         None => Err(ApiError::not_found("workspace not found")),
         Some(r) if r < min => Err(ApiError::forbidden(format!("needs role {}", role_str(min)))),
@@ -266,32 +271,4 @@ pub async fn accept_invite(
         .unwrap_or(Role::Viewer);
     let ws = workspace_row(&st, ws).await?;
     Ok(Json(entry(&st, ws, role)))
-}
-
-#[derive(Deserialize)]
-pub struct ChatQuery {
-    channel: Option<String>,
-    before: Option<String>,
-    limit: Option<i64>,
-}
-
-pub async fn chat_history(
-    State(st): State<AppState>,
-    auth: AuthUser,
-    Path(ws): Path<Uuid>,
-    Query(q): Query<ChatQuery>,
-) -> ApiResult<Json<Vec<ChatMessage>>> {
-    require_role(&st, ws, auth.user.id, Role::Viewer).await?;
-    let channel = q.channel.unwrap_or_else(|| "general".into());
-    let before = match q.before {
-        // A `+` in an offset arrives as a space when the client did not encode it.
-        Some(b) => DateTime::parse_from_rfc3339(&b.replace(' ', "+"))
-            .map_err(|_| ApiError::bad_request("before must be an RFC 3339 time"))?
-            .timestamp_millis(),
-        None => i64::MAX,
-    };
-    let limit = q.limit.unwrap_or(50).clamp(1, 200);
-    Ok(Json(
-        db::chat_page(&st.db, ws, &channel, before, limit).await?,
-    ))
 }

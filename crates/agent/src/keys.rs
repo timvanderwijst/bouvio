@@ -57,9 +57,17 @@ impl KeyringStore {
     }
 
     /// Every provider and whether a key is available for it (keychain or env).
+    /// `Local` counts as configured when a local model server answers (cached,
+    /// never blocks for more than a moment; see [`crate::local::reachable_cached`]).
     pub fn configured() -> Vec<ProviderInfo> {
         let store = KeyringStore;
-        ProviderKind::ALL.into_iter().map(|kind| ProviderInfo { kind, configured: store.get(kind).is_some() }).collect()
+        ProviderKind::ALL
+            .into_iter()
+            .map(|kind| ProviderInfo {
+                kind,
+                configured: if kind == ProviderKind::Local { crate::local::reachable_cached() } else { store.get(kind).is_some() },
+            })
+            .collect()
     }
 }
 

@@ -1,0 +1,16 @@
+{
+  "id": "personal-assistant",
+  "name": "Personal assistant",
+  "description": "One assistant for notes, plans, drafts and errands, with a short brief every weekday morning.",
+  "icon": "sparkles",
+  "instructions": "This is a personal workspace. Be brief and practical. Ask before doing anything that sends, buys or deletes. Keep notes and lists as Markdown files in the workspace.",
+  "captains": [
+    { "name": "Assistant", "instructions": "Helps with plans, drafts, research and lists. Keeps track of open items in issues and follows up on them." }
+  ],
+  "issues": [
+    { "title": "Tell the assistant what you are working on this month", "captain": "Assistant" }
+  ],
+  "automations": [
+    { "name": "Morning brief", "schedule": "30 7 * * 1-5", "prompt": "Write a short morning brief: open issues by priority, anything due soon, and one suggestion for today.", "captain": "Assistant", "enabled": false }
+  ]
+}

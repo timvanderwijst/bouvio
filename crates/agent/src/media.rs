@@ -1,9 +1,11 @@
-//! Images, video, speech and transcription with the user's own keys.
+//! Images, video, speech and transcription with the user's own keys, or on
+//! this machine.
 //!
 //! Models are provider-qualified: `openai:gpt-image-1`, `fal:fal-ai/flux/schnell`,
 //! `replicate:black-forest-labs/flux-schnell`, `elevenlabs:<voice_id>`,
-//! `openai:gpt-4o-mini-tts`, `openai:whisper-1`. Each call writes one file into
-//! `out_dir` and returns its path.
+//! `openai:gpt-4o-mini-tts`, `openai:whisper-1`. Local ones: `comfyui:<checkpoint>`
+//! (or `comfyui:default`), `local:piper/<voice>`, `local:whisper-<size>`. Each
+//! call writes one file into `out_dir` and returns its path.
 
 use crate::keys::KeyStore;
 use crate::provider::{api_error, base_override, base_url, http, missing_key, provider_from_id, provider_name, send_json};
@@ -75,11 +77,15 @@ fn ext_for(ctype: Option<&str>, url: &str, fallback: &str) -> String {
     }
 }
 
-async fn save(out_dir: &Path, prefix: &str, ext: &str, bytes: &[u8]) -> Result<PathBuf> {
+/// A fresh file name in `out_dir`, which is created if needed.
+async fn out_path(out_dir: &Path, prefix: &str, ext: &str) -> Result<PathBuf> {
     tokio::fs::create_dir_all(out_dir).await.with_context(|| format!("Cannot create {}", out_dir.display()))?;
     let id = uuid::Uuid::new_v4().simple().to_string();
-    let name = format!("{prefix}-{}-{}.{ext}", chrono::Local::now().format("%Y%m%d-%H%M%S"), &id[..8]);
-    let path = out_dir.join(name);
+    Ok(out_dir.join(format!("{prefix}-{}-{}.{ext}", chrono::Local::now().format("%Y%m%d-%H%M%S"), &id[..8])))
+}
+
+async fn save(out_dir: &Path, prefix: &str, ext: &str, bytes: &[u8]) -> Result<PathBuf> {
+    let path = out_path(out_dir, prefix, ext).await?;
     tokio::fs::write(&path, bytes).await.with_context(|| format!("Cannot write {}", path.display()))?;
     Ok(path)
 }
@@ -175,8 +181,13 @@ async fn replicate(key: &str, model: &str, input: Value) -> Result<Value> {
 
 // ---- public API ------------------------------------------------------------------------
 
-/// `openai:gpt-image-1`, `fal:fal-ai/flux/schnell`, `replicate:<owner/model>`.
+/// `openai:gpt-image-1`, `fal:fal-ai/flux/schnell`, `replicate:<owner/model>`,
+/// `comfyui:<checkpoint>` (ComfyUI on this machine; `comfyui:default` = its first checkpoint).
 pub async fn generate_image(keys: &dyn KeyStore, model: &str, prompt: &str, out_dir: &Path) -> Result<PathBuf> {
+    if let Some(ckpt) = model.trim().strip_prefix("comfyui:").or((model.trim() == "comfyui").then_some("")) {
+        let (bytes, ctype) = crate::local::media::comfy_image(ckpt.trim(), prompt).await?;
+        return save(out_dir, "image", &ext_for(ctype.as_deref(), "", "png"), &bytes).await;
+    }
     let (p, m) = split(model)?;
     match p {
         ProviderKind::OpenAi => {
@@ -202,7 +213,7 @@ pub async fn generate_image(keys: &dyn KeyStore, model: &str, prompt: &str, out_
             let url = first_url(&out).ok_or_else(|| anyhow!("Replicate sent no image: {out}"))?;
             download(&url, out_dir, "image", "png").await
         }
-        _ => bail!("Image generation works with openai:, fal: and replicate: models, not {model}"),
+        _ => bail!("Image generation works with openai:, fal:, replicate: and comfyui: models, not {model}"),
     }
 }
 
@@ -224,13 +235,22 @@ pub async fn generate_video(keys: &dyn KeyStore, model: &str, prompt: &str, out_
 }
 
 /// `elevenlabs:<voice_id>` (optionally `/<model_id>`), or `openai:gpt-4o-mini-tts`
-/// (optionally `/<voice>`). Writes an mp3.
+/// (optionally `/<voice>`), which write an mp3; or `local:piper/<voice>` (Piper on
+/// this machine, `local:piper` = the configured voice), which writes a WAV.
 pub async fn speak(keys: &dyn KeyStore, model: &str, text: &str, out_dir: &Path) -> Result<PathBuf> {
     let (p, m) = split(model)?;
     let (name, variant) = match m.split_once('/') {
         Some((a, b)) => (a, Some(b)),
         None => (m, None),
     };
+    if p == ProviderKind::Local {
+        if name != "piper" {
+            bail!("Local speech uses Piper: local:piper/<voice>, not {model}");
+        }
+        let path = out_path(out_dir, "speech", "wav").await?;
+        crate::local::media::speak(variant, text, &path).await?;
+        return Ok(path);
+    }
     let (bytes, ctype) = match p {
         ProviderKind::ElevenLabs => {
             let k = key(keys, p)?;
@@ -252,11 +272,21 @@ pub async fn speak(keys: &dyn KeyStore, model: &str, text: &str, out_dir: &Path)
     save(out_dir, "speech", &ext_for(ctype.as_deref(), "", "mp3"), &bytes).await
 }
 
-/// `openai:whisper-1` or `openai:gpt-4o-transcribe`.
+/// `openai:whisper-1` or `openai:gpt-4o-transcribe`; or `local:whisper-<size>`
+/// (`tiny`, `base`, `small`, `medium`; `local:whisper` = the configured size) with
+/// whisper.cpp on this machine, which wants a 16 kHz mono WAV (other formats go
+/// through ffmpeg when it is installed). The model downloads on first use.
 pub async fn transcribe(keys: &dyn KeyStore, model: &str, file: &Path) -> Result<String> {
     let (p, m) = split(model)?;
+    if p == ProviderKind::Local {
+        let size = match m.strip_prefix("whisper") {
+            Some(rest) => rest.trim_start_matches(['-', '/', ':']),
+            None => bail!("Local transcription uses whisper.cpp: local:whisper-<size>, not {model}"),
+        };
+        return crate::local::media::transcribe(Some(size), file).await;
+    }
     if p != ProviderKind::OpenAi {
-        bail!("Transcription works with openai: models, not {model}");
+        bail!("Transcription works with openai: and local:whisper-… models, not {model}");
     }
     let k = key(keys, p)?;
     let bytes = tokio::fs::read(file).await.with_context(|| format!("Cannot read {}", file.display()))?;

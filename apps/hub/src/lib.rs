@@ -2,17 +2,24 @@
 //! presence. It never calls an AI model; runners do that.
 
 mod auth;
+mod chat;
 mod config;
 mod db;
 mod error;
+mod forms;
 mod hub;
+mod limit;
 mod mail;
 mod oauth;
 mod pages;
+mod rtc;
+mod web;
 mod workspaces;
 mod ws;
 
+use std::net::SocketAddr;
 use std::sync::Arc;
+use std::time::Duration;
 
 use axum::routing::{get, patch, post};
 use axum::Router;
@@ -29,6 +36,9 @@ pub struct AppState {
     config: Arc<Config>,
     mailer: Option<Arc<mail::Mailer>>,
     oauth: Arc<oauth::OAuth>,
+    /// Public form views and submissions, per client IP.
+    forms_view: Arc<limit::Limiter>,
+    forms_submit: Arc<limit::Limiter>,
 }
 
 pub async fn router(config: Config) -> anyhow::Result<Router> {
@@ -48,8 +58,13 @@ pub async fn router(config: Config) -> anyhow::Result<Router> {
         db,
         oauth: Arc::new(oauth::OAuth::new()?),
         mailer,
+        forms_view: Arc::new(limit::Limiter::new(60, Duration::from_secs(60))),
+        forms_submit: Arc::new(limit::Limiter::new(10, Duration::from_secs(60))),
         config: Arc::new(config),
     };
+    if let Some(dir) = &state.config.web_dir {
+        tracing::info!("serving the web client from {} at /app/", dir.display());
+    }
 
     Ok(Router::new()
         .route("/health", get(|| async { "ok" }))
@@ -70,7 +85,19 @@ pub async fn router(config: Config) -> anyhow::Result<Router> {
             patch(workspaces::update_member).delete(workspaces::remove_member),
         )
         .route("/workspaces/{id}/invites", post(workspaces::create_invite))
-        .route("/workspaces/{id}/chat", get(workspaces::chat_history))
+        .route("/workspaces/{id}/chat", get(chat::history))
+        .route("/workspaces/{id}/chat/pinned", get(chat::pinned_list))
+        .route("/workspaces/{id}/chat/replies", get(chat::replies_list))
+        .route(
+            "/workspaces/{id}/channels",
+            get(chat::channels_list).post(chat::create_channel),
+        )
+        .route("/workspaces/{id}/huddle", get(rtc::huddle))
+        .route("/ice", get(rtc::ice))
+        .route("/f/{ws}/{form}", get(forms::show).post(forms::submit))
+        .route("/app", get(web::root))
+        .route("/app/", get(web::index))
+        .route("/app/{*path}", get(web::file))
         .route("/invite/{code}", get(pages::invite))
         .route("/invites/{code}/accept", post(workspaces::accept_invite))
         .route("/ws", get(ws::upgrade))
@@ -83,6 +110,10 @@ pub async fn router(config: Config) -> anyhow::Result<Router> {
 pub async fn serve(config: Config, listener: TcpListener) -> anyhow::Result<()> {
     let app = router(config).await?;
     tracing::info!("bouvio hub listening on {}", listener.local_addr()?);
-    axum::serve(listener, app).await?;
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<SocketAddr>(),
+    )
+    .await?;
     Ok(())
 }

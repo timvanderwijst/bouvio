@@ -113,6 +113,7 @@ const GEN_MODELS: Record<"image" | "video" | "speech", { id: string; label: stri
     { id: "fal:fal-ai/flux-pro/v1.1", label: "FLUX 1.1 pro", provider: "fal" },
     { id: "openai:gpt-image-1", label: "GPT Image", provider: "open_ai" },
     { id: "replicate:black-forest-labs/flux-schnell", label: "FLUX schnell (Replicate)", provider: "replicate" },
+    { id: "comfyui:default", label: "ComfyUI on this computer", provider: "local" },
   ],
   video: [
     { id: "fal:fal-ai/kling-video/v2.1/standard/text-to-video", label: "Kling 2.1", provider: "fal" },
@@ -121,6 +122,8 @@ const GEN_MODELS: Record<"image" | "video" | "speech", { id: string; label: stri
   speech: [
     { id: "openai:gpt-4o-mini-tts", label: "OpenAI TTS", provider: "open_ai" },
     { id: "elevenlabs:21m00Tcm4TlvDq8ikWAM", label: "ElevenLabs · Rachel", provider: "eleven_labs" },
+    { id: "local:piper/en_US-lessac-medium", label: "Piper · English", provider: "local" },
+    { id: "local:piper/nl_NL-mls-medium", label: "Piper · Nederlands", provider: "local" },
   ],
 };
 

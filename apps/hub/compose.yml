@@ -29,6 +29,15 @@ services:
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
 
+      # Huddles (voice, video, screen share) are peer to peer. STUN is enough on most
+      # networks; behind strict NATs and company firewalls they need a TURN relay.
+      # Run the coturn service below on this server, then set both:
+      #   TURN_URLS=turn:hub.example.com:3478?transport=udp,turn:hub.example.com:3478?transport=tcp
+      #   TURN_SECRET=<the same long random string as in coturn's --static-auth-secret>
+      TURN_URLS: ${TURN_URLS:-}
+      TURN_SECRET: ${TURN_SECRET:-}
+      # STUN_URLS: stun:stun.l.google.com:19302   # set to an empty value for none
+
       RUST_LOG: ${RUST_LOG:-info}
 
   # HTTPS with automatic certificates. Point a DNS record at the server, set
@@ -44,6 +53,34 @@ services:
   #     - caddy-data:/data
   #   depends_on:
   #     - hub
+
+  # TURN relay for huddles, free on your own server. Generate a secret once
+  # (`openssl rand -hex 32`), put it in TURN_SECRET for both services, set
+  # TURN_URLS on the hub (above) and TURN_EXTERNAL_IP to this server's public IP,
+  # then uncomment. Open 3478/udp+tcp and 49160-49200/udp in the firewall.
+  # Media relayed through TURN counts against your server's traffic.
+  # coturn:
+  #   image: coturn/coturn:4.6
+  #   restart: unless-stopped
+  #   network_mode: host
+  #   command:
+  #     - -n
+  #     - --log-file=stdout
+  #     - --listening-port=3478
+  #     - --min-port=49160
+  #     - --max-port=49200
+  #     - --external-ip=${TURN_EXTERNAL_IP}
+  #     - --realm=${HUB_DOMAIN:-bouvio}
+  #     - --use-auth-secret
+  #     - --static-auth-secret=${TURN_SECRET}
+  #     - --no-cli
+  #     - --no-tls
+  #     - --no-dtls
+  #     - --fingerprint
+  #     - --no-multicast-peers
+  #     - --denied-peer-ip=10.0.0.0-10.255.255.255
+  #     - --denied-peer-ip=172.16.0.0-172.31.255.255
+  #     - --denied-peer-ip=192.168.0.0-192.168.255.255
 
 volumes:
   hub-data:

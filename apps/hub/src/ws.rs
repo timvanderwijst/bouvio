@@ -15,8 +15,10 @@ use uuid::Uuid;
 
 use crate::auth::authenticate;
 use crate::db::{self, role_str};
+
+use crate::chat;
 use crate::error::ApiResult;
-use crate::hub::{rpc_err, ConnId, Except, Hub};
+use crate::hub::{rpc_err, ConnId, Except, Hub, Reply};
 use crate::AppState;
 
 /// Messages queued per connection before it counts as too slow and is dropped.
@@ -24,6 +26,8 @@ const QUEUE: usize = 512;
 const PING_EVERY: Duration = Duration::from_secs(25);
 const RPC_TIMEOUT: Duration = Duration::from_secs(60);
 const MAX_CHAT_LEN: usize = 8000;
+/// SDP offers with many codecs run to ~10 KB; leave room.
+const MAX_SIGNAL_LEN: usize = 64 * 1024;
 
 #[derive(Deserialize)]
 pub struct WsQuery {
@@ -129,15 +133,8 @@ impl Ctx<'_> {
                 params,
             } => self.rpc(id, workspace_id, method, params).await,
             ClientMsg::RpcResult { id, ok, err } => {
-                if let Some((asker, asker_id)) = self.hub().finish_rpc(id, Some(self.conn)) {
-                    self.hub().send(
-                        asker,
-                        &ServerMsg::RpcResult {
-                            id: asker_id,
-                            ok,
-                            err,
-                        },
-                    );
+                if let Some(reply) = self.hub().finish_rpc(id, Some(self.conn)) {
+                    self.hub().answer(reply, ok, err);
                 }
             }
             ClientMsg::Publish {
@@ -187,10 +184,27 @@ impl Ctx<'_> {
                     .broadcast(workspace_id, &msg, Except::User(self.user.id))
                     .await;
             }
-            // Chat threads, reactions, pins and huddle signalling: built by the comms work.
-            ClientMsg::ChatReply { .. } | ClientMsg::React { .. } | ClientMsg::Pin { .. } | ClientMsg::Signal { .. } => {
-                self.error("not supported by this hub yet")
-            }
+            ClientMsg::ChatReply {
+                workspace_id,
+                parent,
+                text,
+            } => self.chat_reply(workspace_id, parent, text).await,
+            ClientMsg::React {
+                workspace_id,
+                message_id,
+                emoji,
+            } => self.react(workspace_id, message_id, emoji).await,
+            ClientMsg::Pin {
+                workspace_id,
+                message_id,
+                pinned,
+            } => self.pin(workspace_id, message_id, pinned).await,
+            ClientMsg::Signal {
+                workspace_id,
+                to,
+                kind,
+                payload,
+            } => self.signal(workspace_id, to, kind, payload).await,
         }
     }
 
@@ -231,7 +245,13 @@ impl Ctx<'_> {
         let Some(host) = hub.host_of(ws) else {
             return hub.send(self.conn, &rpc_err(id, "host offline"));
         };
-        let hub_id = hub.start_rpc(self.conn, id, host);
+        let hub_id = hub.start_rpc(
+            Reply::Conn {
+                asker: self.conn,
+                asker_id: id,
+            },
+            host,
+        );
         let msg = ServerMsg::Rpc {
             id: hub_id,
             workspace_id: ws,
@@ -245,10 +265,11 @@ impl Ctx<'_> {
         let hub = hub.clone();
         tokio::spawn(async move {
             tokio::time::sleep(RPC_TIMEOUT).await;
-            if let Some((asker, asker_id)) = hub.finish_rpc(hub_id, None) {
-                hub.send(
-                    asker,
-                    &rpc_err(asker_id, "timeout: the host did not answer within 60 s"),
+            if let Some(reply) = hub.finish_rpc(hub_id, None) {
+                hub.answer(
+                    reply,
+                    None,
+                    Some("timeout: the host did not answer within 60 s".into()),
                 );
             }
         });
@@ -277,12 +298,188 @@ impl Ctx<'_> {
             reactions: vec![],
             pinned: false,
         };
-        if let Err(e) = db::insert_chat(&self.st.db, &message).await {
+        if let Err(e) = chat::insert(&self.st.db, &message).await {
             tracing::error!("chat insert: {e}");
             return self.error("could not save the message");
         }
         self.hub()
             .broadcast(ws, &ServerMsg::Chat { message }, Except::Nobody)
             .await;
+    }
+
+    /// Checks membership and a minimum role; on failure tells the sender and returns None.
+    async fn allowed(&self, ws: Uuid, min: Role, what: &str) -> Option<Role> {
+        match self.role(ws).await {
+            None => {
+                self.error(format!("not a member of {ws}"));
+                None
+            }
+            Some(r) if r < min => {
+                self.error(format!("{what} needs role {}", role_str(min)));
+                None
+            }
+            Some(r) => Some(r),
+        }
+    }
+
+    async fn chat_reply(&self, ws: Uuid, parent: Uuid, text: String) {
+        if self
+            .allowed(ws, Role::Commenter, "replying")
+            .await
+            .is_none()
+        {
+            return;
+        }
+        let text = text.trim();
+        if text.is_empty() || text.len() > MAX_CHAT_LEN {
+            return self.error("a reply needs text (max 8000 chars)");
+        }
+        let root = match chat::message(&self.st.db, ws, parent).await {
+            Ok(Some(m)) => m,
+            Ok(None) => return self.error("that message does not exist"),
+            Err(e) => {
+                tracing::error!("chat reply: {e}");
+                return self.error("database error");
+            }
+        };
+        // Threads are one level deep: a reply to a reply goes under the same root.
+        let root_id = root.parent.unwrap_or(root.id);
+        let message = ChatMessage {
+            id: Uuid::new_v4(),
+            workspace_id: ws,
+            channel: root.channel,
+            author: self.user.clone(),
+            text: text.to_string(),
+            at: Utc::now(),
+            parent: Some(root_id),
+            reactions: vec![],
+            pinned: false,
+        };
+        if let Err(e) = chat::insert(&self.st.db, &message).await {
+            tracing::error!("chat reply insert: {e}");
+            return self.error("could not save the reply");
+        }
+        self.hub()
+            .broadcast(ws, &ServerMsg::Chat { message }, Except::Nobody)
+            .await;
+    }
+
+    async fn react(&self, ws: Uuid, id: Uuid, emoji: String) {
+        if self
+            .allowed(ws, Role::Commenter, "reacting")
+            .await
+            .is_none()
+        {
+            return;
+        }
+        let emoji = emoji.trim();
+        if emoji.is_empty() || emoji.len() > 32 || emoji.chars().any(char::is_whitespace) {
+            return self.error("a reaction is one emoji or a short :name:");
+        }
+        let result = async {
+            if chat::message(&self.st.db, ws, id).await?.is_none() {
+                return Ok(None);
+            }
+            if !chat::toggle_reaction(&self.st.db, id, self.user.id, emoji).await? {
+                return Ok(Some(None));
+            }
+            Ok::<_, sqlx::Error>(Some(chat::message(&self.st.db, ws, id).await?))
+        }
+        .await;
+        match result {
+            Ok(Some(Some(message))) => {
+                self.hub()
+                    .broadcast(ws, &ServerMsg::ChatUpdated { message }, Except::Nobody)
+                    .await
+            }
+            Ok(Some(None)) => {
+                self.error("this message has as many different reactions as it can take")
+            }
+            Ok(None) => self.error("that message does not exist"),
+            Err(e) => {
+                tracing::error!("react: {e}");
+                self.error("database error")
+            }
+        }
+    }
+
+    async fn pin(&self, ws: Uuid, id: Uuid, pinned: bool) {
+        if self.allowed(ws, Role::Operator, "pinning").await.is_none() {
+            return;
+        }
+        let result = async {
+            if chat::message(&self.st.db, ws, id).await?.is_none() {
+                return Ok(None);
+            }
+            chat::set_pinned(&self.st.db, id, pinned).await?;
+            chat::message(&self.st.db, ws, id).await
+        }
+        .await;
+        match result {
+            Ok(Some(message)) => {
+                self.hub()
+                    .broadcast(ws, &ServerMsg::ChatUpdated { message }, Except::Nobody)
+                    .await
+            }
+            Ok(None) => self.error("that message does not exist"),
+            Err(e) => {
+                tracing::error!("pin: {e}");
+                self.error("database error")
+            }
+        }
+    }
+
+    /// Huddle signalling: relayed to one member's connections, or to every member
+    /// but this connection. `join` and `leave` without a target also update who is
+    /// in the workspace's huddle.
+    async fn signal(&self, ws: Uuid, to: Option<Uuid>, kind: String, payload: serde_json::Value) {
+        if let Err(first) = self.hub().take_signal(self.conn) {
+            if first {
+                self.error("too many signals; slow down");
+            }
+            return;
+        }
+        if self
+            .allowed(ws, Role::Commenter, "a huddle")
+            .await
+            .is_none()
+        {
+            return;
+        }
+        if kind.is_empty() || kind.len() > 32 {
+            return self.error("a signal needs a kind (max 32 chars)");
+        }
+        if payload.to_string().len() > MAX_SIGNAL_LEN {
+            return self.error("signal payload too large");
+        }
+        // Each tab is its own peer: tell the others which connection this is.
+        let mut payload = payload;
+        if let Some(obj) = payload.as_object_mut() {
+            obj.insert("conn".into(), self.conn.into());
+        }
+        let msg = ServerMsg::Signal {
+            workspace_id: ws,
+            from: self.user.clone(),
+            kind: kind.clone(),
+            payload,
+        };
+        match to {
+            Some(user) => {
+                if self.hub().role(ws, user).await.is_none() {
+                    return self.error("that person is not a member of this workspace");
+                }
+                self.hub().send_user(user, &msg, Some(self.conn));
+            }
+            None => {
+                match kind.as_str() {
+                    "join" => self.hub().huddle_join(ws, self.conn, self.user.clone()),
+                    "leave" => self.hub().huddle_leave(ws, self.conn),
+                    _ => {}
+                }
+                self.hub()
+                    .broadcast(ws, &msg, Except::Conn(self.conn))
+                    .await;
+            }
+        }
     }
 }

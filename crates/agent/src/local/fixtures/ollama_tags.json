@@ -1,0 +1,5 @@
+{"models":[
+ {"name":"qwen3:8b","model":"qwen3:8b","modified_at":"2025-10-01T10:12:44.1Z","size":5225388164,"digest":"500a1f067a9f","details":{"parent_model":"","format":"gguf","family":"qwen3","families":["qwen3"],"parameter_size":"8.2B","quantization_level":"Q4_K_M"}},
+ {"name":"llama3.2:latest","model":"llama3.2:latest","modified_at":"2025-09-12T08:01:02.5Z","size":2019393189,"digest":"a80c4f17acd5","details":{"parent_model":"","format":"gguf","family":"llama","families":["llama"],"parameter_size":"3.2B","quantization_level":"Q4_K_M"}},
+ {"name":"nomic-embed-text:latest","model":"nomic-embed-text:latest","modified_at":"2025-09-01T08:00:00Z","size":274302450,"digest":"0a109f422b47","details":{"parent_model":"","format":"gguf","family":"nomic-bert","families":["nomic-bert"],"parameter_size":"137M","quantization_level":"F16"}}
+]}

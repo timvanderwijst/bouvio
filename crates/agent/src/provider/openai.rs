@@ -1,5 +1,5 @@
-//! OpenAI-compatible chat completions with tools: OpenRouter, OpenAI, and Google's
-//! OpenAI-compatible endpoint.
+//! OpenAI-compatible chat completions with tools: OpenRouter, OpenAI, Google's
+//! OpenAI-compatible endpoint, and local servers (Ollama, LM Studio, others).
 
 use super::{base_url, send_json, Message, Part, Reply, Request, Role, Stop, Usage};
 use anyhow::{bail, Result};
@@ -14,21 +14,55 @@ pub(crate) async fn complete(
     req: &Request<'_>,
     cancel: &CancellationToken,
 ) -> Result<Reply> {
-    let body = build_request(provider, model, req);
-    let url = format!("{}/chat/completions", base_url(provider));
-    let v = send_json(
-        provider,
-        || {
-            let mut b = super::http().post(&url).bearer_auth(key).json(&body);
-            if provider == ProviderKind::OpenRouter {
-                b = b.header("HTTP-Referer", "https://github.com/bouvio/bouvio").header("X-Title", "Bouvio");
+    let mut body = build_request(provider, model, req);
+    let base = if provider == ProviderKind::Local { crate::local::chat_base(model) } else { base_url(provider) };
+    let url = format!("{base}/chat/completions");
+    let send = |body: &Value| {
+        let body = body.clone();
+        let url = url.clone();
+        async move {
+            send_json(
+                provider,
+                || {
+                    let mut b = super::http().post(&url).json(&body);
+                    // Local servers usually take no key.
+                    if !key.is_empty() {
+                        b = b.bearer_auth(key);
+                    }
+                    if provider == ProviderKind::OpenRouter {
+                        b = b.header("HTTP-Referer", "https://github.com/bouvio/bouvio").header("X-Title", "Bouvio");
+                    }
+                    b
+                },
+                cancel,
+            )
+            .await
+        }
+    };
+    let v = match send(&body).await {
+        // Some local models cannot call tools; answer without them rather than fail.
+        Err(e) if provider == ProviderKind::Local && body.get("tools").is_some() && no_tool_support(&e) => {
+            tracing::info!("{model} does not support tools; continuing without them");
+            body.as_object_mut().map(|o| o.remove("tools"));
+            send(&body).await?
+        }
+        r => r?,
+    };
+    let mut reply = parse_response(&v)?;
+    if provider == ProviderKind::Local {
+        for p in &mut reply.parts {
+            if let Part::Text { text } = p {
+                *text = crate::oneshot::strip_think(text);
             }
-            b
-        },
-        cancel,
-    )
-    .await?;
-    parse_response(&v)
+        }
+        reply.parts.retain(|p| !matches!(p, Part::Text { text } if text.is_empty()));
+    }
+    Ok(reply)
+}
+
+fn no_tool_support(e: &anyhow::Error) -> bool {
+    let s = e.to_string().to_ascii_lowercase();
+    s.contains("does not support tools") || s.contains("tools are not supported") || s.contains("tool use is not supported")
 }
 
 fn nonempty(s: &str) -> &str {

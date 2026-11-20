@@ -4,7 +4,7 @@ use std::path::Path;
 use std::str::FromStr;
 
 use anyhow::Context;
-use bouvio_protocol::{ChatMessage, HubUser, Role};
+use bouvio_protocol::{HubUser, Role};
 use chrono::{DateTime, TimeZone, Utc};
 use rand::distr::{Alphanumeric, SampleString};
 use rand::Rng;
@@ -322,57 +322,4 @@ pub async fn add_member(
     .execute(db)
     .await?;
     Ok(())
-}
-
-// ---- chat ----------------------------------------------------------------------
-
-pub async fn insert_chat(db: &Db, msg: &ChatMessage) -> sqlx::Result<()> {
-    sqlx::query("INSERT INTO chat_messages (id, workspace_id, channel, author_id, text, at) VALUES (?, ?, ?, ?, ?, ?)")
-        .bind(msg.id.to_string())
-        .bind(msg.workspace_id.to_string())
-        .bind(&msg.channel)
-        .bind(msg.author.id.to_string())
-        .bind(&msg.text)
-        .bind(msg.at.timestamp_millis())
-        .execute(db)
-        .await?;
-    Ok(())
-}
-
-/// Messages before `before_ms`, oldest first.
-pub async fn chat_page(
-    db: &Db,
-    ws: Uuid,
-    channel: &str,
-    before_ms: i64,
-    limit: i64,
-) -> sqlx::Result<Vec<ChatMessage>> {
-    #[allow(clippy::type_complexity)]
-    let rows: Vec<(String, String, i64, String, String, String, Option<String>)> = sqlx::query_as(
-        "SELECT c.id, c.text, c.at, u.id, u.name, u.email, u.avatar_url
-         FROM chat_messages c JOIN users u ON u.id = c.author_id
-         WHERE c.workspace_id = ? AND c.channel = ? AND c.at < ?
-         ORDER BY c.at DESC, c.rowid DESC LIMIT ?",
-    )
-    .bind(ws.to_string())
-    .bind(channel)
-    .bind(before_ms)
-    .bind(limit)
-    .fetch_all(db)
-    .await?;
-    Ok(rows
-        .into_iter()
-        .rev()
-        .map(|(id, text, at, uid, name, email, avatar)| ChatMessage {
-            id: parse_uuid(&id),
-            workspace_id: ws,
-            channel: channel.to_string(),
-            author: user_from_row((uid, name, email, avatar)),
-            text,
-            at: from_ms(at),
-            parent: None,
-            reactions: vec![],
-            pinned: false,
-        })
-        .collect())
 }

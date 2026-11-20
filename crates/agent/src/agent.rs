@@ -24,7 +24,7 @@ pub enum AgentOut {
 
 pub struct AgentConfig {
     pub cwd: PathBuf,
-    /// Provider-qualified: "openrouter:anthropic/claude-sonnet-4.5", "anthropic:claude-sonnet-4-5", "openai:gpt-4.1", "google:gemini-2.5-pro"
+    /// Provider-qualified: "openrouter:anthropic/claude-sonnet-4.5", "anthropic:claude-sonnet-4-5", "openai:gpt-4.1", "google:gemini-2.5-pro", "local:qwen3:8b"
     pub model: String,
     pub instructions: Option<String>,
     pub approval: ApprovalLevel,
@@ -158,8 +158,9 @@ Working directory: {}\nOperating system: {os} (shell: {shell})\nToday: {}",
             Ok(m) => m,
             Err(e) => return self.fail(&out, started, None, e.to_string()),
         };
-        let Some(key) = self.cfg.keys.get(model.provider) else {
-            return self.fail(&out, started, None, provider::missing_key(model.provider));
+        let key = match crate::oneshot::key_for(self.cfg.keys.as_ref(), model.provider) {
+            Ok(k) => k,
+            Err(e) => return self.fail(&out, started, None, e.to_string()),
         };
         let specs: Vec<ToolSpec> = self
             .tools

@@ -7,7 +7,7 @@ pub mod ext;
 mod hub;
 
 use base64::Engine;
-use bouvio_agent::{media, KeyringStore};
+use bouvio_agent::{media, KeyStore, KeyringStore};
 use bouvio_protocol::*;
 use bouvio_runner::{terminal::TerminalOut, Runner};
 use hub::Hub;
@@ -132,11 +132,13 @@ async fn generate_media(app: State<'_, Arc<App>>, workspace_id: Uuid, thread_id:
 #[tauri::command]
 async fn transcribe(app: State<'_, Arc<App>>, audio_base64: String, mime: String, model: Option<String>) -> R<String> {
     let bytes = base64::engine::general_purpose::STANDARD.decode(audio_base64).map_err(err)?;
-    let ext = if mime.contains("ogg") { "ogg" } else if mime.contains("mp4") { "m4a" } else { "webm" };
+    let ext = if mime.contains("wav") { "wav" } else if mime.contains("ogg") { "ogg" } else if mime.contains("mp4") { "m4a" } else { "webm" };
     let path = app.runner.store().dir().join("tmp").join(format!("{}.{ext}", Uuid::new_v4()));
     std::fs::create_dir_all(path.parent().unwrap()).map_err(err)?;
     std::fs::write(&path, bytes).map_err(err)?;
-    let r = media::transcribe(&KeyringStore, model.as_deref().unwrap_or("openai:whisper-1"), &path).await;
+    // Without an OpenAI key, whisper.cpp on this computer does it for free.
+    let default = if KeyringStore.get(ProviderKind::OpenAi).is_some() { "openai:whisper-1" } else { "local:whisper" };
+    let r = media::transcribe(&KeyringStore, model.as_deref().unwrap_or(default), &path).await;
     let _ = std::fs::remove_file(&path);
     r.map_err(err)
 }

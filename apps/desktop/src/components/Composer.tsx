@@ -1,6 +1,7 @@
 import { ArrowUp, GitBranch, Mic, Monitor, ShieldCheck, Square } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { backend } from "../backend";
+import { toWav16k } from "./local/audio";
 import { useT } from "../i18n";
 import type { ApprovalLevel } from "../protocol/ApprovalLevel";
 import type { Effort } from "../protocol/Effort";
@@ -200,11 +201,9 @@ function useVoice(onText: (t: string) => void, onError: (e: string) => void) {
         stream.getTracks().forEach((t) => t.stop());
         setState("busy");
         try {
+          // 16 kHz mono WAV works for both OpenAI and whisper.cpp.
           const blob = new Blob(chunks, { type: r.mimeType });
-          const buf = new Uint8Array(await blob.arrayBuffer());
-          let bin = "";
-          for (let i = 0; i < buf.length; i += 0x8000) bin += String.fromCharCode(...buf.subarray(i, i + 0x8000));
-          onText(await backend.transcribe(btoa(bin), r.mimeType));
+          onText(await backend.transcribe(await toWav16k(blob), "audio/wav"));
         } catch (e) {
           onError(String(e));
         } finally {

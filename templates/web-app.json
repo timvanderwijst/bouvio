@@ -1,0 +1,21 @@
+{
+  "id": "web-app",
+  "name": "Web app",
+  "description": "Frontend, backend and tests captains for a web project, with a dev server for live previews.",
+  "icon": "app-window",
+  "instructions": "This is a web application. Keep changes small and reviewable, one concern per thread. Run the type checker and the tests before you call something done. Never commit secrets; read them from the environment.",
+  "dev_command": "npm run dev -- --port {port}",
+  "captains": [
+    { "name": "Frontend", "instructions": "Owns the user interface: components, styling, accessibility and client-side state. Match the existing design system and check both light and dark themes." },
+    { "name": "Backend", "instructions": "Owns the server: API routes, data models, migrations and integrations. Validate input at the edges and keep endpoints backwards compatible." },
+    { "name": "Tests", "instructions": "Owns the test suite and CI. Add tests for every bug fixed, keep the suite fast, and flag flaky tests instead of retrying them." }
+  ],
+  "issues": [
+    { "title": "Write down how to run the project locally", "body": "Install steps, environment variables, and the dev command, in the README.", "captain": "Backend" },
+    { "title": "Set up linting and formatting", "body": "One formatter and one linter, wired into a script and CI.", "captain": "Tests" },
+    { "title": "Audit the main screens for accessibility", "body": "Keyboard navigation, focus states, labels and contrast.", "captain": "Frontend" },
+    { "title": "Add a health check endpoint", "body": "`GET /health` returns 200 with the version.", "captain": "Backend" },
+    { "title": "Run the tests on every pull request", "captain": "Tests" }
+  ],
+  "automations": []
+}

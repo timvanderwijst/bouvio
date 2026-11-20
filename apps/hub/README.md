@@ -30,6 +30,9 @@ Without Docker: `cargo run --release -p bouvio-hub`.
 | `SMTP_FROM` | `Bouvio <bouvio@localhost>` | sender of login mails |
 | `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | none | enables GitHub sign-in |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | none | enables Google sign-in |
+| `TURN_URLS`, `TURN_SECRET` | none | TURN relay for huddles (coturn `use-auth-secret`); see `compose.yml` |
+| `STUN_URLS` | `stun:stun.l.google.com:19302` | STUN servers for huddles, comma-separated; empty for none |
+| `BOUVIO_HUB_WEB_DIR` | none (`/srv/web` in Docker) | serve the web client from this folder under `/app/` |
 | `RUST_LOG` | `info` | log filter |
 | `BOUVIO_HUB_DEV_CODES` | off | **dev only**: `1` makes `/auth/email/start` return the code in its response. Never set this on a reachable server. |
 
@@ -41,6 +44,12 @@ Endpoints for a provider that is not configured answer `501` with a message sayi
 - **Google**: Cloud Console → APIs & Services → Credentials → OAuth client ID (Web application). Authorized redirect URI: `${BOUVIO_HUB_PUBLIC_URL}/auth/google/callback`.
 
 The app opens `/auth/{github|google}/start` in the browser. After sign-in the browser shows an 8-character code; the person pastes it into Bouvio, which trades it for a token with `POST /auth/exchange`.
+
+## Huddles, forms and the web client
+
+- **Huddles** are WebRTC between members; the hub only relays the signalling and hands out ICE servers at `GET /ice`. With `TURN_URLS` and `TURN_SECRET` set, it adds short-lived TURN credentials (12 h) in coturn's REST format. The commented `coturn` service in `compose.yml` runs one on the same server.
+- **Public forms** live at `/f/<workspace>/<form>`. The hub asks the runner hosting the workspace for the form and passes the answers back; nothing is stored on the hub. Requests are rate-limited per IP.
+- **The web client** is built into the Docker image and served at `/app/`.
 
 ## Tests
 

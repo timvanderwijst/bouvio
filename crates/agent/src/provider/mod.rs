@@ -121,7 +121,7 @@ impl ModelRef {
         }
         if let Some((prefix, rest)) = s.split_once(':') {
             if let Some(p) = provider_from_id(prefix) {
-                if !matches!(p, ProviderKind::OpenRouter | ProviderKind::Anthropic | ProviderKind::OpenAi | ProviderKind::Google) {
+                if !matches!(p, ProviderKind::OpenRouter | ProviderKind::Anthropic | ProviderKind::OpenAi | ProviderKind::Google | ProviderKind::Local) {
                     bail!("{} does not offer chat models", provider_name(p));
                 }
                 if rest.trim().is_empty() {
@@ -178,7 +178,8 @@ fn default_base(p: ProviderKind) -> &'static str {
         ProviderKind::Fal => "https://fal.run",
         ProviderKind::Replicate => "https://api.replicate.com/v1",
         ProviderKind::ElevenLabs => "https://api.elevenlabs.io/v1",
-        // Ollama's OpenAI-compatible endpoint; the local-AI work makes this configurable.
+        // Ollama's OpenAI-compatible endpoint; chat goes through `local::chat_base`,
+        // which follows the user's local settings.
         ProviderKind::Local => "http://127.0.0.1:11434/v1",
     }
 }
@@ -270,6 +271,9 @@ pub(crate) async fn send_json(
                 pause(backoff(attempt), cancel).await?;
                 continue;
             }
+            Err(e) if provider == ProviderKind::Local => {
+                bail!("Could not reach the local model server: {e}. Is Ollama or LM Studio running? See Settings → Local models.")
+            }
             Err(e) => bail!("Could not reach {name}: {e}"),
         };
         let status = resp.status().as_u16();
@@ -345,6 +349,10 @@ mod tests {
         assert_eq!(ModelRef::parse("gpt-4.1").unwrap().provider, ProviderKind::OpenAi);
         assert_eq!(ModelRef::parse("meta/llama").unwrap().provider, ProviderKind::OpenRouter);
         assert!(ModelRef::parse("fal:flux").is_err());
+        let m = ModelRef::parse("local:qwen3:8b").unwrap();
+        assert_eq!((m.provider, m.model.as_str()), (ProviderKind::Local, "qwen3:8b"));
+        assert_eq!(ModelRef::parse("local:qwen/qwen3-8b").unwrap().model, "qwen/qwen3-8b");
+        assert!(ModelRef::parse("local:").is_err());
         assert!(ModelRef::parse("").is_err());
     }
 

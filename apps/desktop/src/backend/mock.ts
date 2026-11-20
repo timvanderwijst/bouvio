@@ -606,6 +606,7 @@ export const mockBackend: Backend = {
       { kind: "fal", configured: true },
       { kind: "replicate", configured: false },
       { kind: "eleven_labs", configured: false },
+      { kind: "local", configured: false },
     ];
   },
   async setKey() {},

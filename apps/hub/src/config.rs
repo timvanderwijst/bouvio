@@ -1,4 +1,5 @@
 use std::env;
+use std::path::PathBuf;
 
 #[derive(Debug, Clone)]
 pub struct OAuthApp {
@@ -18,6 +19,23 @@ pub struct Config {
     pub google: Option<OAuthApp>,
     /// Dev only: `/auth/email/start` returns the login code in its response.
     pub dev_codes: bool,
+    /// STUN servers handed to huddles (`STUN_URLS`, comma-separated).
+    pub stun_urls: Vec<String>,
+    /// coturn with `use-auth-secret`: `TURN_URLS` (comma-separated) and `TURN_SECRET`.
+    pub turn_urls: Vec<String>,
+    pub turn_secret: Option<String>,
+    /// A built web client to serve under `/app/` (`BOUVIO_HUB_WEB_DIR`).
+    pub web_dir: Option<PathBuf>,
+}
+
+const DEFAULT_STUN: &str = "stun:stun.l.google.com:19302";
+
+fn list(v: Option<String>) -> Vec<String> {
+    v.unwrap_or_default()
+        .split(',')
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty())
+        .collect()
 }
 
 impl Config {
@@ -42,6 +60,14 @@ impl Config {
             github: app("GITHUB_CLIENT_ID", "GITHUB_CLIENT_SECRET"),
             google: app("GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"),
             dev_codes: matches!(var("BOUVIO_HUB_DEV_CODES").as_deref(), Some("1" | "true")),
+            // Set but empty means no STUN at all; unset means the public default.
+            stun_urls: match env::var("STUN_URLS") {
+                Ok(v) => list(Some(v)),
+                Err(_) => vec![DEFAULT_STUN.into()],
+            },
+            turn_urls: list(var("TURN_URLS")),
+            turn_secret: var("TURN_SECRET"),
+            web_dir: var("BOUVIO_HUB_WEB_DIR").map(PathBuf::from),
         }
     }
 
@@ -56,6 +82,10 @@ impl Config {
             github: None,
             google: None,
             dev_codes: true,
+            stun_urls: vec![DEFAULT_STUN.into()],
+            turn_urls: vec![],
+            turn_secret: None,
+            web_dir: None,
         }
     }
 }

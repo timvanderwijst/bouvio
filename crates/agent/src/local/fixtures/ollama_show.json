@@ -1,0 +1,4 @@
+{"license":"Apache 2.0","modelfile":"FROM qwen3","parameters":"temperature 0.6","template":"{{ .Prompt }}",
+ "details":{"family":"qwen3","parameter_size":"8.2B","quantization_level":"Q4_K_M"},
+ "model_info":{"general.architecture":"qwen3","general.parameter_count":8190735360,"qwen3.block_count":36,"qwen3.context_length":40960,"qwen3.embedding_length":4096},
+ "capabilities":["completion","tools","thinking"]}

@@ -29,6 +29,9 @@ pub struct HubClient {
     /// Shared workspaces this runner hosts.
     hosted: Arc<Mutex<HashSet<Uuid>>>,
     pub user: Arc<Mutex<Option<HubUser>>>,
+    /// Hub base URL and token, for the few REST calls the runner makes itself.
+    base: String,
+    token: String,
 }
 
 impl HubClient {
@@ -44,6 +47,8 @@ impl HubClient {
             connected: Arc::new(std::sync::atomic::AtomicBool::new(false)),
             hosted: Arc::new(Mutex::new(HashSet::new())),
             user: Arc::new(Mutex::new(None)),
+            base: url.trim_end_matches('/').to_string(),
+            token: token.clone(),
         });
         me.refresh_hosted(&runner);
         tokio::spawn(run(me.clone(), runner.clone(), url, token, rx));
@@ -77,8 +82,29 @@ impl HubClient {
         let _ = self.out.send(msg);
     }
 
-    fn hosts(&self, ws: Uuid) -> bool {
+    pub(crate) fn hosts(&self, ws: Uuid) -> bool {
         self.hosted.lock().unwrap().contains(&ws)
+    }
+
+    /// The signed-in hub user of this connection, once the hub welcomed it.
+    pub fn me(&self) -> Option<HubUser> {
+        self.user.lock().unwrap().clone()
+    }
+
+    /// Members of a shared workspace with their roles (`GET /workspaces/:id/members`).
+    pub async fn members(&self, workspace_id: Uuid) -> Result<Vec<Member>> {
+        let url = format!("{}/workspaces/{workspace_id}/members", self.base);
+        let res = reqwest::Client::new()
+            .get(url)
+            .bearer_auth(&self.token)
+            .timeout(Duration::from_secs(15))
+            .send()
+            .await
+            .context("reaching the hub")?;
+        if !res.status().is_success() {
+            anyhow::bail!("the hub answered {}", res.status());
+        }
+        Ok(res.json().await?)
     }
 }
 
@@ -139,6 +165,13 @@ async fn handle(me: &Arc<HubClient>, runner: &Arc<Runner>, msg: ServerMsg) {
                     None => Ok(ok.unwrap_or(Value::Null)),
                 });
             }
+        }
+        ServerMsg::Chat { message } => {
+            // `@Captain do this` in a workspace this runner hosts starts a thread.
+            if message.parent.is_none() && me.hosts(message.workspace_id) {
+                crate::ext::comms::on_chat(runner, me, &message);
+            }
+            let _ = me.inbound.send(ServerMsg::Chat { message });
         }
         ServerMsg::Rpc { id, workspace_id, method, params, from, role: _ } => {
             // A member asks this runner to do something in a workspace it hosts.
