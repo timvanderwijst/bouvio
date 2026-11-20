@@ -34,6 +34,8 @@ export interface ExtPage {
   order?: number;
   /** Fill the sheet edge to edge (boards, editors) instead of a centred page. */
   flush?: boolean;
+  /** Reachable only by navigation (one open document), not listed in menus. */
+  hidden?: boolean;
   /** Small number next to the label (unread, open items). */
   useBadge?: () => number | undefined;
 }

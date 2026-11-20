@@ -5,13 +5,41 @@ import { area as local } from "../components/local";
 import { area as office } from "../components/office";
 import { area as personal } from "../components/personal";
 import { area as platform } from "../components/platform";
+import { useSyncExternalStore } from "react";
 import type { ExtArea, ExtPage } from "./types";
 
-export const AREAS: ExtArea[] = [local, knowledge, office, comms, dev, platform, personal];
+const BUILT_IN: ExtArea[] = [local, knowledge, office, comms, dev, platform, personal];
+
+/** Built-in areas plus whatever plugins registered at runtime. */
+export let AREAS: ExtArea[] = [...BUILT_IN];
+const subs = new Set<() => void>();
+let version = 0;
+
+/** Plugins register (or replace, by id) an area while the app runs. */
+export function registerArea(area: ExtArea) {
+  AREAS = [...AREAS.filter((a) => a.id !== area.id), area];
+  version++;
+  subs.forEach((f) => f());
+}
+
+export function unregisterArea(id: string) {
+  if (BUILT_IN.some((a) => a.id === id)) return;
+  AREAS = AREAS.filter((a) => a.id !== id);
+  version++;
+  subs.forEach((f) => f());
+}
+
+/** Re-render when plugins change what is registered. */
+export function useExtVersion() {
+  return useSyncExternalStore(
+    (cb) => (subs.add(cb), () => void subs.delete(cb)),
+    () => version,
+  );
+}
 
 export const extPages = (place: ExtPage["place"]) =>
   AREAS.flatMap((a) => a.pages ?? [])
-    .filter((p) => p.place === place)
+    .filter((p) => p.place === place && !p.hidden)
     .sort((a, b) => (a.order ?? 100) - (b.order ?? 100));
 
 export const findPage = (id: string) => AREAS.flatMap((a) => a.pages ?? []).find((p) => p.id === id);

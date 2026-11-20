@@ -21,6 +21,7 @@ pub fn env_vars(p: ProviderKind) -> &'static [&'static str] {
         ProviderKind::Fal => &["FAL_KEY"],
         ProviderKind::Replicate => &["REPLICATE_API_TOKEN"],
         ProviderKind::ElevenLabs => &["ELEVENLABS_API_KEY"],
+        ProviderKind::Local => &[],
     }
 }
 

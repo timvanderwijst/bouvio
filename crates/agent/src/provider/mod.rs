@@ -158,6 +158,7 @@ pub(crate) fn provider_name(p: ProviderKind) -> &'static str {
         ProviderKind::Fal => "fal",
         ProviderKind::Replicate => "Replicate",
         ProviderKind::ElevenLabs => "ElevenLabs",
+        ProviderKind::Local => "local models",
     }
 }
 
@@ -177,6 +178,8 @@ fn default_base(p: ProviderKind) -> &'static str {
         ProviderKind::Fal => "https://fal.run",
         ProviderKind::Replicate => "https://api.replicate.com/v1",
         ProviderKind::ElevenLabs => "https://api.elevenlabs.io/v1",
+        // Ollama's OpenAI-compatible endpoint; the local-AI work makes this configurable.
+        ProviderKind::Local => "http://127.0.0.1:11434/v1",
     }
 }
 

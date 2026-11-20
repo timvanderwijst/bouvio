@@ -246,10 +246,12 @@ pub enum ProviderKind {
     Fal,
     Replicate,
     ElevenLabs,
+    /// Models on this machine: Ollama, LM Studio, whisper.cpp, Piper, ComfyUI. No key.
+    Local,
 }
 
 impl ProviderKind {
-    pub const ALL: [ProviderKind; 7] = [
+    pub const ALL: [ProviderKind; 8] = [
         ProviderKind::OpenRouter,
         ProviderKind::Anthropic,
         ProviderKind::OpenAi,
@@ -257,6 +259,7 @@ impl ProviderKind {
         ProviderKind::Fal,
         ProviderKind::Replicate,
         ProviderKind::ElevenLabs,
+        ProviderKind::Local,
     ];
     pub fn id(self) -> &'static str {
         match self {
@@ -267,6 +270,7 @@ impl ProviderKind {
             ProviderKind::Fal => "fal",
             ProviderKind::Replicate => "replicate",
             ProviderKind::ElevenLabs => "elevenlabs",
+            ProviderKind::Local => "local",
         }
     }
 }

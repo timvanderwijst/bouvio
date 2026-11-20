@@ -267,6 +267,7 @@ impl Runner {
 
     pub async fn send_message(self: &Arc<Self>, thread_id: Uuid, text: String, author: String) -> Result<()> {
         let thread = self.store.thread(thread_id).context("unknown thread")?;
+        ext::personal::check_budget(self, &thread)?;
         // The first message names the thread, like every chat app does.
         if thread.title == "New thread" {
             let title = title_from(&text);

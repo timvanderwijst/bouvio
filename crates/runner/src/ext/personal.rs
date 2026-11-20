@@ -15,3 +15,8 @@ pub fn workspace_of(_r: &Runner, _method: &str, _params: &Value) -> Option<Resul
 }
 
 pub fn start(_r: &Arc<Runner>) {}
+
+/// Refuse a new turn when the thread's captain or workspace is over its budget.
+pub fn check_budget(_r: &Runner, _thread: &bouvio_protocol::Thread) -> Result<()> {
+    Ok(())
+}

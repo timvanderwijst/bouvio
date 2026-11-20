@@ -393,6 +393,7 @@ const PROVIDER_NAMES: Record<ProviderKind, string> = {
   fal: "fal",
   replicate: "Replicate",
   eleven_labs: "ElevenLabs",
+  local: "Local models",
 };
 
 export function ProviderSettings() {
@@ -415,7 +416,7 @@ export function ProviderSettings() {
   return (
     <section className="set-group">
       <h2>{t("settings.providers")}</h2>
-      {providers.map((p) => (
+      {providers.filter((p) => p.kind !== "local").map((p) => (
         <div key={p.kind} className="set-row">
           <span>{PROVIDER_NAMES[p.kind]}</span>
           {edit === p.kind ? (

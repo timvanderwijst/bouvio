@@ -235,6 +235,10 @@ fn forward_hub(handle: AppHandle, app: Arc<App>) {
                             h.emit(&name, payload)
                         }
                         ServerMsg::Chat { message } => h.emit("hub-chat", message),
+                        ServerMsg::ChatUpdated { message } => h.emit("hub-chat-updated", message),
+                        ServerMsg::Signal { workspace_id, from, kind, payload } => {
+                            h.emit("hub-signal", json!({ "workspace_id": workspace_id, "from": from, "kind": kind, "payload": payload }))
+                        }
                         ServerMsg::Presence { presence, online } => h.emit("hub-presence", json!({ "presence": presence, "online": online })),
                         ServerMsg::HostStatus { workspace_id, online } => h.emit("hub-host", json!({ "workspace_id": workspace_id, "online": online })),
                         ServerMsg::Welcome { user } => h.emit("hub-status", json!({ "user": user })),

@@ -19,7 +19,9 @@ export type EventName =
   | "hub-chat"
   | "hub-presence"
   | "hub-host"
-  | "hub-status";
+  | "hub-status"
+  | "hub-chat-updated"
+  | "hub-signal";
 
 /** Everything the UI needs from the app. Tauri in the app, a mock in the browser. */
 export interface Backend {

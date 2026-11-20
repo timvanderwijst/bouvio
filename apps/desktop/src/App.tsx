@@ -12,11 +12,12 @@ import { Panel } from "./components/Panel";
 import { Rail } from "./components/Rail";
 import { Sidebar } from "./components/Sidebar";
 import { useT } from "./i18n";
-import { extOverlays, findPage } from "./ext/areas";
+import { extOverlays, findPage, useExtVersion } from "./ext/areas";
 import { applyTheme, useStore, useWorkspaceThreads } from "./store";
 
 export function App() {
   const t = useT();
+  useExtVersion();
   const ready = useStore((s) => s.ready);
   const view = useStore((s) => s.view);
   const panelOpen = useStore((s) => s.panel.open);
