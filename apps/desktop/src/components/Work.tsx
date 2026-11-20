@@ -42,14 +42,18 @@ export function IssueIcon({ status, size = 14 }: { status: IssueStatus; size?: n
   );
 }
 
-export function IssuesPage() {
+export function IssuesPage({ sub }: { sub?: string } = {}) {
   const t = useT();
   const load = useStore((s) => s.load);
   const data = useWsData();
   const setDialog = useStore((s) => s.setDialog);
   const notify = useStore((s) => s.notify);
   const [filter, setFilter] = useState<"active" | "backlog" | "done">("active");
-  const [open, setOpen] = useState<string | null>(null);
+  // Search and links can open one issue directly.
+  const [open, setOpen] = useState<string | null>(sub ?? null);
+  useEffect(() => {
+    if (sub) setOpen(sub);
+  }, [sub]);
   const [syncing, setSyncing] = useState(false);
   useEffect(() => {
     load("issues");

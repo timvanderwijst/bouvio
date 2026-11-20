@@ -34,6 +34,8 @@ const LOCAL_ONLY: &[&str] = &[
     "export_workspace",
     "import_workspace",
     "create_workspace_from_template",
+    "import_file",
+    "set_skill_sources",
 ];
 
 impl Runner {

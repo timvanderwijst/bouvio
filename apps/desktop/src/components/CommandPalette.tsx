@@ -4,6 +4,7 @@ import { getLang, setLang, useT } from "../i18n";
 import { useStore } from "../store";
 import { PixelAvatar } from "./PixelAvatar";
 import { extCommands, extPages } from "../ext/areas";
+import { kindLabel, openHit, useSearch } from "./knowledge/search";
 
 interface Cmd {
   id: string;
@@ -105,9 +106,37 @@ export function CommandPalette() {
               {c.hint && <span className="menu-hint">{c.hint}</span>}
             </button>
           ))}
-          {found.length === 0 && <div className="empty small">{t("palette.noResults")}</div>}
+          <SearchResults query={q} offset={found.length} index={i} setIndex={setI} />
+          {found.length === 0 && q.trim().length < 2 && <div className="empty small">{t("palette.noResults")}</div>}
         </div>
       </div>
     </div>
+  );
+}
+
+/** Full-text and semantic hits from the knowledge index, below the commands. */
+function SearchResults({ query, offset, index, setIndex }: { query: string; offset: number; index: number; setIndex: (i: number) => void }) {
+  const t = useT();
+  const setPalette = useStore((s) => s.setPalette);
+  const { results } = useSearch(query.trim().length >= 2 ? query : "", { limit: 8 });
+  if (!results.length) return null;
+  return (
+    <>
+      <div className="palette-sep">{t("palette.search")}</div>
+      {results.map((h, j) => (
+        <button
+          key={`${h.kind}:${h.id}`}
+          className={`menu-item ${offset + j === index ? "hot" : ""}`}
+          onMouseEnter={() => setIndex(offset + j)}
+          onClick={() => {
+            openHit(h);
+            setPalette(false);
+          }}
+        >
+          <span className="menu-label truncate">{h.title}</span>
+          <span className="menu-hint">{kindLabel(h.kind)}</span>
+        </button>
+      ))}
+    </>
   );
 }

@@ -143,6 +143,7 @@ export const enMore = {
   "board.selected": "{count, plural, one {# selected} other {# selected}}",
   "board.variantPrompt": "Make 2 variants of this",
 
+  "palette.search": "In this workspace",
   "common.save": "Save",
   "common.saved": "Saved",
   "common.delete": "Delete",
@@ -275,6 +276,7 @@ export const nlMore: Partial<Record<MoreKey, string>> = {
   "board.ask": "Vraag iets over het bord of de selectie",
   "board.selected": "{count} geselecteerd",
   "board.variantPrompt": "Maak hier 2 varianten van",
+  "palette.search": "In deze workspace",
   "common.save": "Opslaan",
   "common.saved": "Opgeslagen",
   "common.delete": "Verwijderen",

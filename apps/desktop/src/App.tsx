@@ -101,11 +101,11 @@ function PageView() {
       {view.kind === "threads" && <ThreadsPage />}
       {view.kind === "rail" && view.page === "runners" && <RunnersPage />}
       {view.kind === "rail" && view.page === "people" && <PeoplePage />}
-      {view.kind === "page" && view.page === "issues" && <IssuesPage />}
+      {view.kind === "page" && view.page === "issues" && <IssuesPage sub={view.sub} />}
       {view.kind === "page" && view.page === "pullRequests" && <PullRequestsPage />}
       {view.kind === "page" && view.page === "automations" && <AutomationsPage />}
       {view.kind === "page" && view.page === "studio" && <StudioPage sub={view.sub} />}
-      {view.kind === "page" && view.page === "files" && <FilesPage />}
+      {view.kind === "page" && view.page === "files" && <FilesPage sub={view.sub} />}
       {view.kind === "page" && view.page === "knowledge" && <KnowledgePage />}
       {view.kind === "page" && view.page === "chat" && <ExtRedirect id="comms.chat" />}
       {view.kind === "board" && <BoardView id={view.id} />}

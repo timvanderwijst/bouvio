@@ -581,7 +581,7 @@ pub fn required_role(method: &str) -> Role {
         m if m.starts_with("list_") || m.starts_with("get_") || m.starts_with("read_") || m.starts_with("search") => Role::Viewer,
         "update_board" | "doc_update" | "add_review_comment" | "resolve_review_comment" | "form_submit" => Role::Commenter,
         "send_message" => Role::Prompter,
-        "workspace_settings_set" | "create_automation" | "update_automation" | "delete_automation" | "export_workspace" | "set_budget" => Role::Admin,
+        "workspace_settings_set" | "install_mcp" | "remove_mcp" | "create_automation" | "update_automation" | "delete_automation" | "export_workspace" | "set_budget" => Role::Admin,
         _ => Role::Operator,
     }
 }

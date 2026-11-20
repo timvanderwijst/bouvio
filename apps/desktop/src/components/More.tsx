@@ -20,12 +20,13 @@ interface Preview {
   data_url?: string;
 }
 
-export function FilesPage() {
+export function FilesPage({ sub }: { sub?: string } = {}) {
   const t = useT();
   const ws = useWorkspace();
-  const [dir, setDir] = useState("");
+  // `sub` is a path to open, e.g. from search.
+  const [dir, setDir] = useState(sub ? sub.split("/").slice(0, -1).join("/") : "");
   const [entries, setEntries] = useState<FileEntry[] | null>(null);
-  const [file, setFile] = useState<string | null>(null);
+  const [file, setFile] = useState<string | null>(sub ?? null);
   const [preview, setPreview] = useState<Preview | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
