@@ -2467,6 +2467,48 @@ mod tests {
         assert_eq!(hits[0].workspace_id, ws.id);
     }
 
+    #[tokio::test]
+    async fn semantic_hits_fuse_with_keywords() {
+        let dir = tempfile::tempdir().unwrap();
+        let r = Runner::open(dir.path()).unwrap();
+        // A toy embedder: one dimension per known topic word.
+        let topics = ["cat", "kitten", "dog", "invoice", "money"];
+        let embed: crate::ext::EmbedFn = Arc::new(move |texts: Vec<String>| {
+            Box::pin(async move {
+                Ok(texts
+                    .iter()
+                    .map(|t| {
+                        let t = t.to_lowercase();
+                        let mut v: Vec<f32> = topics.iter().map(|w| t.matches(w).count() as f32).collect();
+                        // cats and kittens are the same topic here
+                        let pets = v[0] + v[1];
+                        v[0] = pets;
+                        v[1] = pets;
+                        v.push(0.01);
+                        v
+                    })
+                    .collect())
+            })
+        });
+        *r.hooks.embed.lock().unwrap() = Some(embed);
+        let ws = r.create_workspace("W".into(), None).unwrap();
+        index(&r, ws.id, "note", "a", "Pets", "My kitten sleeps all day.");
+        index(&r, ws.id, "note", "b", "Bills", "Pay the invoice before Friday, money is tight.");
+        assert_eq!(kb_of(&r).pending_for(ws.id), 2);
+        while embed_some(&r).await {}
+        let ix = kb_of(&r).open(ws.id).unwrap();
+        assert_eq!(ix.vectors.lock().unwrap().entries.len(), 2);
+        ix.flush().unwrap();
+        assert!(dir.path().join("knowledge").join(ws.id.to_string()).join("vectors.bin").exists());
+
+        // "cat" never appears as a word, but the vectors know it means the kitten note.
+        let hits = search(&r, &json!({ "workspace_id": ws.id, "query": "cat" })).await.unwrap();
+        assert_eq!(hits.len(), 1);
+        assert_eq!(hits[0].id, "a");
+        assert!(hits[0].snippet.text.contains("kitten"));
+        assert_eq!(status(&r, ws.id).vectors, 2);
+    }
+
     /// `cargo test --release -p bouvio-runner search_is_fast -- --ignored`
     #[test]
     #[ignore]

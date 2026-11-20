@@ -8,7 +8,8 @@ import { area as platform } from "../components/platform";
 import { useSyncExternalStore } from "react";
 import type { ExtArea, ExtPage } from "./types";
 
-const BUILT_IN: ExtArea[] = [local, knowledge, office, comms, dev, platform, personal];
+// Order matters for Home blocks: the brief comes first.
+const BUILT_IN: ExtArea[] = [personal, local, knowledge, office, comms, dev, platform];
 
 /** Built-in areas plus whatever plugins registered at runtime. */
 export let AREAS: ExtArea[] = [...BUILT_IN];

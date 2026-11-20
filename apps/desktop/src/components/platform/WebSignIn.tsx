@@ -105,3 +105,23 @@ function initialSignInStep(): "email" | "paste" {
     return "email";
   }
 }
+
+/** Settings → Account in the web client: who is signed in, and a way out. */
+export function WebAccount() {
+  const t = useT();
+  const user = useStore((s) => s.hub.user);
+  return (
+    <section className="set-group">
+      <h2>{t("platform.web.account")}</h2>
+      <div className="set-row">
+        <span className="pf-col">
+          <span>{user?.name ?? "–"}</span>
+          {user && <span className="pf-hint">{user.email}</span>}
+        </span>
+        <button className="btn small" onClick={() => backend.hub.logout().catch((e) => useStore.getState().notify(String(e)))}>
+          {t("platform.web.signOut")}
+        </button>
+      </div>
+    </section>
+  );
+}

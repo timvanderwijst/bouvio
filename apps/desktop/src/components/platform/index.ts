@@ -5,6 +5,7 @@ import { PlatformOverlay } from "./Overlay";
 import { PluginsSettings } from "./PluginsSettings";
 import { usePlatform } from "./state";
 import { UpdatesSettings } from "./Updates";
+import { WebAccount } from "./WebSignIn";
 import { target } from "../../backend";
 import "./platform.css";
 
@@ -14,11 +15,13 @@ const desktop = target !== "web";
 
 export const area: ExtArea = {
   id: "platform",
-  settings: [
-    { id: "platform.updates", component: UpdatesSettings },
-    { id: "platform.backup", component: BackupSettings },
-    { id: "platform.plugins", component: PluginsSettings },
-  ],
+  settings: desktop
+    ? [
+        { id: "platform.updates", component: UpdatesSettings },
+        { id: "platform.backup", component: BackupSettings },
+        { id: "platform.plugins", component: PluginsSettings },
+      ]
+    : [{ id: "platform.account", component: WebAccount }],
   commands: desktop
     ? [
         { id: "platform.export", label: "platform.backup.export", icon: Archive, run: () => void exportWorkspace() },

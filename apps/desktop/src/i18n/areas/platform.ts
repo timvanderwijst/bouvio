@@ -70,6 +70,8 @@ export const en: Record<string, string> = {
   "platform.web.back": "Back",
   "platform.web.menu": "Menu",
   "platform.web.desktopOnly": "Available in the desktop app",
+  "platform.web.account": "Account",
+  "platform.web.signOut": "Sign out",
 };
 
 export const nl: Record<string, string> = {
@@ -138,4 +140,6 @@ export const nl: Record<string, string> = {
   "platform.web.back": "Terug",
   "platform.web.menu": "Menu",
   "platform.web.desktopOnly": "Beschikbaar in de desktop-app",
+  "platform.web.account": "Account",
+  "platform.web.signOut": "Uitloggen",
 };

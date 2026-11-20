@@ -32,6 +32,7 @@ export function ChatComposer({
   onSend,
   autoFocus,
   draftKey,
+  captainHint = true,
 }: {
   placeholder: string;
   people: Mentionable[];
@@ -42,6 +43,8 @@ export function ChatComposer({
   autoFocus?: boolean;
   /** Keeps a draft per channel or thread while the page is open. */
   draftKey: string;
+  /** Say that `@Captain …` at the start runs on the host (top-level messages only). */
+  captainHint?: boolean;
 }) {
   const t = useT();
   const [text, setText] = useState(() => drafts.get(draftKey) ?? "");
@@ -116,7 +119,7 @@ export function ChatComposer({
 
   return (
     <div className="cm-composer-wrap">
-      {captainLead?.captain && (
+      {captainHint && captainLead?.captain && (
         <div className="cm-composer-hint">
           <PixelAvatar seed={captainLead.captain.avatar_seed} size={14} />
           {hostName ? t("comms.captainRunsOn", { name: captainLead.name, host: hostName }) : t("comms.captainRunsHere", { name: captainLead.name })}

@@ -5,11 +5,11 @@
 import type { HubStatus } from "../protocol/HubStatus";
 import type { HubUser } from "../protocol/HubUser";
 import type { Workspace } from "../protocol/Workspace";
+import { t } from "../i18n";
 import type { Backend, Unlisten } from "./types";
 import { RpcTable, eventFor, toWorkspaces } from "./web-rpc";
 
 const TOKEN_KEY = "bouvio.hub.token";
-const DESKTOP_ONLY = "Available in the desktop app";
 
 const store = {
   get(): string | null {
@@ -174,7 +174,7 @@ async function rpc<T>(workspaceId: string | null, method: string, params: Record
     await authed();
     return toWorkspaces(await request("GET", "/workspaces")) as T;
   }
-  if (!workspaceId) throw new Error(DESKTOP_ONLY);
+  if (!workspaceId) throw new Error(t("platform.web.desktopOnly"));
   await authed();
   await connect();
   const { id, promise } = table.open<T>();
@@ -191,7 +191,7 @@ if (token) connect().catch(() => {});
 // ---- the Backend ---------------------------------------------------------------------------
 
 const desktopOnly = async (): Promise<never> => {
-  throw new Error(DESKTOP_ONLY);
+  throw new Error(t("platform.web.desktopOnly"));
 };
 
 export const webBackend: Backend = {

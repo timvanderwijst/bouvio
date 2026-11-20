@@ -5,12 +5,14 @@ import { useT } from "../i18n";
 import type { Automation } from "../protocol/Automation";
 import type { Member } from "../protocol/Member";
 import type { Role } from "../protocol/Role";
+import type { Workspace } from "../protocol/Workspace";
 import { rpc, useStore, useWorkspace, useWorkspaceCaptains, useWsData } from "../store";
 import { Dialog } from "./Dialog";
 import { Menu } from "./Menu";
 import { PixelAvatar } from "./PixelAvatar";
 import { personColor } from "./Sidebar";
 import { describeCron } from "./Work";
+import { TemplatePicker } from "./platform/TemplatePicker";
 
 export function Dialogs() {
   const dialog = useStore((s) => s.dialog);
@@ -28,8 +30,10 @@ function WorkspaceDialog() {
   const t = useT();
   const setDialog = useStore((s) => s.setDialog);
   const create = useStore((s) => s.createWorkspace);
+  const notify = useStore((s) => s.notify);
   const [name, setName] = useState("");
   const [root, setRoot] = useState<string | null>(null);
+  const [template, setTemplate] = useState<string | null>(null);
   const [shake, setShake] = useState(false);
 
   const pick = async () => {
@@ -50,7 +54,14 @@ function WorkspaceDialog() {
             setTimeout(() => setShake(false), 400);
             return;
           }
-          create(name.trim(), root);
+          if (!template) return create(name.trim(), root);
+          // A template sets up captains, issues and automations in one go.
+          rpc<Workspace>("create_workspace_from_template", { name: name.trim(), root, template_id: template }, null)
+            .then(async (w) => {
+              useStore.setState((s) => ({ workspaces: [...s.workspaces, w], dialog: null }));
+              await useStore.getState().selectWorkspace(w.id);
+            })
+            .catch((e) => notify(String(e)));
         }}
       >
         <label className="field">
@@ -66,6 +77,7 @@ function WorkspaceDialog() {
             </button>
           </div>
         </div>
+        <TemplatePicker value={template} onChange={(id) => setTemplate(id)} blank />
         <div className="form-actions">
           <button type="button" className="btn ghost" onClick={() => setDialog(null)}>
             {t("common.cancel")}

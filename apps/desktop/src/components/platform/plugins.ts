@@ -112,7 +112,10 @@ async function load(info: PluginInfo) {
   try {
     const source = await backend.app<string>("plugin_source", { id });
     const url = URL.createObjectURL(new Blob([source], { type: "text/javascript" }));
-    const module = await import(/* @vite-ignore */ url);
+    const module = await import(/* @vite-ignore */ url).catch((e) => {
+      URL.revokeObjectURL(url);
+      throw e;
+    });
     loaded.set(id, { info, module, url, areaId: `plugin:${id}` });
     await module.activate?.(apiFor(info, await registry()));
   } catch (e) {
@@ -134,8 +137,16 @@ async function unload(id: string) {
   URL.revokeObjectURL(l.url);
 }
 
-/** Bring loaded plugins in line with what is enabled on disk. Returns the list. */
-export async function syncPlugins(reload = false): Promise<PluginInfo[]> {
+let queue: Promise<unknown> = Promise.resolve();
+
+/** Bring loaded plugins in line with what is enabled on disk. Returns the list. Calls run one at a time. */
+export function syncPlugins(reload = false): Promise<PluginInfo[]> {
+  const run = queue.then(() => sync(reload));
+  queue = run.catch(() => {});
+  return run;
+}
+
+async function sync(reload: boolean): Promise<PluginInfo[]> {
   if (target !== "desktop") return target === "preview" ? backend.app<PluginInfo[]>("plugins_list").catch(() => []) : [];
   const list = await backend.app<PluginInfo[]>("plugins_list").catch(() => [] as PluginInfo[]);
   const want = new Map(list.filter((p) => p.enabled && !p.error).map((p) => [p.manifest.id, p]));

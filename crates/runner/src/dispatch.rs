@@ -25,7 +25,16 @@ fn ok<T: serde::Serialize>(v: T) -> Result<Value> {
 }
 
 /// Methods that only make sense on your own machine, never through the hub.
-const LOCAL_ONLY: &[&str] = &["list_workspaces", "create_workspace", "update_workspace", "detect_harnesses"];
+const LOCAL_ONLY: &[&str] = &[
+    "list_workspaces",
+    "create_workspace",
+    "update_workspace",
+    "detect_harnesses",
+    // These read or write arbitrary paths on the host.
+    "export_workspace",
+    "import_workspace",
+    "create_workspace_from_template",
+];
 
 impl Runner {
     pub async fn call(self: &Arc<Self>, method: &str, params: Value, actor: &str) -> Result<Value> {

@@ -1,4 +1,5 @@
 import { RefreshCw, Rocket } from "lucide-react";
+import { target } from "../../backend";
 import { getLang, useT } from "../../i18n";
 import { checkNow, install, restart } from "./updates";
 import { usePlatform } from "./state";
@@ -16,7 +17,7 @@ function ago(at: number) {
 export function UpdatesSettings() {
   const t = useT();
   const { version, phase, next, progress, error, checkedAt } = usePlatform();
-  if (phase === "unknown" && !version) return null;
+  if (target === "web" || (phase === "unknown" && !version)) return null;
 
   const pct = progress === null ? null : Math.round(progress * 100);
   return (
@@ -24,7 +25,7 @@ export function UpdatesSettings() {
       <h2>{t("platform.updates")}</h2>
       <div className="set-row">
         <span>{t("platform.updates.version")}</span>
-        <span className="set-state">{version ?? "web"}</span>
+        <span className="set-state">{version ?? "–"}</span>
       </div>
 
       {phase === "off" ? (

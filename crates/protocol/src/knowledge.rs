@@ -59,7 +59,7 @@ pub struct KnowledgeIndexStatus {
     pub docs: u32,
     /// Text chunks with an embedding.
     pub vectors: u32,
-    /// Chunks still waiting for an embedding.
+    /// Items still waiting for an embedding.
     pub pending: u32,
     /// Whether an embedding model is plugged in.
     pub semantic: bool,
