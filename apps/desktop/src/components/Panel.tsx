@@ -5,6 +5,7 @@ import type { Thread } from "../protocol/Thread";
 import { rpc, useStore, useWorkspaceCaptains, useWorkspaceThreads, type PanelTab } from "../store";
 import { ArtifactPreview } from "./Studio";
 import { DevBar } from "./ThreadExtras";
+import { extPanels } from "../ext/areas";
 import { parseDiff, type DiffFile } from "../lib/diff";
 import { ago } from "../lib/format";
 import { PixelAvatar } from "./PixelAvatar";
@@ -19,6 +20,7 @@ export function Panel({ thread }: { thread: Thread | null }) {
     { id: "overview", label: t("panel.overview") },
     { id: "changes", label: t("panel.changes") },
     { id: "terminal", label: t("panel.terminal") },
+    ...extPanels().map((p) => ({ id: p.id as PanelTab, label: t(p.label) })),
     ...(panel.artifact ? [{ id: "preview" as PanelTab, label: t("panel.preview") }] : []),
   ];
   const bar = useRef<HTMLDivElement>(null);
@@ -55,6 +57,11 @@ export function Panel({ thread }: { thread: Thread | null }) {
         {panel.tab === "changes" && <Changes thread={thread} />}
         {panel.tab === "terminal" && (thread ? <Terminal key={thread.id} threadId={thread.id} /> : <Empty text={t("panel.nothing")} />)}
         {panel.tab === "preview" && panel.artifact && <ArtifactPreview key={panel.artifact.id} artifact={panel.artifact} />}
+        {extPanels()
+          .filter((p) => p.id === panel.tab)
+          .map((p) => (
+            <p.component key={p.id} thread={thread} />
+          ))}
       </div>
     </section>
   );

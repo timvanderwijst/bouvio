@@ -23,6 +23,19 @@ base64 = "0.22"
 ignore = "0.4"
 tokio-tungstenite = { version = "0.26", features = ["rustls-tls-webpki-roots"] }
 futures-util = "0.3"
+tantivy = "0.27.0"
+yrs = "0.28.2"
+pdf-extract = "0.12.1"
+calamine = "0.38.0"
+zip = "9.8.0"
+quick-xml = "0.42.0"
+scraper = "0.29.0"
+axum = "0.8.9"
+futures = "0.3.34"
+regex = "1.13.2"
+sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio", "sqlite", "postgres", "mysql", "tls-rustls-ring-webpki"] }
+
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "stream"] }
 
 [dev-dependencies]
 tempfile = "3"

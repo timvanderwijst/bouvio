@@ -7,6 +7,7 @@
 pub mod control;
 pub mod detect;
 pub mod dispatch;
+pub mod ext;
 pub mod git;
 pub mod harness;
 pub mod hub;
@@ -56,6 +57,8 @@ pub struct Runner {
     pub(crate) dev: Mutex<HashMap<Uuid, (DevServer, tokio::process::Child)>>,
     /// Extra harnesses plugged in by the app (the API agent loop).
     api_factory: Mutex<Option<ApiFactory>>,
+    /// Model access the app plugs in for feature areas (embeddings, completions).
+    pub hooks: ext::Hooks,
     pub terminals: Terminals,
 }
 
@@ -97,6 +100,7 @@ impl Runner {
             self_exe: Mutex::new(std::env::current_exe().ok()),
             dev: Mutex::new(HashMap::new()),
             api_factory: Mutex::new(None),
+            hooks: ext::Hooks::default(),
             terminals: Terminals::new(),
         }))
     }
@@ -128,6 +132,7 @@ impl Runner {
         let addr = control::serve(self.clone()).await?;
         let _ = self.control.set(addr);
         work::spawn_scheduler(self.clone());
+        ext::start(self);
         Ok(())
     }
 

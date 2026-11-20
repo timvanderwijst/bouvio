@@ -8,6 +8,15 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 use uuid::Uuid;
 
+// Each feature area keeps its own types in its own file.
+pub mod comms;
+pub mod dev;
+pub mod knowledge;
+pub mod local;
+pub mod office;
+pub mod personal;
+pub mod platform;
+
 /// A CLI agent (or our own API loop) that actually runs a thread.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
 #[serde(rename_all = "snake_case")]
@@ -479,6 +488,14 @@ pub struct ChatMessage {
     pub author: HubUser,
     pub text: String,
     pub at: DateTime<Utc>,
+    /// Reply in a thread under this message.
+    #[serde(default)]
+    pub parent: Option<Uuid>,
+    /// Emoji → user ids who reacted with it.
+    #[serde(default)]
+    pub reactions: Vec<(String, Vec<Uuid>)>,
+    #[serde(default)]
+    pub pinned: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
@@ -520,6 +537,13 @@ pub enum ClientMsg {
     Publish { workspace_id: Uuid, kind: String, payload: serde_json::Value },
     Chat { workspace_id: Uuid, channel: String, text: String },
     Presence { workspace_id: Uuid, viewing: Option<String>, cursor: Option<(f64, f64)> },
+    /// A reply in a chat thread.
+    ChatReply { workspace_id: Uuid, parent: Uuid, text: String },
+    React { workspace_id: Uuid, message_id: Uuid, emoji: String },
+    Pin { workspace_id: Uuid, message_id: Uuid, pinned: bool },
+    /// Peer-to-peer signalling for huddles (WebRTC offers, answers, ICE), relayed
+    /// to one member (`to`) or to everyone in the workspace.
+    Signal { workspace_id: Uuid, to: Option<Uuid>, kind: String, payload: serde_json::Value },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
@@ -532,6 +556,9 @@ pub enum ServerMsg {
     RpcResult { id: u64, ok: Option<serde_json::Value>, err: Option<String> },
     Event { workspace_id: Uuid, kind: String, payload: serde_json::Value },
     Chat { message: ChatMessage },
+    /// A message changed: reactions, pin.
+    ChatUpdated { message: ChatMessage },
+    Signal { workspace_id: Uuid, from: HubUser, kind: String, payload: serde_json::Value },
     Presence { presence: Presence, online: bool },
     /// The runner hosting a workspace came online or went away.
     HostStatus { workspace_id: Uuid, online: bool },
@@ -539,14 +566,16 @@ pub enum ServerMsg {
 }
 
 /// Lowest role that may call a runner method through the hub.
+///
+/// Reading is open to viewers by naming convention (`list_*`, `get_*`, `read_*`,
+/// `search*`); everything not named here needs an operator.
 pub fn required_role(method: &str) -> Role {
     match method {
-        "list_threads" | "thread_events" | "list_captains" | "thread_diff" | "list_issues" | "list_pull_requests"
-        | "list_artifacts" | "read_artifact" | "list_boards" | "get_board" | "workspace_settings" | "list_files"
-        | "read_file" | "list_automations" | "dev_servers" => Role::Viewer,
-        "update_board" => Role::Commenter,
+        "thread_events" | "thread_diff" | "workspace_settings" | "dev_servers" | "git_graph" | "ci_runs" | "thread_replay" | "cost_summary" => Role::Viewer,
+        m if m.starts_with("list_") || m.starts_with("get_") || m.starts_with("read_") || m.starts_with("search") => Role::Viewer,
+        "update_board" | "doc_update" | "add_review_comment" | "form_submit" => Role::Commenter,
         "send_message" => Role::Prompter,
-        "workspace_settings_set" | "create_automation" | "update_automation" | "delete_automation" => Role::Admin,
+        "workspace_settings_set" | "create_automation" | "update_automation" | "delete_automation" | "export_workspace" | "set_budget" => Role::Admin,
         _ => Role::Operator,
     }
 }

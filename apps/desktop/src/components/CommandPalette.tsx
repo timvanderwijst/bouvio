@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { getLang, setLang, useT } from "../i18n";
 import { useStore } from "../store";
 import { PixelAvatar } from "./PixelAvatar";
+import { extCommands, extPages } from "../ext/areas";
 
 interface Cmd {
   id: string;
@@ -59,6 +60,9 @@ export function CommandPalette() {
         run: () => (s.go({ kind: "page", page }), close()),
       })),
     ];
+    for (const c of extCommands()) list.push({ id: `x${c.id}`, label: t(c.label), icon: <c.icon size={15} />, run: () => (c.run(), close()) });
+    for (const p of [...extPages("workspace"), ...extPages("rail")])
+      list.push({ id: `xp${p.id}`, label: t(p.label), icon: <p.icon size={15} />, run: () => (s.go({ kind: "ext", id: p.id }), close()) });
     for (const w of s.workspaces) list.push({ id: `w${w.id}`, label: w.name, hint: t("nav.workspaces"), icon: <Layers size={15} />, run: () => (s.selectWorkspace(w.id), close()) });
     for (const [wid, cs] of Object.entries(s.captains))
       for (const c of cs) list.push({ id: `c${c.id}`, label: c.name, hint: ws(wid), icon: <PixelAvatar seed={c.avatar_seed} size={15} />, run: () => (s.openCaptain(c), close()) });

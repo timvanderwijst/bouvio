@@ -24,6 +24,8 @@ anyhow.workspace = true
 tauri = { version = "2", features = [] }
 tauri-plugin-dialog = "2"
 tauri-plugin-opener = "2"
+tauri-plugin-notification = "2"
+futures = "0.3"
 bouvio-agent = { path = "../../../crates/agent" }
 async-trait = "0.1"
 tokio-util = "0.7"

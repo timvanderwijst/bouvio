@@ -12,6 +12,7 @@ import { Panel } from "./components/Panel";
 import { Rail } from "./components/Rail";
 import { Sidebar } from "./components/Sidebar";
 import { useT } from "./i18n";
+import { extOverlays, findPage } from "./ext/areas";
 import { applyTheme, useStore, useWorkspaceThreads } from "./store";
 
 export function App() {
@@ -53,7 +54,9 @@ export function App() {
   }, [theme]);
 
   const inWorkspace = view.kind === "thread" || view.kind === "draft";
-  const showSidebar = !!workspaceId && view.kind !== "home" && view.kind !== "workspaces" && view.kind !== "settings" && view.kind !== "rail";
+  const extPage = view.kind === "ext" ? findPage(view.id) : undefined;
+  const showSidebar =
+    !!workspaceId && view.kind !== "home" && view.kind !== "workspaces" && view.kind !== "settings" && view.kind !== "rail" && extPage?.place !== "rail";
   const toast = useStore((s) => s.toast);
 
   return (
@@ -72,6 +75,9 @@ export function App() {
           {toast}
         </div>
       )}
+      {extOverlays().map((o) => (
+        <o.component key={o.id} />
+      ))}
       <Dialogs />
       <CommandPalette />
     </div>
@@ -81,7 +87,7 @@ export function App() {
 function PageView() {
   const view = useStore((s) => s.view);
   return (
-    <section className={`main page-host ${view.kind === "board" || (view.kind === "page" && view.page === "chat") ? "flush" : ""}`}>
+    <section className={`main page-host ${view.kind === "board" || (view.kind === "page" && view.page === "chat") || (view.kind === "ext" && findPage(view.id)?.flush) ? "flush" : ""}`}>
       {view.kind === "home" && <Home />}
       {view.kind === "settings" && <Settings />}
       {view.kind === "workspaces" && <WorkspacesPage />}
@@ -96,6 +102,10 @@ function PageView() {
       {view.kind === "page" && view.page === "knowledge" && <KnowledgePage />}
       {view.kind === "page" && view.page === "chat" && <ChatPage />}
       {view.kind === "board" && <BoardView id={view.id} />}
+      {view.kind === "ext" && (() => {
+        const P = findPage(view.id);
+        return P ? <P.component sub={view.sub} /> : null;
+      })()}
     </section>
   );
 }

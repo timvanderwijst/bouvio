@@ -1,0 +1,17 @@
+//! Communication: what the runner does for chat (an @captain in chat starts a thread) and the inbox.
+
+use crate::Runner;
+use anyhow::Result;
+use serde_json::Value;
+use std::sync::Arc;
+use uuid::Uuid;
+
+pub async fn call(_r: &Arc<Runner>, _method: &str, _params: &Value, _actor: &str) -> Option<Result<Value>> {
+    None
+}
+
+pub fn workspace_of(_r: &Runner, _method: &str, _params: &Value) -> Option<Result<Uuid>> {
+    None
+}
+
+pub fn start(_r: &Arc<Runner>) {}

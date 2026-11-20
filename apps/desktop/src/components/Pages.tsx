@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import { LANGUAGES, getLang, setLang, useT, type Lang } from "../i18n";
 import { useStore, useWorkspaceCaptains, useWorkspaceThreads, type ThemePref } from "../store";
 import { HubSettings, ProviderSettings } from "./More";
+import { extHome, extSettings } from "../ext/areas";
 import { ago, cost } from "../lib/format";
 import { Overview } from "./Panel";
 import { PixelAvatar } from "./PixelAvatar";
@@ -23,6 +24,9 @@ export function Home() {
   return (
     <div className="page home">
       <h1 className="display">{t(greet, { name })}</h1>
+      {extHome().map((b) => (
+        <b.component key={b.id} />
+      ))}
       {workspaces.length === 0 ? (
         <div className="home-empty">
           <p>{t("home.empty")}</p>
@@ -173,6 +177,9 @@ export function Settings() {
       </section>
 
       <ProviderSettings />
+      {extSettings().map((b) => (
+        <b.component key={b.id} />
+      ))}
       <HubSettings />
 
       <section className="set-group">

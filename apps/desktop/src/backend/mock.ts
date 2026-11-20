@@ -15,7 +15,17 @@ import type { Issue } from "../protocol/Issue";
 import type { Member } from "../protocol/Member";
 import type { PullRequest } from "../protocol/PullRequest";
 import type { WorkspaceSettings } from "../protocol/WorkspaceSettings";
-import type { Backend, EventName } from "./types";
+import type { Backend } from "./types";
+import { listeners, mockFire } from "./mock-bus";
+import * as xComms from "./mock-ext/comms";
+import * as xDev from "./mock-ext/dev";
+import * as xKnowledge from "./mock-ext/knowledge";
+import * as xLocal from "./mock-ext/local";
+import * as xOffice from "./mock-ext/office";
+import * as xPersonal from "./mock-ext/personal";
+import * as xPlatform from "./mock-ext/platform";
+
+const EXT = [xComms, xDev, xKnowledge, xLocal, xOffice, xPersonal, xPlatform];
 
 const uid = () => crypto.randomUUID();
 const ago = (min: number) => new Date(Date.now() - min * 60_000).toISOString();
@@ -293,9 +303,9 @@ const members: Member[] = [
 ];
 
 const chat: ChatMessage[] = [
-  { id: uid(), workspace_id: B, channel: "general", author: isa, text: "The rail thread is close. Can someone check it on a small laptop screen?", at: ago(42) },
-  { id: uid(), workspace_id: B, channel: "general", author: tim, text: "On it. Also merged the draft fix.", at: ago(38) },
-  { id: uid(), workspace_id: B, channel: "general", author: noor, text: "Hub magic links are waiting on an SMTP choice — Resend?", at: ago(11) },
+  { id: uid(), workspace_id: B, channel: "general", author: isa, text: "The rail thread is close. Can someone check it on a small laptop screen?", at: ago(42), parent: null, reactions: [], pinned: false },
+  { id: uid(), workspace_id: B, channel: "general", author: tim, text: "On it. Also merged the draft fix.", at: ago(38), parent: null, reactions: [], pinned: false },
+  { id: uid(), workspace_id: B, channel: "general", author: noor, text: "Hub magic links are waiting on an SMTP choice — Resend?", at: ago(11), parent: null, reactions: [], pinned: false },
 ];
 
 const files: Record<string, { name: string; dir: boolean; size: number }[]> = {
@@ -322,8 +332,7 @@ const files: Record<string, { name: string; dir: boolean; size: number }[]> = {
 // ---- the fake runner ---------------------------------------------------------------------------
 
 type Cb = (p: unknown) => void;
-const listeners = new Map<EventName, Set<Cb>>();
-const fire = (e: EventName, p: unknown) => listeners.get(e)?.forEach((f) => f(p));
+const fire = mockFire;
 
 function push(threadId: string, event: ThreadEvent) {
   const list = events.get(threadId) ?? [];
@@ -561,12 +570,20 @@ const handlers: Record<string, (p: Record<string, any>) => unknown> = {
   stop_dev_server: () => null,
 };
 
+Object.assign(handlers, ...EXT.map((x) => x.handlers));
+const appHandlers: Record<string, (p: Record<string, any>) => unknown> = Object.assign({}, ...EXT.map((x) => x.app));
+
 export const mockBackend: Backend = {
   live: false,
   async rpc(_ws, method, params = {}) {
     const h = handlers[method];
     if (!h) throw new Error(`preview: ${method} is not available`);
     await wait(30);
+    return (await h(params)) as never;
+  },
+  async app(method, params = {}) {
+    const h = appHandlers[method];
+    if (!h) throw new Error(`preview: ${method} needs the desktop app`);
     return (await h(params)) as never;
   },
   on(event, cb) {
@@ -639,7 +656,7 @@ export const mockBackend: Backend = {
     },
     async send(msg) {
       if (msg.t === "chat") {
-        const m: ChatMessage = { id: uid(), workspace_id: msg.workspace_id, channel: msg.channel, author: tim, text: msg.text, at: new Date().toISOString() };
+        const m: ChatMessage = { id: uid(), workspace_id: msg.workspace_id, channel: msg.channel, author: tim, text: msg.text, at: new Date().toISOString(), parent: null, reactions: [], pinned: false };
         chat.push(m);
         fire("hub-chat", m);
       }

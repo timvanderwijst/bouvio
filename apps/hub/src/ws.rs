@@ -187,6 +187,10 @@ impl Ctx<'_> {
                     .broadcast(workspace_id, &msg, Except::User(self.user.id))
                     .await;
             }
+            // Chat threads, reactions, pins and huddle signalling: built by the comms work.
+            ClientMsg::ChatReply { .. } | ClientMsg::React { .. } | ClientMsg::Pin { .. } | ClientMsg::Signal { .. } => {
+                self.error("not supported by this hub yet")
+            }
         }
     }
 
@@ -269,6 +273,9 @@ impl Ctx<'_> {
             author: self.user.clone(),
             text: text.to_string(),
             at: Utc::now(),
+            parent: None,
+            reactions: vec![],
+            pinned: false,
         };
         if let Err(e) = db::insert_chat(&self.st.db, &message).await {
             tracing::error!("chat insert: {e}");

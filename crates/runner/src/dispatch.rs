@@ -98,7 +98,10 @@ impl Runner {
             "start_dev_server" => ok(self.start_dev_server(th()?)?),
             "stop_dev_server" => ok(self.stop_dev_server(th()?)?),
 
-            m => bail!("unknown method `{m}`"),
+            m => match crate::ext::call(self, m, &params, actor).await {
+                Some(r) => r,
+                None => bail!("unknown method `{m}`"),
+            },
         }
     }
 
@@ -143,6 +146,9 @@ impl Runner {
             if let Ok(b) = self.get_board(id) {
                 return Ok(b.workspace_id);
             }
+        }
+        if let Some(r) = crate::ext::workspace_of(self, method, params) {
+            return r;
         }
         bail!("cannot tell which workspace `{method}` touches")
     }

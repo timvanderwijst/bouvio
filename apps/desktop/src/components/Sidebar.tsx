@@ -8,6 +8,8 @@ import { ago } from "../lib/format";
 import { PixelAvatar } from "./PixelAvatar";
 import { StatusIcon } from "./StatusIcon";
 import { BouvioMark } from "./Rail";
+import { extPages } from "../ext/areas";
+import type { ExtPage } from "../ext/types";
 
 export function Sidebar() {
   const t = useT();
@@ -53,6 +55,11 @@ export function Sidebar() {
           <List size={15} />
           <span>{t("ws.threads")}</span>
         </button>
+        {extPages("workspace")
+          .filter((p) => (p.order ?? 100) < 50)
+          .map((p) => (
+            <ExtNav key={p.id} page={p} />
+          ))}
         {pages.map((p) => (
           <button
             key={p.page}
@@ -66,6 +73,15 @@ export function Sidebar() {
         ))}
       </nav>
 
+      {extPages("workspace").some((p) => (p.order ?? 100) >= 50) && (
+        <nav className="sb-nav sb-more">
+          {extPages("workspace")
+            .filter((p) => (p.order ?? 100) >= 50)
+            .map((p) => (
+              <ExtNav key={p.id} page={p} />
+            ))}
+        </nav>
+      )}
       <div className="sb-scroll">
         <div className="sb-section">
           <button className="sb-heading" onClick={() => setCaptainsOpen((o) => !o)}>
@@ -205,6 +221,20 @@ function WorkspaceSwitcher() {
         </>
       )}
     </div>
+  );
+}
+
+function ExtNav({ page }: { page: ExtPage }) {
+  const t = useT();
+  const view = useStore((s) => s.view);
+  const go = useStore((s) => s.go);
+  const badge = page.useBadge?.();
+  return (
+    <button className={`sb-row ${view.kind === "ext" && view.id === page.id ? "active" : ""}`} onClick={() => go({ kind: "ext", id: page.id })}>
+      <page.icon size={15} />
+      <span className="truncate">{t(page.label)}</span>
+      {badge ? <span className="sb-count">{badge}</span> : null}
+    </button>
   );
 }
 

@@ -24,6 +24,7 @@ export const tauriBackend: Backend = {
   live: true,
   rpc: (workspaceId, method, params = {}) => invoke("rpc", { workspaceId, method, params, actor }),
   on: (event, cb) => sub(event, cb),
+  app: (method, params = {}) => invoke("app_call", { method, params }),
   pickFolder: () => invoke("pick_folder"),
   openUrl: (url) => openUrl(url),
   providers: () => invoke("providers"),

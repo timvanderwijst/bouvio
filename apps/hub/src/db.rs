@@ -370,6 +370,9 @@ pub async fn chat_page(
             author: user_from_row((uid, name, email, avatar)),
             text,
             at: from_ms(at),
+            parent: None,
+            reactions: vec![],
+            pinned: false,
         })
         .collect())
 }

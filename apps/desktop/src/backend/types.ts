@@ -28,7 +28,9 @@ export interface Backend {
 
   /** Any runner method; through the hub when someone else hosts the workspace. */
   rpc<T = unknown>(workspaceId: string | null, method: string, params?: Record<string, unknown>): Promise<T>;
-  on<T = unknown>(event: EventName, cb: (payload: T) => void): Unlisten;
+  on<T = unknown>(event: EventName | (string & {}), cb: (payload: T) => void): Unlisten;
+  /** Desktop-only methods of feature areas: local models, updates, plugins. */
+  app<T = unknown>(method: string, params?: Record<string, unknown>): Promise<T>;
 
   pickFolder(): Promise<string | null>;
   openUrl(url: string): Promise<void>;

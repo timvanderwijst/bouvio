@@ -32,11 +32,13 @@ export type View =
   | { kind: "page"; page: Page; sub?: string }
   | { kind: "rail"; page: RailPage }
   | { kind: "board"; id: string }
+  /** A page registered by a feature area (see src/ext). */
+  | { kind: "ext"; id: string; sub?: string }
   | { kind: "thread"; id: string }
   /** A thread that does not exist yet: the first message creates it. */
   | { kind: "draft"; captainId: string | null };
 
-export type PanelTab = "overview" | "changes" | "terminal" | "preview";
+export type PanelTab = "overview" | "changes" | "terminal" | "preview" | (string & {});
 export type ThemePref = "system" | "light" | "dark";
 
 export interface ComposerPrefs {

@@ -3,15 +3,24 @@ import { useSyncExternalStore } from "react";
 import { en, type MessageKey } from "./en";
 import { nl } from "./nl";
 import { enMore, nlMore, type MoreKey } from "./more";
+import * as aComms from "./areas/comms";
+import * as aDev from "./areas/dev";
+import * as aKnowledge from "./areas/knowledge";
+import * as aLocal from "./areas/local";
+import * as aOffice from "./areas/office";
+import * as aPersonal from "./areas/personal";
+import * as aPlatform from "./areas/platform";
+
+const AREA_MSGS = [aComms, aDev, aKnowledge, aLocal, aOffice, aPersonal, aPlatform];
 
 // English is complete; every other language falls back to it per message.
 // Adding a language = one file + one line here.
-type Key = MessageKey | MoreKey;
-const EN: Record<Key, string> = { ...en, ...enMore };
+type Key = MessageKey | MoreKey | (string & {});
+const EN: Record<string, string> = Object.assign({ ...en, ...enMore }, ...AREA_MSGS.map((a) => a.en));
 
 export const LANGUAGES = {
   en: { name: "English", messages: EN as Partial<Record<Key, string>> },
-  nl: { name: "Nederlands", messages: { ...nl, ...nlMore } as Partial<Record<Key, string>> },
+  nl: { name: "Nederlands", messages: Object.assign({ ...nl, ...nlMore }, ...AREA_MSGS.map((a) => a.nl)) as Partial<Record<Key, string>> },
 } as const;
 
 export type Lang = keyof typeof LANGUAGES;

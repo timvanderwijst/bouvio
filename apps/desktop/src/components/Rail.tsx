@@ -2,6 +2,7 @@ import { Home, Layers, Server, Settings, Users } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useT } from "../i18n";
 import { useStore, type View } from "../store";
+import { extPages } from "../ext/areas";
 
 /**
  * The outer layer: hidden until the pointer touches the left edge (or Ctrl+\),
@@ -34,11 +35,18 @@ export function Rail() {
     return () => window.removeEventListener("keydown", key);
   }, []);
 
-  const items: { view: View; icon: typeof Home; label: string; active: boolean }[] = [
+  const items: { view: View; icon: typeof Home; label: string; active: boolean; badge?: () => number | undefined }[] = [
     { view: { kind: "home" }, icon: Home, label: t("nav.home"), active: view.kind === "home" },
     { view: { kind: "workspaces" }, icon: Layers, label: t("nav.workspaces"), active: view.kind === "workspaces" },
     { view: { kind: "rail", page: "runners" }, icon: Server, label: t("nav.runners"), active: view.kind === "rail" && view.page === "runners" },
     { view: { kind: "rail", page: "people" }, icon: Users, label: t("nav.people"), active: view.kind === "rail" && view.page === "people" },
+    ...extPages("rail").map((p) => ({
+      view: { kind: "ext", id: p.id } as View,
+      icon: p.icon,
+      label: t(p.label),
+      active: view.kind === "ext" && view.id === p.id,
+      badge: p.useBadge,
+    })),
   ];
 
   return (
@@ -60,6 +68,7 @@ export function Rail() {
             aria-label={it.label}
           >
             <it.icon size={18} strokeWidth={1.75} />
+            {it.badge ? <RailBadge use={it.badge} /> : null}
           </button>
         ))}
         <div className="rail-spacer" />
@@ -77,6 +86,11 @@ export function Rail() {
       </nav>
     </>
   );
+}
+
+function RailBadge({ use }: { use: () => number | undefined }) {
+  const n = use();
+  return n ? <span className="rail-badge">{n > 99 ? "99+" : n}</span> : null;
 }
 
 /** Placeholder mark until the wordmark is designed: a b built from two rounded blocks. */

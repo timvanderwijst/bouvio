@@ -3,6 +3,7 @@
 //! for workspaces someone else hosts, through the hub.
 
 mod api;
+pub mod ext;
 mod hub;
 
 use base64::Engine;
@@ -23,9 +24,9 @@ fn err(e: impl std::fmt::Display) -> String {
     format!("{e:#}").trim_start_matches("Error: ").to_string()
 }
 
-struct App {
-    runner: Arc<Runner>,
-    hub: Hub,
+pub struct App {
+    pub runner: Arc<Runner>,
+    pub hub: Hub,
 }
 
 #[tauri::command]
@@ -41,6 +42,15 @@ async fn rpc(app: State<'_, Arc<App>>, workspace_id: Option<Uuid>, method: Strin
     // Own workspaces: the hub user name if signed in, so shared threads show who wrote.
     let name = app.hub.user.lock().unwrap().as_ref().map(|u| u.name.clone()).unwrap_or(actor);
     app.runner.call(&method, params, &name).await.map_err(err)
+}
+
+/// Desktop-only methods of the feature areas (local models, updates, plugins).
+#[tauri::command]
+async fn app_call(app: State<'_, Arc<App>>, method: String, params: Value) -> R<Value> {
+    match ext::call(app.inner(), &method, &params).await {
+        Some(r) => r.map_err(err),
+        None => Err(format!("unknown app method `{method}`")),
+    }
 }
 
 #[tauri::command]
@@ -238,8 +248,9 @@ fn forward_hub(handle: AppHandle, app: Arc<App>) {
 
 pub fn run() {
     let _ = tracing_subscriber::fmt().with_env_filter(tracing_subscriber::EnvFilter::from_default_env()).try_init();
-    tauri::Builder::default()
+    ext::plugins(tauri::Builder::default())
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             let dir = std::env::var_os("BOUVIO_DATA").map(PathBuf::from).unwrap_or_else(Runner::default_dir);
@@ -264,6 +275,7 @@ pub fn run() {
                 };
             });
             let state = Arc::new(App { hub: Hub::load(&runner), runner: runner.clone() });
+            ext::setup(&state, &h);
             forward_hub(h, state.clone());
             let s = state.clone();
             tauri::async_runtime::spawn(async move {
@@ -276,6 +288,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             rpc,
+            app_call,
             pick_folder,
             providers,
             set_key,
