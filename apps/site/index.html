@@ -2,22 +2,188 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Bouvio site versions</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Bouvio</title>
+<meta name="description" content="Bouvio is a free, open-source desktop workspace where people and AI agents work together, on your own machines and keys." />
+<script>(function(){var r=document.documentElement,a=r.getAttribute("data-theme");if(a!=="dark"&&a!=="light"){try{a=localStorage.getItem("bouvio.theme")}catch(e){}r.dataset.theme=a==="dark"||(a!=="light"&&matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light"}})()</script>
 <link rel="stylesheet" href="../desktop/src/styles/tokens.css" />
 <link rel="stylesheet" href="../desktop/src/styles/app.css" />
+<link rel="stylesheet" href="../desktop/src/styles/screens.css" />
 <link rel="stylesheet" href="site.css" />
+<link rel="stylesheet" href="parts.css" />
 </head>
-<body class="site">
-<main class="wrap" style="padding:80px 0">
-  <h1 class="h2">Five versions</h1>
-  <div class="list" style="margin-top:24px">
-    <a class="list-row" href="v1.html"><span class="list-title">1 · The workspace</span><span class="list-meta">window, approval, chat, board</span></a>
-    <a class="list-row" href="v2.html"><span class="list-title">2 · The fleet</span><span class="list-meta">overview, threads, git graph, costs</span></a>
-    <a class="list-row" href="v3.html"><span class="list-title">3 · Docs and sheets</span><span class="list-meta">doc, sheet, board view, search</span></a>
-    <a class="list-row" href="v4.html"><span class="list-title">4 · Together</span><span class="list-meta">chat, huddle, board, roles, inbox</span></a>
-    <a class="list-row" href="v5.html"><span class="list-title">5 · Free and local</span><span class="list-meta">local models, VPS, costs, window</span></a>
+<body>
+<div class="site" id="top">
+<div data-ui="nav"></div>
+<main>
+
+<!-- Hero: the live app -->
+<section class="hero center wrap">
+  <h1 class="h1" data-split>Your agents and your team, in <span class="accent">one workspace</span></h1>
+  <p class="lede">Claude Code, Codex and local models run on your own machines. Your team chats, plans and writes right next to them, and approves what matters.</p>
+  <div data-ui="cta"></div>
+</section>
+<section class="wrap hero-win"><div data-ui="window" data-typing="Looks good. Open a PR for the draft fix"></div></section>
+
+<section class="wrap stats" aria-label="Bouvio in numbers">
+  <div><b><span data-count="9">9</span></b><p>tools it replaces: chat, docs, sheets, issues, calendar and more</p></div>
+  <div><b>€<span data-count="0">0</span></b><p>a month, for you and your whole team</p></div>
+  <div><b><span data-count="3">3</span></b><p>ways to run agents: Claude Code, Codex or a local model</p></div>
+</section>
+
+<section class="wrap statement">
+  <p data-fill>Agents write the code, the docs and the plans. People decide what ships. Bouvio keeps both in one place, on machines you own.</p>
+</section>
+
+<!-- Agents: stage -->
+<section class="sec wrap" id="agents">
+  <div class="sec-head"><span class="eyebrow">Threads and leads</span><h2 class="h2">A fleet of agents you can follow</h2></div>
+  <div class="stg" data-stage>
+    <div class="stg-steps">
+      <article class="stg-step on" data-step>
+        <h3 class="h3">Leads own a part of the work</h3>
+        <p class="note">A lead is an agent with a name, instructions and a domain. Desktop, Runner, Hub. You see at a glance who is busy and who needs you.</p>
+        <div class="stg-vis shot" data-ui="overview"></div>
+      </article>
+      <article class="stg-step" data-step>
+        <h3 class="h3">Work splits into threads</h3>
+        <p class="note">When a task has two parts, the lead starts two threads. Each one runs in parallel on its own branch and worktree.</p>
+        <div class="stg-vis shot"><div class="stg-thread" data-ui="thread"></div></div>
+      </article>
+      <article class="stg-step" data-step>
+        <h3 class="h3">Risky steps wait for a yes</h3>
+        <p class="note">Shell commands, network calls and deletes stop at a card. Anyone with the right role can answer it, from any device.</p>
+        <div class="stg-vis shot pad" data-ui="approval"></div>
+      </article>
+      <article class="stg-step" data-step>
+        <h3 class="h3">Review it like any other branch</h3>
+        <p class="note">Commits, diffs and pull requests live in the app. Merge when it looks right.</p>
+        <div class="stg-vis shot" data-ui="gitgraph"></div>
+      </article>
+    </div>
+    <div class="stg-pin" aria-hidden="true">
+      <div class="stg-scr on" data-scr><div class="shot stg-fill" data-ui="overview"></div></div>
+      <div class="stg-scr" data-scr><div class="shot stg-fill"><div class="stg-thread" data-ui="thread"></div></div></div>
+      <div class="stg-scr" data-scr><div class="shot stg-fill stg-center"><div class="stg-approval" data-ui="approval"></div></div></div>
+      <div class="stg-scr" data-scr><div class="shot stg-fill" data-ui="gitgraph"></div></div>
+    </div>
   </div>
+
+  <div class="sub">
+    <div class="sec-head small"><h3 class="h3">From issue to merge in one morning</h3><p class="note">What a normal task looks like.</p></div>
+    <div data-ui="timeline"></div>
+  </div>
+</section>
+
+<!-- Team -->
+<section class="sec wrap" id="team">
+  <div class="two flip">
+    <div>
+      <span class="eyebrow">Chat and huddles</span>
+      <h2 class="h2">Mention a lead, it gets to work</h2>
+      <p class="lede" style="margin-top:14px">Ask in a channel. The lead starts a thread on the host's machine and answers right there. Jump into a huddle when typing is too slow.</p>
+    </div>
+    <div class="chat-wrap"><div class="shot pad" data-ui="chat"></div><div class="huddle-float" data-ui="huddle"></div></div>
+  </div>
+  <div class="three" style="margin-top:72px">
+    <div class="box"><h3 class="h3">Inbox</h3><p class="note">Approvals, mentions and finished runs from every workspace. Your own to-dos sit in the tab next to it.</p><div data-ui="inbox"></div><div class="divide"></div><div data-ui="myWork"></div></div>
+    <div class="box"><h3 class="h3">Roles that fit</h3><p class="note">Viewers watch, prompters talk to agents, operators start them. You decide per person.</p><div data-ui="people"></div></div>
+    <div class="box"><h3 class="h3">Machines</h3><p class="note">Agents run where the code is. Your laptop, a desktop at the office or a small server.</p><div data-ui="machines"></div></div>
+  </div>
+</section>
+
+<!-- Work: planning + library -->
+<section class="sec wrap" id="work">
+  <div class="sec-head"><span class="eyebrow">Planning</span><h2 class="h2">Plan the work where it happens</h2><p class="lede">Issues, pull requests and the calendar share one place with the agents that do the work.</p></div>
+  <div class="tabx" data-tabs>
+    <div class="tabx-bar"><div class="tabx-list" role="tablist" aria-label="Planning">
+      <button type="button" role="tab" id="tp-issues" aria-controls="pp-issues">Issues</button>
+      <button type="button" role="tab" id="tp-prs" aria-controls="pp-prs">Pull requests</button>
+      <button type="button" role="tab" id="tp-cal" aria-controls="pp-cal">Calendar</button>
+      <i class="tabx-ind" data-ind></i></div></div>
+    <div class="tabx-pane" role="tabpanel" id="pp-issues" aria-labelledby="tp-issues"><div class="tabx-text"><h3 class="h3">Every issue has a lead</h3><p class="note">Give an issue to a lead and it starts a thread. The status follows the work on its own.</p></div><div class="shot" data-ui="issues"></div></div>
+    <div class="tabx-pane" role="tabpanel" id="pp-prs" aria-labelledby="tp-prs" hidden><div class="tabx-text"><h3 class="h3">Pull requests with checks</h3><p class="note">See the branch, the checks and the diff. Merge from the app or let the lead fix what failed.</p></div><div class="shot" data-ui="prs"></div></div>
+    <div class="tabx-pane" role="tabpanel" id="pp-cal" aria-labelledby="tp-cal" hidden><div class="tabx-text"><h3 class="h3">One calendar for people and agents</h3><p class="note">Meetings, releases and scheduled runs in one week view. Syncs with CalDAV.</p></div><div class="shot" data-ui="calendar"></div></div>
+  </div>
+
+  <div class="sec-head" style="margin-top:110px"><span class="eyebrow">Library</span><h2 class="h2">Docs, sheets and everything you know</h2><p class="lede">Write together, keep numbers in sheets and find anything a person or an agent wrote.</p></div>
+  <div class="tabx" data-tabs>
+    <div class="tabx-bar"><div class="tabx-list" role="tablist" aria-label="Library">
+      <button type="button" role="tab" id="tl-docs" aria-controls="pl-docs">Docs</button>
+      <button type="button" role="tab" id="tl-sheets" aria-controls="pl-sheets">Sheets</button>
+      <button type="button" role="tab" id="tl-db" aria-controls="pl-db">Databases</button>
+      <button type="button" role="tab" id="tl-search" aria-controls="pl-search">Search</button>
+      <i class="tabx-ind" data-ind></i></div></div>
+    <div class="tabx-pane" role="tabpanel" id="pl-docs" aria-labelledby="tl-docs"><div class="tabx-text"><h3 class="h3">Docs you write together</h3><p class="note">Live cursors, to-dos and slash commands. Type <span class="mono">/ask</span> and a lead writes along.</p></div><div class="shot" data-ui="doc"></div></div>
+    <div class="tabx-pane" role="tabpanel" id="pl-sheets" aria-labelledby="tl-sheets" hidden><div class="tabx-text"><h3 class="h3">Sheets with real formulas</h3><p class="note">Budgets and lists with formulas. Import and export CSV.</p></div><div class="shot" data-ui="sheet"></div></div>
+    <div class="tabx-pane" role="tabpanel" id="pl-db" aria-labelledby="tl-db" hidden><div class="tabx-text"><h3 class="h3">Databases with views</h3><p class="note">Board, table, calendar and gallery views of the same rows. Forms fill them from a public link.</p></div><div class="shot soft" data-ui="kanban"></div></div>
+    <div class="tabx-pane" role="tabpanel" id="pl-search" aria-labelledby="tl-search" hidden><div class="tabx-text"><h3 class="h3">Find it by word or by meaning</h3><p class="note">Threads, issues, files, docs and imported PDFs. Agents search the same knowledge.</p></div><div class="shot" data-ui="search"></div></div>
+  </div>
+</section>
+
+<!-- Studio -->
+<section class="sec wrap" id="studio">
+  <div class="sec-head"><span class="eyebrow">Studio</span><h2 class="h2">Design next to the running app</h2><p class="lede">Every frame on the board is a live branch. Ask for two variants and get two branches side by side, with everyone's cursor on it.</p></div>
+  <div class="shot" data-ui="board"></div>
+</section>
+
+<!-- Build + insights -->
+<section class="sec wrap" id="build">
+  <div class="sec-head"><span class="eyebrow">Build</span><h2 class="h2">The tools agents need, built in</h2></div>
+  <div class="three">
+    <div class="box"><h3 class="h3">Terminal and preview</h3><p class="note">Run tests and open the dev server in the app, next to the thread that changed it.</p><div class="shot soft" data-ui="devTerminal"></div></div>
+    <div class="box"><h3 class="h3">Automations</h3><p class="note">Start agents on a schedule or when something happens.</p><div data-ui="automations"></div></div>
+    <div class="box"><h3 class="h3">Integrations</h3><p class="note">MCP servers and skills from the registry. They run on your machine with your keys.</p><div data-ui="integrations"></div></div>
+  </div>
+
+  <div class="sec-head" style="margin-top:110px"><span class="eyebrow">Insights</span><h2 class="h2">Know what each agent costs and how well it works</h2></div>
+  <div class="two even">
+    <div class="box"><h3 class="h3">Costs</h3><p class="note">Per lead, per model and per person. Set a monthly budget and the fleet stops at it.</p><div data-ui="costs"></div></div>
+    <div class="box"><h3 class="h3">Evals</h3><p class="note">Run the same tasks against each model and pick the one that does your work best.</p><div data-ui="evals"></div></div>
+  </div>
+</section>
+
+<!-- Free -->
+<section class="sec wrap" id="free">
+  <div class="sec-head"><span class="eyebrow">Free and local</span><h2 class="h2">Nothing to pay us. Ever.</h2><p class="lede">Bring your own subscriptions and keys, or run models on your own hardware.</p></div>
+  <div class="plans">
+    <a class="plan" href="https://github.com/timvanderwijst/bouvio/releases/latest"><b>Desktop app</b><p>Agents, chat, docs, planning and Studio. Windows, macOS and Linux.</p><span class="plan-p">€0</span><span class="plan-go">Download →</span></a>
+    <a class="plan hi" href="https://github.com/timvanderwijst/bouvio/blob/main/apps/hub/README.md"><b>Hub for your team</b><p>One small server keeps chat, docs and agents in sync for everyone.</p><span class="plan-p">€0<small>+ your server</small></span><span class="plan-go">Self-host →</span></a>
+    <a class="plan" href="#local"><b>Models</b><p>Your Claude or ChatGPT subscription, your API keys, or local models.</p><span class="plan-p">€0<small>+ your keys</small></span><span class="plan-go">See models →</span></a>
+  </div>
+  <div class="two even" id="local" style="margin-top:56px">
+    <div class="box"><h3 class="h3">Local models</h3><p class="note">Ollama, whisper.cpp, Piper and ComfyUI. No key needed.</p><div data-ui="localModels"></div></div>
+    <div class="box"><h3 class="h3">Your own server</h3><p class="note">The hub and a runner on a €4 VPS keep agents working at night.</p><div class="shot soft" data-ui="terminal"></div></div>
+  </div>
+</section>
+
+<section class="sec" aria-label="Models and tools that work with Bouvio">
+  <div class="wrap"><div class="sec-head small"><h2 class="h3">Works with the models and tools you already use</h2></div></div>
+  <div data-ui="marquees"></div>
+</section>
+
+<!-- FAQ -->
+<section class="sec wrap faq-sec">
+  <div class="two">
+    <div><h2 class="h2">Questions</h2><p class="lede" style="margin-top:14px">Something else? Open an issue on GitHub.</p></div>
+    <div class="faq">
+      <details><summary>Is it really free?<i aria-hidden="true">→</i></summary><p>Yes. Bouvio is open source under MIT. You pay your model provider directly, or nothing at all with local models.</p></details>
+      <details><summary>Where does my code go?<i aria-hidden="true">→</i></summary><p>It stays on the machines you choose. Agents run on your computer or your server, and your keys stay in your keychain.</p></details>
+      <details><summary>Do I need a server?<i aria-hidden="true">→</i></summary><p>Not on your own. For a team, one small VPS runs the hub that keeps everyone in sync.</p></details>
+      <details><summary>Can I use my Claude subscription?<i aria-hidden="true">→</i></summary><p>Yes. Bouvio drives Claude Code and Codex the same way you do, with your own login.</p></details>
+      <details><summary>Can I add my own features?<i aria-hidden="true">→</i></summary><p>Plugins can add pages, panels, commands and settings. The built-in areas use the same system.</p></details>
+    </div>
+  </div>
+</section>
+
+<section class="end wrap">
+  <h2 class="h2">Free, open source and yours</h2>
+  <p class="lede" style="margin:14px auto 0">Your keys stay in your keychain. Your hub runs on your own server.</p>
+  <div data-ui="cta"></div>
+</section>
 </main>
+<div data-ui="foot"></div>
+</div>
+<script type="module">import { mount } from "./ui.js"; mount();</script>
 </body>
 </html>
