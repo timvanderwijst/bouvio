@@ -45,7 +45,7 @@ const task = (title: string, due: string | null, extra: Partial<PersonalTask> = 
 let tasks: PersonalTask[] = [
   task("Answer Jonas about the hub invite flow", day(-1), { priority: "high" }, 0),
   task("Review the magic link thread", day(0), { priority: "medium" }, 1),
-  task("Renew bouvio.com domain", day(0), { notes: "Registrar sends the invoice to the old address." }, 2),
+  task("Renew cuna.io domain", day(0), { notes: "Registrar sends the invoice to the old address." }, 2),
   task("Draft release notes for 0.2", day(2), {}, 3),
   task("Try Kimi K2 on the runner lead", day(5), { priority: "low" }, 4),
   task("Call the accountant", day(9), {}, 5),
@@ -257,9 +257,9 @@ async function seedEvals(workspaceId: string) {
       updated_at: ago(600),
       cases: [
         { prompt: "Which port does the dev server use? Answer with the number only.", check: "contains", expected: "1420" },
-        { prompt: "Add a unit test for title_from that covers an empty string.", check: "command_exit_zero", expected: "cargo test -q -p bouvio-runner title_from" },
+        { prompt: "Add a unit test for title_from that covers an empty string.", check: "command_exit_zero", expected: "cargo test -q -p cuna-runner title_from" },
         { prompt: "Explain what an isolated thread is in two sentences.", check: "judge", expected: "Mentions its own git worktree and branch; no more than two sentences." },
-        { prompt: "List the harnesses Bouvio supports.", check: "regex", expected: "(?i)claude code.*codex" },
+        { prompt: "List the harnesses Cuna supports.", check: "regex", expected: "(?i)claude code.*codex" },
       ],
     },
   ];

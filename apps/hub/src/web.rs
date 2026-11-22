@@ -1,10 +1,10 @@
-//! The web client under `/app/`, when `BOUVIO_HUB_WEB_DIR` points at a build.
+//! The web client under `/app/`, when `CUNA_HUB_WEB_DIR` points at a build.
 //! A single-page app: unknown paths get `index.html`.
 
 use std::path::{Component, Path, PathBuf};
 
 use axum::extract::{Path as UrlPath, State};
-use axum::http::{header, HeaderValue, StatusCode};
+use axum::http::{header, HeaderValue, StatusCode, Uri};
 use axum::response::{IntoResponse, Redirect, Response};
 
 use crate::AppState;
@@ -58,6 +58,22 @@ fn content_type(path: &Path) -> String {
     }
 }
 
+/// The landing page at `/`, when `CUNA_HUB_SITE_DIR` points at it; otherwise `/` opens the web client.
+pub async fn site_index(State(st): State<AppState>) -> Response {
+    match st.config.site_dir.as_deref() {
+        Some(dir) => serve_dir(dir, "", false).await,
+        None => Redirect::temporary("/app/").into_response(),
+    }
+}
+
+/// Files of the landing page (styles, scripts); anything else is a 404.
+pub async fn site_file(State(st): State<AppState>, uri: Uri) -> Response {
+    match st.config.site_dir.as_deref() {
+        Some(dir) => serve_dir(dir, uri.path(), false).await,
+        None => StatusCode::NOT_FOUND.into_response(),
+    }
+}
+
 async fn serve(st: &AppState, rel: &str) -> Response {
     let Some(dir) = st.config.web_dir.as_deref() else {
         return (
@@ -66,6 +82,11 @@ async fn serve(st: &AppState, rel: &str) -> Response {
         )
             .into_response();
     };
+    serve_dir(dir, rel, true).await
+}
+
+/// One file from `dir`. A single-page app (`spa`) answers unknown routes with its `index.html`.
+async fn serve_dir(dir: &Path, rel: &str, spa: bool) -> Response {
     let rel = rel.trim_start_matches('/');
     let Some(path) = resolve(dir, rel) else {
         return StatusCode::BAD_REQUEST.into_response();
@@ -87,7 +108,8 @@ async fn serve(st: &AppState, rel: &str) -> Response {
         None if Path::new(rel).extension().is_some() && !rel.ends_with(".html") => {
             return StatusCode::NOT_FOUND.into_response()
         }
-        None => (dir.join("index.html"), false),
+        None if rel.is_empty() || spa => (dir.join("index.html"), false),
+        None => return StatusCode::NOT_FOUND.into_response(),
     };
     let body = match tokio::fs::read(&path).await {
         Ok(b) => b,

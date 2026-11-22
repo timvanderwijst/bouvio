@@ -1,17 +1,17 @@
 [package]
-name = "bouvio-runner-cli"
-description = "Headless Bouvio runner: the same core as the desktop app, for a VPS or for testing"
+name = "cuna-runner-cli"
+description = "Headless Cuna runner: the same core as the desktop app, for a VPS or for testing"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [[bin]]
-name = "bouvio-runner"
+name = "cuna-runner"
 path = "src/main.rs"
 
 [dependencies]
-bouvio-protocol.workspace = true
-bouvio-runner.workspace = true
+cuna-protocol.workspace = true
+cuna-runner.workspace = true
 tokio.workspace = true
 anyhow.workspace = true
 serde_json.workspace = true

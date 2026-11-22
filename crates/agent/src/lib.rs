@@ -1,11 +1,11 @@
-//! Bouvio's own agent loop for people who connect API keys (OpenRouter,
+//! Cuna's own agent loop for people who connect API keys (OpenRouter,
 //! Anthropic, OpenAI, Google) or run models on their own machine (Ollama,
 //! LM Studio, any OpenAI-compatible server; see [`local`]) instead of running
 //! Claude Code or Codex, plus model listing, one-shot completions, embeddings
 //! and media generation.
 //!
 //! Keys belong to the user and live in the OS keychain ([`KeyringStore`]);
-//! Bouvio never pays for a call.
+//! Cuna never pays for a call.
 //!
 //! A turn ([`Agent::turn`]) streams `ThreadEvent`s on a channel, in this order:
 //! `Status{Working}`, then per model step any `AssistantText`, one `ToolUse`

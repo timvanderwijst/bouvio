@@ -62,8 +62,8 @@ export function Rail() {
     <>
       <div className="rail-edge" onMouseEnter={show} onMouseLeave={later} aria-hidden />
       <nav className={`rail ${open ? "open" : ""}`} onMouseEnter={show} onMouseLeave={later} aria-label="App">
-        <div className="rail-mark" aria-label="Bouvio">
-          <BouvioMark />
+        <div className="rail-mark" aria-label="Cuna">
+          <CunaMark />
         </div>
         {items.map((it) => (
           <button
@@ -108,7 +108,7 @@ function RailBadge({ use }: { use: () => number | undefined }) {
 }
 
 /** Placeholder mark until the wordmark is designed: a b built from two rounded blocks. */
-export function BouvioMark({ size = 22 }: { size?: number }) {
+export function CunaMark({ size = 22 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden>
       <rect x="4" y="2.5" width="5.5" height="19" rx="2.75" fill="currentColor" />

@@ -3,8 +3,8 @@
 use super::{root, run};
 use crate::Runner;
 use anyhow::{Context, Result};
-use bouvio_protocol::dev::*;
-use bouvio_protocol::*;
+use cuna_protocol::dev::*;
+use cuna_protocol::*;
 use serde::Deserialize;
 use std::path::Path;
 use std::sync::Arc;
@@ -62,7 +62,7 @@ fn thread_on(threads: &[Thread], branch: &str) -> Option<Uuid> {
         return None;
     }
     let mut v: Vec<&Thread> = threads.iter().filter(|t| t.branch.as_deref() == Some(branch)).collect();
-    v.sort_by_key(|t| (!t.branch.as_deref().is_some_and(|b| b.starts_with("bouvio/")), std::cmp::Reverse(t.updated_at)));
+    v.sort_by_key(|t| (!t.branch.as_deref().is_some_and(|b| b.starts_with("cuna/")), std::cmp::Reverse(t.updated_at)));
     v.first().map(|t| t.id)
 }
 
@@ -165,7 +165,7 @@ mod tests {
     use chrono::Utc;
 
     const FIXTURE: &str = r#"[
-      {"conclusion":"failure","createdAt":"2026-11-19T21:04:11Z","databaseId":12001,"displayTitle":"Keep a draft per thread","event":"push","headBranch":"bouvio/3f9a2c1e","status":"completed","url":"https://github.com/o/r/actions/runs/12001","workflowName":"CI"},
+      {"conclusion":"failure","createdAt":"2026-11-19T21:04:11Z","databaseId":12001,"displayTitle":"Keep a draft per thread","event":"push","headBranch":"cuna/3f9a2c1e","status":"completed","url":"https://github.com/o/r/actions/runs/12001","workflowName":"CI"},
       {"conclusion":"","createdAt":"2026-11-19T21:10:00Z","databaseId":12002,"displayTitle":"Bump deps","event":"pull_request","headBranch":"renovate/deps","status":"in_progress","url":"https://github.com/o/r/actions/runs/12002","workflowName":"CI"},
       {"conclusion":"success","createdAt":"2026-11-19T20:00:00Z","databaseId":11990,"displayTitle":"Release","event":"push","headBranch":"main","status":"completed","url":"u","workflowName":"Release"}
     ]"#;
@@ -192,7 +192,7 @@ mod tests {
 
     #[test]
     fn parses_gh_runs_and_matches_threads() {
-        let draft = thread("bouvio/3f9a2c1e");
+        let draft = thread("cuna/3f9a2c1e");
         let v = parse_runs(FIXTURE, &[draft.clone(), thread("other")]).unwrap();
         assert_eq!(v.len(), 3);
         assert_eq!(v[0].id, 12001);

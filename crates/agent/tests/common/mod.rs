@@ -2,8 +2,8 @@
 #![allow(dead_code)]
 
 use axum::{extract::State, http::HeaderMap, routing::post, Json, Router};
-use bouvio_agent::{Agent, AgentOut, CancellationToken};
-use bouvio_protocol::ThreadEvent;
+use cuna_agent::{Agent, AgentOut, CancellationToken};
+use cuna_protocol::ThreadEvent;
 use serde_json::Value;
 use std::collections::VecDeque;
 use std::sync::{Arc, Mutex};

@@ -4,7 +4,7 @@ use crate::keys::KeyStore;
 use crate::pricing::price;
 use crate::provider::{base_override, base_url, http, provider_name};
 use anyhow::{bail, Result};
-use bouvio_protocol::{ModelInfo, ProviderKind};
+use cuna_protocol::{ModelInfo, ProviderKind};
 use serde_json::Value;
 use std::time::Duration;
 

@@ -1,7 +1,7 @@
 {
-  "name": "Bouvio",
-  "short_name": "Bouvio",
-  "description": "Follow and steer the workspaces you share on your Bouvio hub.",
+  "name": "Cuna",
+  "short_name": "Cuna",
+  "description": "Follow and steer the workspaces you share on your Cuna hub.",
   "id": "./",
   "start_url": "./",
   "scope": "./",

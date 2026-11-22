@@ -19,7 +19,7 @@ use crate::store::Collection;
 use crate::Runner;
 use anyhow::{bail, Context, Result};
 use base64::Engine;
-use bouvio_protocol::office::{Doc, DocAwareness, DocKind, DocUpdate, PublicForm, PublicQuestion};
+use cuna_protocol::office::{Doc, DocAwareness, DocKind, DocUpdate, PublicForm, PublicQuestion};
 use chrono::Utc;
 use serde::de::DeserializeOwned;
 use serde_json::{json, Value};

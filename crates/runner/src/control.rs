@@ -57,7 +57,7 @@ async fn handle(runner: Arc<Runner>, sock: TcpStream, token: &str) -> Result<()>
 
 /// Client side, used by the MCP helper process.
 pub async fn call(port: u16, token: &str, thread_id: &str, method: &str, params: Value) -> Result<Value> {
-    let sock = TcpStream::connect(("127.0.0.1", port)).await.context("connect to Bouvio runner")?;
+    let sock = TcpStream::connect(("127.0.0.1", port)).await.context("connect to Cuna runner")?;
     let (rd, mut wr) = sock.into_split();
     let req = json!({ "token": token, "thread_id": thread_id, "method": method, "params": params });
     wr.write_all(format!("{req}\n").as_bytes()).await?;

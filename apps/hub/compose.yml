@@ -1,10 +1,10 @@
-# Self-host the Bouvio hub:   cd apps/hub && docker compose up -d
+# Self-host the Cuna hub:   cd apps/hub && docker compose up -d
 services:
   hub:
     build:
       context: ../..
       dockerfile: apps/hub/Dockerfile
-    image: bouvio-hub
+    image: cuna-hub
     restart: unless-stopped
     ports:
       - "8787:8787"           # with the Caddy service below, drop this and let Caddy publish 80/443
@@ -12,18 +12,18 @@ services:
       - hub-data:/data        # SQLite database
     environment:
       # Where people reach the hub; used in invite links and OAuth callbacks.
-      BOUVIO_HUB_PUBLIC_URL: ${BOUVIO_HUB_PUBLIC_URL:-http://localhost:8787}
-      # BOUVIO_HUB_ADDR: 0.0.0.0:8787
-      # BOUVIO_HUB_DB: sqlite:///data/hub.db
+      CUNA_HUB_PUBLIC_URL: ${CUNA_HUB_PUBLIC_URL:-http://localhost:8787}
+      # CUNA_HUB_ADDR: 0.0.0.0:8787
+      # CUNA_HUB_DB: sqlite:///data/hub.db
 
       # Mail for login codes. Without it, codes are written to the log:
       #   docker compose logs hub | grep "login code"
       SMTP_URL: ${SMTP_URL:-}             # e.g. smtps://user:pass@smtp.example.com:465
-      SMTP_FROM: ${SMTP_FROM:-}           # e.g. Bouvio <bouvio@example.com>
+      SMTP_FROM: ${SMTP_FROM:-}           # e.g. Cuna <cuna@example.com>
 
       # Optional sign-in with GitHub / Google. Callback URLs:
-      #   ${BOUVIO_HUB_PUBLIC_URL}/auth/github/callback
-      #   ${BOUVIO_HUB_PUBLIC_URL}/auth/google/callback
+      #   ${CUNA_HUB_PUBLIC_URL}/auth/github/callback
+      #   ${CUNA_HUB_PUBLIC_URL}/auth/google/callback
       GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
       GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
@@ -41,7 +41,7 @@ services:
       RUST_LOG: ${RUST_LOG:-info}
 
   # HTTPS with automatic certificates. Point a DNS record at the server, set
-  # HUB_DOMAIN and BOUVIO_HUB_PUBLIC_URL=https://<domain>, then uncomment.
+  # HUB_DOMAIN and CUNA_HUB_PUBLIC_URL=https://<domain>, then uncomment.
   # caddy:
   #   image: caddy:2
   #   restart: unless-stopped
@@ -70,7 +70,7 @@ services:
   #     - --min-port=49160
   #     - --max-port=49200
   #     - --external-ip=${TURN_EXTERNAL_IP}
-  #     - --realm=${HUB_DOMAIN:-bouvio}
+  #     - --realm=${HUB_DOMAIN:-cuna}
   #     - --use-auth-secret
   #     - --static-auth-secret=${TURN_SECRET}
   #     - --no-cli

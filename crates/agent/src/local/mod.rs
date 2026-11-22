@@ -9,8 +9,8 @@ pub(crate) mod media;
 
 use crate::provider::{base_override, http};
 use anyhow::{anyhow, bail, Context, Result};
-pub use bouvio_protocol::local::*;
-use bouvio_protocol::{ModelInfo, ProviderKind};
+pub use cuna_protocol::local::*;
+use cuna_protocol::{ModelInfo, ProviderKind};
 use futures::StreamExt;
 use serde_json::{json, Value};
 use std::collections::HashMap;
@@ -47,14 +47,14 @@ pub fn set_models_dir(dir: impl Into<PathBuf>) {
     *dir_lock().write().unwrap() = Some(dir.into());
 }
 
-/// `set_models_dir`, else `$BOUVIO_DATA/local`, else `~/.bouvio/local`.
+/// `set_models_dir`, else `$CUNA_DATA/local`, else `~/.cuna/local`.
 pub fn models_dir() -> PathBuf {
     if let Some(d) = dir_lock().read().unwrap().clone() {
         return d;
     }
-    let data = std::env::var_os("BOUVIO_DATA").map(PathBuf::from).unwrap_or_else(|| {
+    let data = std::env::var_os("CUNA_DATA").map(PathBuf::from).unwrap_or_else(|| {
         let home = std::env::var_os("HOME").or_else(|| std::env::var_os("USERPROFILE")).map(PathBuf::from).unwrap_or_else(std::env::temp_dir);
-        home.join(".bouvio")
+        home.join(".cuna")
     });
     data.join("local")
 }
@@ -120,7 +120,7 @@ fn routes() -> &'static Mutex<HashMap<String, String>> {
 }
 
 /// The OpenAI-compatible base URL (with `/v1`) that serves `model`.
-/// `BOUVIO_LOCAL_BASE_URL` overrides everything (tests).
+/// `CUNA_LOCAL_BASE_URL` overrides everything (tests).
 pub(crate) fn chat_base(model: &str) -> String {
     if let Some(b) = base_override("local") {
         return b;

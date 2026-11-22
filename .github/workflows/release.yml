@@ -46,7 +46,7 @@ jobs:
             const { data } = await github.rest.repos.createRelease({
               ...context.repo,
               tag_name: tag,
-              name: `Bouvio ${tag}`,
+              name: `Cuna ${tag}`,
               draft: true,
               generate_release_notes: true,
             });
@@ -143,19 +143,19 @@ jobs:
         with:
           key: runner-${{ matrix.target }}
 
-      - run: cargo build --release --locked -p bouvio-runner-cli --target ${{ matrix.target }}
+      - run: cargo build --release --locked -p cuna-runner-cli --target ${{ matrix.target }}
 
       - name: Package
         id: pkg
         shell: bash
         run: |
-          name="bouvio-runner-${GITHUB_REF_NAME}-${{ matrix.target }}"
+          name="cuna-runner-${GITHUB_REF_NAME}-${{ matrix.target }}"
           dir="target/${{ matrix.target }}/release"
           if [ "${{ runner.os }}" = "Windows" ]; then
-            7z a "$name.zip" "./$dir/bouvio-runner.exe" README.md LICENSE >/dev/null
+            7z a "$name.zip" "./$dir/cuna-runner.exe" README.md LICENSE >/dev/null
             echo "file=$name.zip" >> "$GITHUB_OUTPUT"
           else
-            tar -czf "$name.tar.gz" -C "$dir" bouvio-runner -C "$GITHUB_WORKSPACE" README.md LICENSE
+            tar -czf "$name.tar.gz" -C "$dir" cuna-runner -C "$GITHUB_WORKSPACE" README.md LICENSE
             echo "file=$name.tar.gz" >> "$GITHUB_OUTPUT"
           fi
 
@@ -187,7 +187,7 @@ jobs:
       - id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/timvanderwijst/bouvio-hub
+          images: ghcr.io/timvanderwijst/cuna-hub
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}

@@ -2,10 +2,10 @@
 
 mod common;
 
-use bouvio_agent::{Agent, AgentConfig, CancellationToken, StaticKeys};
+use cuna_agent::{Agent, AgentConfig, CancellationToken, StaticKeys};
 #[cfg(unix)]
-use bouvio_protocol::ApprovalLevel;
-use bouvio_protocol::ProviderKind;
+use cuna_protocol::ApprovalLevel;
+use cuna_protocol::ProviderKind;
 use common::*;
 use serde_json::json;
 use std::sync::Arc;
@@ -17,7 +17,7 @@ use std::time::{Duration, Instant};
 async fn cancel_stops_a_running_command() {
     let dir = tempfile::tempdir().unwrap();
     let mock = start(
-        "BOUVIO_OPENAI_BASE_URL",
+        "CUNA_OPENAI_BASE_URL",
         "/chat/completions",
         vec![chat_tool_call("call_1", "bash", json!({"command":"sleep 30"}), json!({"prompt_tokens":10,"completion_tokens":5}))],
     )
@@ -48,7 +48,7 @@ async fn cancel_stops_a_running_command() {
 async fn dropped_approval_counts_as_denied() {
     let dir = tempfile::tempdir().unwrap();
     start(
-        "BOUVIO_OPENROUTER_BASE_URL",
+        "CUNA_OPENROUTER_BASE_URL",
         "/chat/completions",
         vec![
             chat_tool_call("call_1", "web_fetch", json!({"url":"https://example.com"}), json!({"cost":0.001})),

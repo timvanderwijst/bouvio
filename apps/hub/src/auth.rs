@@ -4,7 +4,7 @@ use axum::extract::{FromRequestParts, State};
 use axum::http::request::Parts;
 use axum::http::{header, StatusCode};
 use axum::Json;
-use bouvio_protocol::HubUser;
+use cuna_protocol::HubUser;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -84,7 +84,7 @@ pub struct EmailStart {
 #[derive(Serialize)]
 pub struct EmailStarted {
     ok: bool,
-    /// Only with `BOUVIO_HUB_DEV_CODES=1`.
+    /// Only with `CUNA_HUB_DEV_CODES=1`.
     #[serde(skip_serializing_if = "Option::is_none")]
     code: Option<String>,
 }

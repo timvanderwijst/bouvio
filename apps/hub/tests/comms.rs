@@ -5,7 +5,7 @@ mod common;
 
 use std::time::Duration;
 
-use bouvio_protocol::{ChatMessage, ClientMsg, ServerMsg};
+use cuna_protocol::{ChatMessage, ClientMsg, ServerMsg};
 use common::*;
 use serde_json::{json, Value};
 use uuid::Uuid;
@@ -408,7 +408,7 @@ async fn answer_form_rpcs(mut host: Client, form: Uuid) -> Vec<Value> {
         };
         assert_eq!(from.id, Uuid::nil());
         assert_eq!(from.name, "Form");
-        assert_eq!(role, bouvio_protocol::Role::Commenter);
+        assert_eq!(role, cuna_protocol::Role::Commenter);
         let ok = match method.as_str() {
             "get_form_public" => {
                 assert_eq!(params["form_id"], form.to_string());
@@ -533,7 +533,7 @@ async fn serves_the_web_client() {
     std::fs::create_dir_all(web.path().join("assets")).unwrap();
     std::fs::write(
         web.path().join("index.html"),
-        "<!doctype html><title>Bouvio</title>",
+        "<!doctype html><title>Cuna</title>",
     )
     .unwrap();
     std::fs::write(
@@ -549,7 +549,7 @@ async fn serves_the_web_client() {
     let r = get("/app/").await.unwrap();
     assert_eq!(r.status(), StatusCode::OK);
     assert_eq!(r.headers()["cache-control"], "no-cache");
-    assert!(r.text().await.unwrap().contains("<title>Bouvio"));
+    assert!(r.text().await.unwrap().contains("<title>Cuna"));
 
     let r = get("/app/assets/index-Bx12abCD.js").await.unwrap();
     assert_eq!(
@@ -568,7 +568,7 @@ async fn serves_the_web_client() {
     // Routes of the app fall back to index.html; missing assets do not.
     let r = get("/app/workspaces/123/chat").await.unwrap();
     assert_eq!(r.status(), StatusCode::OK);
-    assert!(r.text().await.unwrap().contains("<title>Bouvio"));
+    assert!(r.text().await.unwrap().contains("<title>Cuna"));
     assert_eq!(
         get("/app/assets/gone-12345678.js").await.unwrap().status(),
         StatusCode::NOT_FOUND
@@ -589,4 +589,31 @@ async fn serves_the_web_client() {
             .status(),
         StatusCode::NOT_FOUND
     );
+}
+
+#[tokio::test]
+async fn serves_the_landing_page_at_the_root() {
+    let site = tempfile::tempdir().unwrap();
+    std::fs::create_dir_all(site.path().join("styles")).unwrap();
+    std::fs::write(site.path().join("index.html"), "<!doctype html><title>Cuna</title>").unwrap();
+    std::fs::write(site.path().join("styles/app.css"), "body{}").unwrap();
+    let dir = site.path().to_path_buf();
+    let hub = Hub::start_with(move |c| c.site_dir = Some(dir)).await;
+    let get = |p: &str| hub.http.get(hub.url(p)).send();
+
+    let r = get("/").await.unwrap();
+    assert_eq!(r.status(), StatusCode::OK);
+    assert!(r.text().await.unwrap().contains("<title>Cuna"));
+    let r = get("/styles/app.css").await.unwrap();
+    assert_eq!(r.status(), StatusCode::OK);
+    assert!(r.headers()["content-type"].to_str().unwrap().starts_with("text/css"));
+    // The site is not a single-page app, and the API keeps its routes.
+    assert_eq!(get("/nope").await.unwrap().status(), StatusCode::NOT_FOUND);
+    assert_eq!(get("/health").await.unwrap().text().await.unwrap(), "ok");
+
+    // Without a site, the root opens the web client.
+    let plain = Hub::start().await;
+    let r = reqwest::Client::builder().redirect(reqwest::redirect::Policy::none()).build().unwrap().get(plain.url("/")).send().await.unwrap();
+    assert!(r.status().is_redirection());
+    assert_eq!(r.headers()["location"], "/app/");
 }

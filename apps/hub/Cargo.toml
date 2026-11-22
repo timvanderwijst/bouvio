@@ -1,16 +1,16 @@
 [package]
-name = "bouvio-hub"
-description = "Bouvio hub: accounts, sharing, permissions, realtime relay, chat and presence"
+name = "cuna-hub"
+description = "Cuna hub: accounts, sharing, permissions, realtime relay, chat and presence"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [[bin]]
-name = "bouvio-hub"
+name = "cuna-hub"
 path = "src/main.rs"
 
 [dependencies]
-bouvio-protocol.workspace = true
+cuna-protocol.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 tokio.workspace = true

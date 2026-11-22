@@ -1,6 +1,6 @@
 [package]
-name = "bouvio-protocol"
-description = "Shared types between the Bouvio app, runner and hub"
+name = "cuna-protocol"
+description = "Shared types between the Cuna app, runner and hub"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

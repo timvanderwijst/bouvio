@@ -25,7 +25,7 @@ export const LANGUAGES = {
 
 export type Lang = keyof typeof LANGUAGES;
 
-const KEY = "bouvio.lang";
+const KEY = "cuna.lang";
 const listeners = new Set<() => void>();
 const cache = new Map<string, IntlMessageFormat>();
 

@@ -1,17 +1,17 @@
-# Bouvio
+# Cuna
 
 A desktop workspace where people and agent fleets work together, live, without pushing to Git first.
 
-Bouvio runs the agents you already have (Claude Code, Codex) and models from your own keys, on your own machines. A small hub you host lets others join your workspace: they see threads, diffs and terminals as they happen, chat, and steer agents with the role you give them. Bouvio never pays for or proxies model calls.
+Cuna runs the agents you already have (Claude Code, Codex) and models from your own keys, on your own machines. A small hub you host lets others join your workspace: they see threads, diffs and terminals as they happen, chat, and steer agents with the role you give them. Cuna never pays for or proxies model calls.
 
 ## What's in it
 
 | Area | What it does |
 | --- | --- |
 | **Leads and threads** | Long-lived agents per domain (leads) split work into threads. Each thread can get its own git worktree and branch. Status per agent: working, needs you, idle, error. |
-| **Harnesses** | Claude Code (`stream-json`, one process per thread, resumed after restarts), Codex (`codex exec --json`), and Bouvio's own agent loop for API keys: OpenRouter, Anthropic, OpenAI, Google. |
+| **Harnesses** | Claude Code (`stream-json`, one process per thread, resumed after restarts), Codex (`codex exec --json`), and Cuna's own agent loop for API keys: OpenRouter, Anthropic, OpenAI, Google. |
 | **Approvals** | Ask for everything, ask when risky, or free. Claude Code's permission prompts and the API loop's risky tools land in the thread as a card anyone with the right role can answer. |
-| **Fleet tools** | Every agent gets a `bouvio` MCP server: `spawn_thread`, `list_threads`, `thread_status`, `create_issue`, `remember`. |
+| **Fleet tools** | Every agent gets a `cuna` MCP server: `spawn_thread`, `list_threads`, `thread_status`, `create_issue`, `remember`. |
 | **Work** | Own issue tracker with GitHub sync, pull requests and merges through `gh`, commits from a thread, scheduled automations (cron). |
 | **Studio** | Artifacts agents make (HTML, images, documents, media) with previews; image, video and speech generation with your keys; design boards with live frames of each branch's dev server, variants, remote cursors. |
 | **Knowledge** | Workspace instructions, editable memory, MCP servers per workspace. |
@@ -33,7 +33,7 @@ apps/hub              hub server (axum + SQLite), Dockerfile and compose.yml
 apps/runner-cli       headless runner: `serve` hosts shared workspaces from a VPS
 crates/protocol       types shared by app, runner and hub; generates TypeScript
 crates/runner         harnesses, event log, approvals, MCP server, worktrees, terminals, issues, studio, hub client
-crates/agent          Bouvio's agent loop, tools, providers, keychain, media generation
+crates/agent          Cuna's agent loop, tools, providers, keychain, media generation
 ```
 
 ## Run the app
@@ -50,7 +50,7 @@ pnpm tauri dev
 
 The UI alone runs in a browser with sample data: `pnpm dev` → http://127.0.0.1:1420.
 
-Data lives in `~/.bouvio` (`BOUVIO_DATA` to change). API keys live in the OS keychain.
+Data lives in `~/.cuna` (`CUNA_DATA` to change). API keys live in the OS keychain.
 
 ## Host a hub
 
@@ -67,7 +67,7 @@ Then in the app: Settings → Hub → Sign in, and Share on a workspace.
 On the VPS, next to the hub or anywhere else:
 
 ```bash
-cargo run --release -p bouvio-runner-cli -- serve --hub https://hub.example.com --token <your hub token>
+cargo run --release -p cuna-runner-cli -- serve --hub https://hub.example.com --token <your hub token>
 ```
 
 ## Docs
@@ -80,7 +80,7 @@ cargo run --release -p bouvio-runner-cli -- serve --hub https://hub.example.com 
 ```bash
 cargo test --workspace
 pnpm -r typecheck
-pnpm --filter @bouvio/desktop test:web
+pnpm --filter @cuna/desktop test:web
 ```
 
 ## License

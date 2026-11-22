@@ -1,20 +1,20 @@
 [package]
-name = "bouvio-desktop"
-description = "Bouvio desktop app: the workspace UI with a runner built in"
+name = "cuna-desktop"
+description = "Cuna desktop app: the workspace UI with a runner built in"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [lib]
-name = "bouvio_desktop_lib"
+name = "cuna_desktop_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-bouvio-protocol.workspace = true
-bouvio-runner.workspace = true
+cuna-protocol.workspace = true
+cuna-runner.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 tokio.workspace = true
@@ -28,7 +28,7 @@ tauri-plugin-notification = "2"
 tauri-plugin-updater = "2"
 tauri-plugin-process = "2"
 futures = "0.3"
-bouvio-agent = { path = "../../../crates/agent" }
+cuna-agent = { path = "../../../crates/agent" }
 async-trait = "0.1"
 tokio-util = "0.7"
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }

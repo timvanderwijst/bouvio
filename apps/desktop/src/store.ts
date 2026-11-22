@@ -163,8 +163,8 @@ export const useStore = create<State>((set, get) => ({
   panel: { open: true, tab: "overview", wide: false, artifact: null },
   drafts: {},
   prefs: { harness: "claude_code", model: null, effort: "medium", approval: "ask_risky", isolate: true },
-  userName: ls.get("bouvio.name") || "You",
-  theme: (ls.get("bouvio.theme") as ThemePref) || "system",
+  userName: ls.get("cuna.name") || "You",
+  theme: (ls.get("cuna.theme") as ThemePref) || "system",
   dialog: null,
   dialogArg: null,
   palette: false,
@@ -192,7 +192,7 @@ export const useStore = create<State>((set, get) => ({
       threads[w.id] = lists[i][0];
       leads[w.id] = lists[i][1];
     });
-    const saved = ls.get("bouvio.workspace");
+    const saved = ls.get("cuna.workspace");
     const workspaceId = workspaces.find((w) => w.id === saved)?.id ?? workspaces[0]?.id ?? null;
     const preferred = harnesses.find((h) => h.available && h.kind !== "api")?.kind ?? "api";
 
@@ -265,7 +265,7 @@ export const useStore = create<State>((set, get) => ({
   },
 
   async selectWorkspace(id) {
-    ls.set("bouvio.workspace", id);
+    ls.set("cuna.workspace", id);
     set({ workspaceId: id });
     if (!get().threads[id]) {
       const [t, c] = await Promise.all([rpc<Thread[]>("list_threads", { workspace_id: id }, id), rpc<Lead[]>("list_leads", { workspace_id: id }, id)]).catch(
@@ -387,12 +387,12 @@ export const useStore = create<State>((set, get) => ({
   },
 
   setUserName(n) {
-    ls.set("bouvio.name", n);
+    ls.set("cuna.name", n);
     setActor(n);
     set({ userName: n });
   },
   setTheme(t) {
-    ls.set("bouvio.theme", t);
+    ls.set("cuna.theme", t);
     applyTheme(t);
     set({ theme: t });
   },

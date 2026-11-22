@@ -83,7 +83,7 @@ pub enum LocalEngineKind {
 pub struct LocalModel {
     /// Name as the engine knows it (`qwen3:8b`, `base`, `en_US-lessac-medium`, a checkpoint file).
     pub name: String,
-    /// Provider-qualified id Bouvio uses (`local:qwen3:8b`, `local:whisper-base`, `comfyui:…`).
+    /// Provider-qualified id Cuna uses (`local:qwen3:8b`, `local:whisper-base`, `comfyui:…`).
     pub id: String,
     #[ts(type = "number | null")]
     pub size: Option<u64>,

@@ -1,6 +1,6 @@
 //! Finds which agent CLIs are installed on this machine.
 
-use bouvio_protocol::{HarnessInfo, HarnessKind};
+use cuna_protocol::{HarnessInfo, HarnessKind};
 use std::time::Duration;
 use tokio::process::Command;
 

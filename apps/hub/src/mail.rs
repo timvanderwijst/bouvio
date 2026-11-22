@@ -21,9 +21,9 @@ impl Mailer {
         let msg = Message::builder()
             .from(self.from.clone())
             .to(to.parse().context("invalid recipient")?)
-            .subject(format!("Your Bouvio code: {code}"))
+            .subject(format!("Your Cuna code: {code}"))
             .body(format!(
-                "Your Bouvio login code is {code}\n\nIt works for 10 minutes. If you did not ask for it, ignore this mail.\n"
+                "Your Cuna login code is {code}\n\nIt works for 10 minutes. If you did not ask for it, ignore this mail.\n"
             ))?;
         self.transport.send(msg).await.context("sending mail")?;
         Ok(())

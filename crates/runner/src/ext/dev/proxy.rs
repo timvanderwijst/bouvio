@@ -7,7 +7,7 @@ use axum::body::Body;
 use axum::extract::{Request, State};
 use axum::http::{header, HeaderMap, HeaderValue, StatusCode};
 use axum::response::{IntoResponse, Response};
-use bouvio_protocol::dev::DevProxy;
+use cuna_protocol::dev::DevProxy;
 use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::atomic::{AtomicU16, Ordering};
@@ -18,9 +18,9 @@ use tokio::sync::mpsc;
 use tokio::task::JoinHandle;
 use uuid::Uuid;
 
-pub const PICKER_PATH: &str = "/__bouvio/picker.js";
+pub const PICKER_PATH: &str = "/__cuna/picker.js";
 pub const PICKER_JS: &str = include_str!("picker.js");
-const SCRIPT: &str = "<script src=\"/__bouvio/picker.js\"></script>";
+const SCRIPT: &str = "<script src=\"/__cuna/picker.js\"></script>";
 
 struct Running {
     port: u16,
@@ -337,7 +337,7 @@ mod tests {
         // The picker itself.
         let js = c.get(format!("{base}{PICKER_PATH}")).send().await.unwrap();
         assert!(js.headers()[header::CONTENT_TYPE].to_str().unwrap().contains("javascript"));
-        assert!(js.text().await.unwrap().contains("bouvio:picked"));
+        assert!(js.text().await.unwrap().contains("cuna:picked"));
         task.abort();
     }
 

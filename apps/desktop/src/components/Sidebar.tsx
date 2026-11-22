@@ -7,7 +7,7 @@ import { useStore, useWorkspaceLeads, useWorkspaceThreads, useWsData } from "../
 import { ago } from "../lib/format";
 import { PixelAvatar } from "./PixelAvatar";
 import { StatusIcon } from "./StatusIcon";
-import { BouvioMark } from "./Rail";
+import { CunaMark } from "./Rail";
 import { extPages, useExtVersion } from "../ext/areas";
 import { NAV_GROUPS, groupActive, groupKey, groupedIds, liveMembers, openGroup, useGroupBadge, type NavGroup } from "./NavGroups";
 import { HuddleSidebarRow } from "./comms";
@@ -155,9 +155,9 @@ function WorkspaceSwitcher() {
     <div className="ws-switch">
       <button className="ws-btn" onClick={() => setOpen((o) => !o)} aria-expanded={open} title={t("ws.switch")}>
         <span className="ws-mark">
-          <BouvioMark size={16} />
+          <CunaMark size={16} />
         </span>
-        <span className="truncate">{ws?.name ?? "Bouvio"}</span>
+        <span className="truncate">{ws?.name ?? "Cuna"}</span>
         <ChevronDown size={13} className="menu-chev" />
       </button>
       {open && (

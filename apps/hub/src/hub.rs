@@ -8,8 +8,8 @@ use std::sync::{Arc, Mutex, MutexGuard};
 use std::time::{Duration, Instant};
 
 use axum::extract::ws::{Message, Utf8Bytes};
-use bouvio_protocol::comms::HuddleState;
-use bouvio_protocol::{HubUser, Presence, Role, ServerMsg};
+use cuna_protocol::comms::HuddleState;
+use cuna_protocol::{HubUser, Presence, Role, ServerMsg};
 use chrono::{DateTime, Utc};
 use serde_json::Value;
 use tokio::sync::{mpsc, oneshot, Notify};

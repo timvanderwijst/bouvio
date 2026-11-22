@@ -6,7 +6,7 @@ import { backend, target } from "../../backend";
 import type { AppInfo } from "../../protocol/AppInfo";
 import { usePlatform } from "./state";
 
-const LAST = "bouvio.updates.checkedAt";
+const LAST = "cuna.updates.checkedAt";
 const DAY = 24 * 60 * 60 * 1000;
 let pending: Update | null = null;
 let started = false;

@@ -3,7 +3,7 @@ import { backend } from "../../backend";
 import { useStore } from "../../store";
 
 // Chat text: paragraphs, fenced and inline code, bold, links, links to threads
-// (`bouvio://thread/<id>`, as leads post them) and @mention chips.
+// (`cuna://thread/<id>`, as leads post them) and @mention chips.
 // Nothing is interpreted as HTML.
 
 export interface MentionTarget {
@@ -21,7 +21,7 @@ function inline(text: string, mention: RegExp | null, targets: Map<string, Menti
   const parts: string[] = [
     "(`[^`\\n]+`)",
     "(\\*\\*[^*\\n]+\\*\\*)",
-    "(\\[[^\\]\\n]+\\]\\((?:https?|bouvio):\\/\\/[^)\\s]+\\))",
+    "(\\[[^\\]\\n]+\\]\\((?:https?|cuna):\\/\\/[^)\\s]+\\))",
     "(https?:\\/\\/[^\\s<>()]+[^\\s<>().,;:!?'\"])",
   ];
   if (mention) parts.push(`(${mention.source})`);
@@ -45,7 +45,7 @@ function inline(text: string, mention: RegExp | null, targets: Map<string, Menti
     else if (m[3]) {
       const mm = tok.match(/^\[([^\]]+)\]\(([^)]+)\)$/)!;
       const [, label, href] = mm;
-      const thread = href.match(/^bouvio:\/\/thread\/([0-9a-f-]{36})$/i);
+      const thread = href.match(/^cuna:\/\/thread\/([0-9a-f-]{36})$/i);
       if (thread)
         out.push(
           <button key={k++} type="button" className="cm-thread-link" onClick={() => openThread(thread[1])}>

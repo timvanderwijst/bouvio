@@ -8,7 +8,7 @@ pub(crate) mod anthropic;
 pub(crate) mod openai;
 
 use anyhow::{anyhow, bail, Result};
-use bouvio_protocol::ProviderKind;
+use cuna_protocol::ProviderKind;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::sync::OnceLock;
@@ -184,14 +184,14 @@ fn default_base(p: ProviderKind) -> &'static str {
     }
 }
 
-/// Base URL for a provider. `BOUVIO_<PROVIDER>_BASE_URL` (e.g. `BOUVIO_OPENAI_BASE_URL`)
+/// Base URL for a provider. `CUNA_<PROVIDER>_BASE_URL` (e.g. `CUNA_OPENAI_BASE_URL`)
 /// overrides it; meant for tests against a local mock server.
 pub(crate) fn base_url(p: ProviderKind) -> String {
     base_override(p.id()).unwrap_or_else(|| default_base(p).to_string())
 }
 
 pub(crate) fn base_override(id: &str) -> Option<String> {
-    let var = format!("BOUVIO_{}_BASE_URL", id.to_ascii_uppercase());
+    let var = format!("CUNA_{}_BASE_URL", id.to_ascii_uppercase());
     std::env::var(var).ok().filter(|v| !v.trim().is_empty()).map(|v| v.trim().trim_end_matches('/').to_string())
 }
 
@@ -199,7 +199,7 @@ pub(crate) fn http() -> &'static reqwest::Client {
     static CLIENT: OnceLock<reqwest::Client> = OnceLock::new();
     CLIENT.get_or_init(|| {
         reqwest::Client::builder()
-            .user_agent(concat!("Bouvio/", env!("CARGO_PKG_VERSION")))
+            .user_agent(concat!("Cuna/", env!("CARGO_PKG_VERSION")))
             .connect_timeout(Duration::from_secs(20))
             // Non-streaming completions can take minutes on long answers.
             .timeout(Duration::from_secs(600))

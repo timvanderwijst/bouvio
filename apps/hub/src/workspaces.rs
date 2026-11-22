@@ -3,7 +3,7 @@
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::Json;
-use bouvio_protocol::{HubUser, Member, Role};
+use cuna_protocol::{HubUser, Member, Role};
 use chrono::DateTime;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;

@@ -199,8 +199,8 @@ async function lead(s: State, m: ChatMessage) {
     });
   const title = (match[2] || "New thread").split("\n")[0].slice(0, 60);
   const fakeId = "00000000-0000-4000-8000-000000000000";
-  await reply(`Started [${title}](bouvio://thread/${fakeId})`, 700);
-  await reply(`This is the browser preview, so no agent ran. In the app, ${match[1]} works on this on the host's runner and posts its answer here.\n\n[${title}](bouvio://thread/${fakeId})`, 2500);
+  await reply(`Started [${title}](cuna://thread/${fakeId})`, 700);
+  await reply(`This is the browser preview, so no agent ran. In the app, ${match[1]} works on this on the host's runner and posts its answer here.\n\n[${title}](cuna://thread/${fakeId})`, 2500);
 }
 
 // ---- a fake huddle participant ------------------------------------------------------

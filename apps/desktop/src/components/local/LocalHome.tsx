@@ -5,7 +5,7 @@ import { useStore } from "../../store";
 import { openLocalSettings } from "./open";
 import "./local.css";
 
-const HIDE = "bouvio.local.homeHidden";
+const HIDE = "cuna.local.homeHidden";
 
 function hidden() {
   try {

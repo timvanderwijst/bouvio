@@ -1,4 +1,4 @@
-use bouvio_hub::Config;
+use cuna_hub::Config;
 use tracing_subscriber::EnvFilter;
 
 #[tokio::main]
@@ -11,5 +11,5 @@ async fn main() -> anyhow::Result<()> {
         .init();
     let config = Config::from_env();
     let listener = tokio::net::TcpListener::bind(&config.addr).await?;
-    bouvio_hub::serve(config, listener).await
+    cuna_hub::serve(config, listener).await
 }

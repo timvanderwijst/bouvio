@@ -10,7 +10,7 @@ use axum::response::Response;
 const COST_METHODS: &[&str] = &["cost_summary", "list_budgets"];
 const COST_NOTICES: &[&str] = &["personal-budgets", "personal-eval"];
 
-use bouvio_protocol::{required_role, ChatMessage, ClientMsg, HubUser, Presence, Role, ServerMsg};
+use cuna_protocol::{required_role, ChatMessage, ClientMsg, HubUser, Presence, Role, ServerMsg};
 use chrono::Utc;
 use futures_util::{SinkExt, StreamExt};
 use serde::Deserialize;

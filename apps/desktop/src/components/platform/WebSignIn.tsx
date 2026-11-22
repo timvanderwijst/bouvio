@@ -33,7 +33,7 @@ export function WebSignIn() {
   // OAuth runs in this tab; the hub's callback page shows a code to paste back here.
   const oauth = (p: "google" | "github") => {
     try {
-      sessionStorage.setItem("bouvio.signin.step", "paste");
+      sessionStorage.setItem("cuna.signin.step", "paste");
     } catch {}
     location.href = `/auth/${p}/start`;
   };
@@ -98,8 +98,8 @@ export function WebSignIn() {
 /** Returning from Google/GitHub: open straight on the paste step. */
 function initialSignInStep(): "email" | "paste" {
   try {
-    const s = sessionStorage.getItem("bouvio.signin.step");
-    sessionStorage.removeItem("bouvio.signin.step");
+    const s = sessionStorage.getItem("cuna.signin.step");
+    sessionStorage.removeItem("cuna.signin.step");
     return s === "paste" ? "paste" : "email";
   } catch {
     return "email";

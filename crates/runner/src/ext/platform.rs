@@ -7,8 +7,8 @@
 
 use crate::{store, Runner};
 use anyhow::{bail, Context, Result};
-use bouvio_protocol::platform::*;
-use bouvio_protocol::*;
+use cuna_protocol::platform::*;
+use cuna_protocol::*;
 use chrono::Utc;
 use serde::de::DeserializeOwned;
 use serde_json::{json, Value};
@@ -170,7 +170,7 @@ pub fn apply_template(r: &Runner, workspace_id: Uuid, template_id: &str, harness
 
 // ---- export ------------------------------------------------------------------------------
 
-const FORMAT: &str = "bouvio-workspace";
+const FORMAT: &str = "cuna-workspace";
 const VERSION: u32 = 1;
 /// Artifact files go in until they would pass this; their metadata always does.
 const ARTIFACT_BUDGET: u64 = 50 * 1024 * 1024;
@@ -325,12 +325,12 @@ pub fn import_workspace(r: &Runner, path: &Path, o: ImportOptions) -> Result<Imp
         Ok(serde_json::from_slice(b)?)
     };
 
-    let manifest = read("manifest.json").context("not a Bouvio workspace export")?;
+    let manifest = read("manifest.json").context("not a Cuna workspace export")?;
     if manifest["format"] != FORMAT {
-        bail!("not a Bouvio workspace export");
+        bail!("not a Cuna workspace export");
     }
     if manifest["version"].as_u64().unwrap_or(0) > VERSION as u64 {
-        bail!("this backup was made by a newer Bouvio; update the app first");
+        bail!("this backup was made by a newer Cuna; update the app first");
     }
 
     let ws_old: Workspace = serde_json::from_value(read("workspace.json")?)?;
@@ -649,7 +649,7 @@ mod tests {
     async fn export_import_round_trip_remaps_ids() {
         let dir = tempfile::tempdir().unwrap();
         let r = Runner::open(dir.path().join("data")).unwrap();
-        let ws = r.create_workspace("Bouvio".into(), None).unwrap();
+        let ws = r.create_workspace("Cuna".into(), None).unwrap();
         let cap = r
             .create_lead(NewLead {
                 workspace_id: ws.id,

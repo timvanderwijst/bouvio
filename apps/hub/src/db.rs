@@ -4,7 +4,7 @@ use std::path::Path;
 use std::str::FromStr;
 
 use anyhow::Context;
-use bouvio_protocol::{HubUser, Role};
+use cuna_protocol::{HubUser, Role};
 use chrono::{DateTime, TimeZone, Utc};
 use rand::distr::{Alphanumeric, SampleString};
 use rand::Rng;

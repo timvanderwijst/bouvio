@@ -4,7 +4,7 @@
 use super::{HarnessOut, HarnessSession, SessionConfig};
 use anyhow::{Context, Result};
 use async_trait::async_trait;
-use bouvio_protocol::{AgentStatus, ApprovalLevel, ThreadEvent};
+use cuna_protocol::{AgentStatus, ApprovalLevel, ThreadEvent};
 use serde_json::{json, Value};
 use std::process::Stdio;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -50,10 +50,10 @@ impl ClaudeSession {
         }
         if let Some(path) = &self.cfg.mcp_config {
             cmd.arg("--mcp-config").arg(path);
-            // Bouvio's own fleet tools never need a person's yes.
-            cmd.args(["--allowedTools", "mcp__bouvio__spawn_thread,mcp__bouvio__list_threads,mcp__bouvio__thread_status,mcp__bouvio__create_issue,mcp__bouvio__remember"]);
+            // Cuna's own fleet tools never need a person's yes.
+            cmd.args(["--allowedTools", "mcp__cuna__spawn_thread,mcp__cuna__list_threads,mcp__cuna__thread_status,mcp__cuna__create_issue,mcp__cuna__remember"]);
             if self.cfg.prompt_tool {
-                cmd.args(["--permission-prompt-tool", "mcp__bouvio__approve"]);
+                cmd.args(["--permission-prompt-tool", "mcp__cuna__approve"]);
             }
         }
         if let Some(i) = self.cfg.instructions.as_deref().filter(|i| !i.trim().is_empty()) {

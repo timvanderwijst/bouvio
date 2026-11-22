@@ -5,7 +5,7 @@
 use crate::hub::HubClient;
 use crate::Runner;
 use anyhow::Result;
-use bouvio_protocol::*;
+use cuna_protocol::*;
 use serde_json::Value;
 use std::sync::Arc;
 use std::time::Duration;
@@ -66,7 +66,7 @@ fn reply(hub: &HubClient, msg: &ChatMessage, text: String) {
 }
 
 fn link(t: &Thread) -> String {
-    format!("[{}](bouvio://thread/{})", t.title.replace(['[', ']'], ""), t.id)
+    format!("[{}](cuna://thread/{})", t.title.replace(['[', ']'], ""), t.id)
 }
 
 pub fn truncate(text: &str, max: usize) -> String {

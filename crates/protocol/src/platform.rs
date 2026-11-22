@@ -118,7 +118,7 @@ pub enum PluginPermission {
     Network,
 }
 
-/// `~/.bouvio/plugins/<id>/plugin.json`.
+/// `~/.cuna/plugins/<id>/plugin.json`.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "../../../apps/desktop/src/protocol/")]
 pub struct PluginManifest {

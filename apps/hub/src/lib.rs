@@ -1,4 +1,4 @@
-//! Bouvio hub: accounts, sharing, permissions, realtime relay, people chat and
+//! Cuna hub: accounts, sharing, permissions, realtime relay, people chat and
 //! presence. It never calls an AI model; runners do that.
 
 mod auth;
@@ -51,7 +51,7 @@ pub async fn router(config: Config) -> anyhow::Result<Router> {
         tracing::info!("SMTP_URL not set: login codes are written to this log");
     }
     if config.dev_codes {
-        tracing::warn!("BOUVIO_HUB_DEV_CODES is on: login codes are returned over HTTP. Never use this in production.");
+        tracing::warn!("CUNA_HUB_DEV_CODES is on: login codes are returned over HTTP. Never use this in production.");
     }
     let state = AppState {
         hub: Arc::new(hub::Hub::new(db.clone())),
@@ -64,6 +64,9 @@ pub async fn router(config: Config) -> anyhow::Result<Router> {
     };
     if let Some(dir) = &state.config.web_dir {
         tracing::info!("serving the web client from {} at /app/", dir.display());
+    }
+    if let Some(dir) = &state.config.site_dir {
+        tracing::info!("serving the landing page from {} at /", dir.display());
     }
 
     Ok(Router::new()
@@ -101,6 +104,8 @@ pub async fn router(config: Config) -> anyhow::Result<Router> {
         .route("/invite/{code}", get(pages::invite))
         .route("/invites/{code}/accept", post(workspaces::accept_invite))
         .route("/ws", get(ws::upgrade))
+        .route("/", get(web::site_index))
+        .fallback(web::site_file)
         .layer(CorsLayer::permissive())
         .layer(TraceLayer::new_for_http())
         .with_state(state))
@@ -109,7 +114,7 @@ pub async fn router(config: Config) -> anyhow::Result<Router> {
 /// Serves the hub on an already bound listener until the process ends.
 pub async fn serve(config: Config, listener: TcpListener) -> anyhow::Result<()> {
     let app = router(config).await?;
-    tracing::info!("bouvio hub listening on {}", listener.local_addr()?);
+    tracing::info!("cuna hub listening on {}", listener.local_addr()?);
     axum::serve(
         listener,
         app.into_make_service_with_connect_info::<SocketAddr>(),

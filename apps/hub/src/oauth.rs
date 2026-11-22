@@ -1,5 +1,5 @@
 //! GitHub and Google sign-in for a desktop app without deep links: the browser
-//! ends on a page with a one-time code that the person pastes into Bouvio.
+//! ends on a page with a one-time code that the person pastes into Cuna.
 
 use std::collections::HashMap;
 use std::sync::Mutex;
@@ -61,7 +61,7 @@ pub struct OAuth {
 impl OAuth {
     pub fn new() -> anyhow::Result<Self> {
         let http = reqwest::Client::builder()
-            .user_agent("bouvio-hub")
+            .user_agent("cuna-hub")
             .timeout(Duration::from_secs(15))
             .build()?;
         Ok(OAuth {
@@ -160,7 +160,7 @@ pub async fn callback(
     if !st.oauth.take_state(&state, provider) {
         return pages::error(
             StatusCode::BAD_REQUEST,
-            "This sign-in link expired. Start again from Bouvio.",
+            "This sign-in link expired. Start again from Cuna.",
         );
     }
     let profile = match fetch_profile(&st, provider, &app, &code).await {

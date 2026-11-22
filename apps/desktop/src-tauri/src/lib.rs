@@ -7,9 +7,9 @@ pub mod ext;
 mod hub;
 
 use base64::Engine;
-use bouvio_agent::{media, KeyStore, KeyringStore};
-use bouvio_protocol::*;
-use bouvio_runner::{terminal::TerminalOut, Runner};
+use cuna_agent::{media, KeyStore, KeyringStore};
+use cuna_protocol::*;
+use cuna_runner::{terminal::TerminalOut, Runner};
 use hub::Hub;
 use serde_json::{json, Value};
 use std::path::PathBuf;
@@ -81,7 +81,7 @@ fn set_key(app: State<'_, Arc<App>>, provider: ProviderKind, key: Option<String>
     };
     let path = app.runner.store().dir().join("keys.json");
     let mut file: serde_json::Map<String, Value> = std::fs::read(&path).ok().and_then(|b| serde_json::from_slice(&b).ok()).unwrap_or_default();
-    let var = bouvio_agent::keys::env_vars(provider).first().copied().unwrap_or_default();
+    let var = cuna_agent::keys::env_vars(provider).first().copied().unwrap_or_default();
     match (&key, keychain.is_ok()) {
         (Some(k), false) => {
             file.insert(provider.id().into(), Value::String(k.clone()));
@@ -101,7 +101,7 @@ fn load_file_keys(dir: &std::path::Path) {
     let Ok(b) = std::fs::read(dir.join("keys.json")) else { return };
     let Ok(map) = serde_json::from_slice::<serde_json::Map<String, Value>>(&b) else { return };
     for p in ProviderKind::ALL {
-        if let (Some(Value::String(k)), Some(var)) = (map.get(p.id()), bouvio_agent::keys::env_vars(p).first()) {
+        if let (Some(Value::String(k)), Some(var)) = (map.get(p.id()), cuna_agent::keys::env_vars(p).first()) {
             std::env::set_var(var, k);
         }
     }
@@ -109,7 +109,7 @@ fn load_file_keys(dir: &std::path::Path) {
 
 #[tauri::command]
 async fn list_models() -> Vec<ModelInfo> {
-    bouvio_agent::list_models(&KeyringStore).await
+    cuna_agent::list_models(&KeyringStore).await
 }
 
 #[tauri::command]
@@ -259,7 +259,7 @@ pub fn run() {
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
-            let dir = std::env::var_os("BOUVIO_DATA").map(PathBuf::from).unwrap_or_else(Runner::default_dir);
+            let dir = std::env::var_os("CUNA_DATA").map(PathBuf::from).unwrap_or_else(Runner::default_dir);
             load_file_keys(&dir);
             let runner = Runner::open(dir)?;
             runner.set_api_factory(api::factory());
@@ -312,5 +312,5 @@ pub fn run() {
             hub_send,
         ])
         .run(tauri::generate_context!())
-        .expect("error while running Bouvio");
+        .expect("error while running Cuna");
 }

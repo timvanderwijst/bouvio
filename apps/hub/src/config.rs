@@ -24,8 +24,10 @@ pub struct Config {
     /// coturn with `use-auth-secret`: `TURN_URLS` (comma-separated) and `TURN_SECRET`.
     pub turn_urls: Vec<String>,
     pub turn_secret: Option<String>,
-    /// A built web client to serve under `/app/` (`BOUVIO_HUB_WEB_DIR`).
+    /// A built web client to serve under `/app/` (`CUNA_HUB_WEB_DIR`).
     pub web_dir: Option<PathBuf>,
+    /// The landing page to serve at `/` (`CUNA_HUB_SITE_DIR`).
+    pub site_dir: Option<PathBuf>,
 }
 
 const DEFAULT_STUN: &str = "stun:stun.l.google.com:19302";
@@ -40,7 +42,11 @@ fn list(v: Option<String>) -> Vec<String> {
 
 impl Config {
     pub fn from_env() -> Self {
-        let var = |k: &str| env::var(k).ok().filter(|v| !v.trim().is_empty());
+        // CUNA_* settings; the old BOUVIO_* names still work.
+        let var = |k: &str| {
+            let get = |k: &str| env::var(k).ok().filter(|v| !v.trim().is_empty());
+            get(k).or_else(|| k.strip_prefix("CUNA_").and_then(|rest| get(&format!("BOUVIO_{rest}"))))
+        };
         let app = |id: &str, secret: &str| match (var(id), var(secret)) {
             (Some(client_id), Some(client_secret)) => Some(OAuthApp {
                 client_id,
@@ -49,17 +55,17 @@ impl Config {
             _ => None,
         };
         Config {
-            addr: var("BOUVIO_HUB_ADDR").unwrap_or_else(|| "0.0.0.0:8787".into()),
-            db_url: var("BOUVIO_HUB_DB").unwrap_or_else(|| "sqlite://data/hub.db".into()),
-            public_url: var("BOUVIO_HUB_PUBLIC_URL")
+            addr: var("CUNA_HUB_ADDR").unwrap_or_else(|| "0.0.0.0:8787".into()),
+            db_url: var("CUNA_HUB_DB").unwrap_or_else(|| "sqlite://data/hub.db".into()),
+            public_url: var("CUNA_HUB_PUBLIC_URL")
                 .unwrap_or_else(|| "http://localhost:8787".into())
                 .trim_end_matches('/')
                 .to_string(),
             smtp_url: var("SMTP_URL"),
-            smtp_from: var("SMTP_FROM").unwrap_or_else(|| "Bouvio <bouvio@localhost>".into()),
+            smtp_from: var("SMTP_FROM").unwrap_or_else(|| "Cuna <cuna@localhost>".into()),
             github: app("GITHUB_CLIENT_ID", "GITHUB_CLIENT_SECRET"),
             google: app("GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"),
-            dev_codes: matches!(var("BOUVIO_HUB_DEV_CODES").as_deref(), Some("1" | "true")),
+            dev_codes: matches!(var("CUNA_HUB_DEV_CODES").as_deref(), Some("1" | "true")),
             // Set but empty means no STUN at all; unset means the public default.
             stun_urls: match env::var("STUN_URLS") {
                 Ok(v) => list(Some(v)),
@@ -67,7 +73,8 @@ impl Config {
             },
             turn_urls: list(var("TURN_URLS")),
             turn_secret: var("TURN_SECRET"),
-            web_dir: var("BOUVIO_HUB_WEB_DIR").map(PathBuf::from),
+            web_dir: var("CUNA_HUB_WEB_DIR").map(PathBuf::from),
+            site_dir: var("CUNA_HUB_SITE_DIR").map(PathBuf::from),
         }
     }
 
@@ -78,7 +85,7 @@ impl Config {
             db_url,
             public_url: "http://localhost:8787".into(),
             smtp_url: None,
-            smtp_from: "Bouvio <bouvio@localhost>".into(),
+            smtp_from: "Cuna <cuna@localhost>".into(),
             github: None,
             google: None,
             dev_codes: true,
@@ -86,6 +93,7 @@ impl Config {
             turn_urls: vec![],
             turn_secret: None,
             web_dir: None,
+            site_dir: None,
         }
     }
 }

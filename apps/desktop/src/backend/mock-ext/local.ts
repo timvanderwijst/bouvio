@@ -44,7 +44,7 @@ const recommended: LocalRecommended[] = [
 
 function status(): LocalStatus {
   return {
-    models_dir: "~/.bouvio/local",
+    models_dir: "~/.cuna/local",
     engines: [
       { kind: "ollama", ready: true, version: "0.12.6", location: config.ollama_url, models: ollamaModels, error: null },
       { kind: "lm_studio", ready: false, version: null, location: config.lmstudio_url, models: [], error: null },

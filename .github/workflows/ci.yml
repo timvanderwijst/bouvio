@@ -35,7 +35,7 @@ jobs:
 
       # The desktop crate embeds the built UI; tests only need the folder to exist.
       - name: Placeholder UI build
-        run: mkdir -p apps/desktop/dist && echo '<!doctype html><title>Bouvio</title>' > apps/desktop/dist/index.html
+        run: mkdir -p apps/desktop/dist && echo '<!doctype html><title>Cuna</title>' > apps/desktop/dist/index.html
 
       - run: cargo test --workspace --locked
 
@@ -56,10 +56,10 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: Type check
-        run: pnpm --filter @bouvio/desktop typecheck
+        run: pnpm --filter @cuna/desktop typecheck
 
       - name: Web client tests
-        run: pnpm --filter @bouvio/desktop test:web
+        run: pnpm --filter @cuna/desktop test:web
 
       - name: Web client build
-        run: pnpm --filter @bouvio/desktop build:web
+        run: pnpm --filter @cuna/desktop build:web

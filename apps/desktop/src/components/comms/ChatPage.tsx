@@ -32,7 +32,7 @@ import {
 const EMPTY: ChatMessage[] = [];
 const lastChannel = (ws: string) => {
   try {
-    return localStorage.getItem(`bouvio.comms.channel.${ws}`) || GENERAL;
+    return localStorage.getItem(`cuna.ioms.channel.${ws}`) || GENERAL;
   } catch {
     return GENERAL;
   }
@@ -122,7 +122,7 @@ function Chat({ wsId, sub }: { wsId: string; sub?: string }) {
   const [loading, setLoading] = useState(false);
   useEffect(() => {
     try {
-      localStorage.setItem(`bouvio.comms.channel.${wsId}`, channel);
+      localStorage.setItem(`cuna.ioms.channel.${wsId}`, channel);
     } catch {}
     markRead(wsId, channel);
     setLoading(true);

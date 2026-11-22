@@ -9,7 +9,7 @@ export type LocalModel = {
  */
 name: string, 
 /**
- * Provider-qualified id Bouvio uses (`local:qwen3:8b`, `local:whisper-base`, `comfyui:…`).
+ * Provider-qualified id Cuna uses (`local:qwen3:8b`, `local:whisper-base`, `comfyui:…`).
  */
 id: string, size: number | null, 
 /**

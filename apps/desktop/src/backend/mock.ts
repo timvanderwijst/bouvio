@@ -31,7 +31,7 @@ const uid = () => crypto.randomUUID();
 const ago = (min: number) => new Date(Date.now() - min * 60_000).toISOString();
 
 const ws: Workspace[] = [
-  { id: uid(), name: "Bouvio", kind: "shared", root: "~/code/bouvio", created_at: ago(9000), role: null, host: null },
+  { id: uid(), name: "Cuna", kind: "shared", root: "~/code/cuna", created_at: ago(9000), role: null, host: null },
   { id: uid(), name: "northwind.dev", kind: "personal", root: "~/code/northwind", created_at: ago(20000), role: null, host: null },
   { id: uid(), name: "Q1 planning", kind: "personal", root: null, created_at: ago(3000), role: null, host: null },
 ];
@@ -68,7 +68,7 @@ function thread(c: Lead | null, title: string, status: Thread["status"], min: nu
     effort: "medium",
     approval: "ask_risky",
     status,
-    cwd: "~/code/bouvio",
+    cwd: "~/code/cuna",
     branch: "main",
     created_at: ago(min + 30),
     updated_at: ago(min),
@@ -81,15 +81,15 @@ function thread(c: Lead | null, title: string, status: Thread["status"], min: nu
 const [desktop, runner, hub, design] = leads;
 const threads: Thread[] = [
   thread(desktop, "Desktop", "idle", 3, { cost_usd: 0.41, created_at: ago(20000) }),
-  thread(desktop, "Keep a draft per thread in the composer", "idle", 4, { branch: "bouvio/3f9a2c1e", cost_usd: 0.38 }),
-  thread(desktop, "Rail shows on hover at the left edge", "working", 1, { branch: "bouvio/7be04d55" }),
+  thread(desktop, "Keep a draft per thread in the composer", "idle", 4, { branch: "cuna/3f9a2c1e", cost_usd: 0.38 }),
+  thread(desktop, "Rail shows on hover at the left edge", "working", 1, { branch: "cuna/7be04d55" }),
   thread(runner, "Runner", "idle", 40, { created_at: ago(20000) }),
-  thread(runner, "Find Codex on the Windows PATH", "working", 2, { branch: "bouvio/c01d9e72" }),
+  thread(runner, "Find Codex on the Windows PATH", "working", 2, { branch: "cuna/c01d9e72" }),
   thread(runner, "Resume Claude sessions after a restart", "idle", 55, { cost_usd: 0.22 }),
   thread(hub, "Hub", "idle", 300, { created_at: ago(20000) }),
-  thread(hub, "Magic link sign-in", "blocked", 12, { branch: "bouvio/a4410b9f" }),
+  thread(hub, "Magic link sign-in", "blocked", 12, { branch: "cuna/a4410b9f" }),
   thread(design, "Design", "idle", 600, { created_at: ago(20000) }),
-  thread(design, "Diff colors in the dark theme", "error", 90, { branch: "bouvio/5d2e7a03" }),
+  thread(design, "Diff colors in the dark theme", "error", 90, { branch: "cuna/5d2e7a03" }),
   thread(null, "What does Herdr do with a blocked pane?", "idle", 180, { cost_usd: 0.04 }),
 ];
 
@@ -114,7 +114,7 @@ seed(
     { type: "assistant_text", text: "The draft lived in local component state, so it died with the component. I split this in two threads:\n\n- **Keep a draft per thread in the composer** moves drafts into the store, keyed by thread.\n- **Rail shows on hover at the left edge** fixes the hover zone, which was 2px wide on Windows." },
     { type: "turn_complete", duration_ms: 4100, cost_usd: 0.03 },
     { type: "status", status: "idle" },
-    { type: "assistant_text", text: "The draft thread is done: `pnpm typecheck` passes and switching threads keeps what you typed. The rail thread is still working. Changes are on `bouvio/3f9a2c1e`; open **Changes** to review them." },
+    { type: "assistant_text", text: "The draft thread is done: `pnpm typecheck` passes and switching threads keeps what you typed. The rail thread is still working. Changes are on `cuna/3f9a2c1e`; open **Changes** to review them." },
   ],
   6,
 );
@@ -207,9 +207,9 @@ index 91be3d0..a27c6e4 100644
 
 // ---- more sample data: work, studio, people ------------------------------------------
 
-const maya: HubUser = { id: uid(), name: "Maya", email: "maya@bouvio.com", avatar_url: null };
-const jonas: HubUser = { id: uid(), name: "Jonas", email: "jonas@bouvio.com", avatar_url: null };
-const noor: HubUser = { id: uid(), name: "Noor", email: "noor@bouvio.com", avatar_url: null };
+const maya: HubUser = { id: uid(), name: "Maya", email: "maya@cuna.io", avatar_url: null };
+const jonas: HubUser = { id: uid(), name: "Jonas", email: "jonas@cuna.io", avatar_url: null };
+const noor: HubUser = { id: uid(), name: "Noor", email: "noor@cuna.io", avatar_url: null };
 
 const issue = (n: number, title: string, status: Issue["status"], lead: Lead | null, min: number, body = ""): Issue => ({
   id: uid(),
@@ -239,9 +239,9 @@ const issues: Issue[] = [
 ];
 
 const prs: PullRequest[] = [
-  { number: 142, title: "fix(desktop): keep a draft per thread", url: "https://github.com/bouvio/bouvio/pull/142", head: "bouvio/3f9a2c1e", base: "main", state: "open", draft: false, author: "maya", additions: 17, deletions: 35, updated_at: ago(3) },
-  { number: 141, title: "feat(runner): resume Claude sessions after restart", url: "https://github.com/bouvio/bouvio/pull/141", head: "bouvio/9e1c0a77", base: "main", state: "merged", draft: false, author: "maya", additions: 88, deletions: 12, updated_at: ago(50) },
-  { number: 140, title: "feat(hub): invites with roles", url: "https://github.com/bouvio/bouvio/pull/140", head: "bouvio/1a2b3c4d", base: "main", state: "open", draft: true, author: "jonas", additions: 214, deletions: 9, updated_at: ago(130) },
+  { number: 142, title: "fix(desktop): keep a draft per thread", url: "https://github.com/timvanderwijst/bouvio/pull/142", head: "cuna/3f9a2c1e", base: "main", state: "open", draft: false, author: "maya", additions: 17, deletions: 35, updated_at: ago(3) },
+  { number: 141, title: "feat(runner): resume Claude sessions after restart", url: "https://github.com/timvanderwijst/bouvio/pull/141", head: "cuna/9e1c0a77", base: "main", state: "merged", draft: false, author: "maya", additions: 88, deletions: 12, updated_at: ago(50) },
+  { number: 140, title: "feat(hub): invites with roles", url: "https://github.com/timvanderwijst/bouvio/pull/140", head: "cuna/1a2b3c4d", base: "main", state: "open", draft: true, author: "jonas", additions: 214, deletions: 9, updated_at: ago(130) },
 ];
 
 const automations: Automation[] = [
@@ -258,7 +258,7 @@ const art = (title: string, kind: Artifact["kind"], min: number, extra: Partial<
   thread_id: firstThread.id,
   kind,
   title,
-  path: `~/code/bouvio/${title}`,
+  path: `~/code/cuna/${title}`,
   size: 48_000,
   created_at: ago(min),
   prompt: null,
@@ -292,7 +292,7 @@ const settings: Record<string, WorkspaceSettings> = {
     mcp_servers: [{ name: "linear", command: "npx", args: ["-y", "@linear/mcp"], env: [] }],
     dev_command: "pnpm dev --port {port}",
     issue_prefix: "BOU",
-    github_repo: "bouvio/bouvio",
+    github_repo: "cuna/cuna",
   },
 };
 
@@ -360,7 +360,7 @@ async function reply(id: string, text: string) {
   await wait(700);
   push(id, { type: "tool_use", id: "m1", name: "Read", input: { file_path: "README.md" } });
   await wait(400);
-  push(id, { type: "tool_result", tool_use_id: "m1", output: "# Bouvio", is_error: false });
+  push(id, { type: "tool_result", tool_use_id: "m1", output: "# Cuna", is_error: false });
   await wait(400);
   if (/test|run|install|build/i.test(text)) {
     push(id, { type: "approval_request", id: "a1", tool: "Bash", input: { command: "pnpm test" } });
@@ -383,7 +383,7 @@ function readPreview(title: string, kind: Artifact["kind"]) {
   if (kind === "html")
     return {
       mime: "text/html",
-      text: `<!doctype html><html><body style="font-family:Inter,system-ui;margin:0;padding:48px;background:#fafaf9;color:#1b1b1a"><h1 style="font-size:40px;letter-spacing:-.02em;margin:0 0 8px">Bouvio is free</h1><p style="color:#77776f;margin:0 0 32px">Bring your own keys and machines.</p><div style="display:flex;gap:16px">${["Personal", "Team", "Self-hosted"]
+      text: `<!doctype html><html><body style="font-family:Inter,system-ui;margin:0;padding:48px;background:#fafaf9;color:#1b1b1a"><h1 style="font-size:40px;letter-spacing:-.02em;margin:0 0 8px">Cuna is free</h1><p style="color:#77776f;margin:0 0 32px">Bring your own keys and machines.</p><div style="display:flex;gap:16px">${["Personal", "Team", "Self-hosted"]
         .map((n) => `<div style="flex:1;padding:24px;border-radius:14px;background:#fff;box-shadow:0 0 0 1px #0001"><b>${n}</b><p style="color:#77776f">€0</p></div>`)
         .join("")}</div></body></html>`,
     };
@@ -422,7 +422,7 @@ const handlers: Record<string, (p: Record<string, any>) => unknown> = {
       effort: n.effort,
       approval: n.approval,
       cwd: w.root,
-      branch: w.root ? (n.isolate ? `bouvio/${uid().slice(0, 8)}` : "main") : null,
+      branch: w.root ? (n.isolate ? `cuna/${uid().slice(0, 8)}` : "main") : null,
       created_at: now,
     });
     threads.push(t);
@@ -445,7 +445,7 @@ const handlers: Record<string, (p: Record<string, any>) => unknown> = {
   open_terminal: () => {
     const id = uid();
     terms.set(id, "");
-    setTimeout(() => fire("terminal-chunk", { terminal_id: id, data: "\x1b[2m~/code/bouvio\x1b[0m on \x1b[35mmain\x1b[0m\r\n❯ " }), 50);
+    setTimeout(() => fire("terminal-chunk", { terminal_id: id, data: "\x1b[2m~/code/cuna\x1b[0m on \x1b[35mmain\x1b[0m\r\n❯ " }), 50);
     return id;
   },
   write_terminal: ({ id, data }) => {
@@ -505,7 +505,7 @@ const handlers: Record<string, (p: Record<string, any>) => unknown> = {
   sync_github_issues: () => 0,
 
   list_pull_requests: () => prs,
-  create_pull_request: () => "https://github.com/bouvio/bouvio/pull/143",
+  create_pull_request: () => "https://github.com/timvanderwijst/bouvio/pull/143",
   merge_pull_request: ({ number }) => {
     const pr = prs.find((x) => x.number === number);
     if (pr) pr.state = "merged";
@@ -542,7 +542,7 @@ const handlers: Record<string, (p: Record<string, any>) => unknown> = {
     return readPreview(a.title, a.kind);
   },
   list_files: ({ dir }) => (files[dir ?? ""] ?? []).map((f) => ({ ...f, path: dir ? `${dir}/${f.name}` : f.name })),
-  read_file: ({ path }) => ({ mime: "text/plain", text: path === "README.md" ? "# Bouvio\n\nA desktop workspace where people and agent fleets work together.\n" : `// ${path}\n` }),
+  read_file: ({ path }) => ({ mime: "text/plain", text: path === "README.md" ? "# Cuna\n\nA desktop workspace where people and agent fleets work together.\n" : `// ${path}\n` }),
 
   list_boards: ({ workspace_id }) => boards.filter((b) => b.workspace_id === workspace_id).map((b) => ({ ...b, doc: null })),
   create_board: ({ workspace_id, name }) => {
@@ -631,13 +631,13 @@ export const mockBackend: Backend = {
   },
   hub: {
     async status() {
-      return { url: "https://hub.bouvio.com", user: maya, connected: true };
+      return { url: "https://hub.cuna.io", user: maya, connected: true };
     },
     async setUrl() {},
     async request(method: string, path: string) {
       if (path.endsWith("/members")) return members as never;
       if (path.includes("/chat")) return chat.filter((m) => path.includes(m.channel)) as never;
-      if (path.endsWith("/invites") && method === "POST") return { code: "K7Q2MX9A", url: "https://hub.bouvio.com/invite/K7Q2MX9A" } as never;
+      if (path.endsWith("/invites") && method === "POST") return { code: "K7Q2MX9A", url: "https://hub.cuna.io/invite/K7Q2MX9A" } as never;
       return null as never;
     },
     async signIn() {

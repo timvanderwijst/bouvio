@@ -20,7 +20,7 @@ export function DataTab() {
   const t = useT();
   const ws = useStore((s) => s.workspaceId);
   const [conns, setConns] = useState<DbConnections | null>(null);
-  const [connId, setConnId] = useState<string | null>(() => prefs.get(`bouvio.dev.conn.${ws}`));
+  const [connId, setConnId] = useState<string | null>(() => prefs.get(`cuna.dev.conn.${ws}`));
   const [tables, setTables] = useState<DbTable[] | null>(null);
   const [tablesError, setTablesError] = useState<string | null>(null);
   const [table, setTable] = useState<string | null>(null);
@@ -38,7 +38,7 @@ export function DataTab() {
 
   const conn = conns?.connections.find((c) => c.id === connId) ?? conns?.connections[0] ?? null;
   useEffect(() => {
-    if (conn) prefs.set(`bouvio.dev.conn.${ws}`, conn.id);
+    if (conn) prefs.set(`cuna.dev.conn.${ws}`, conn.id);
   }, [conn, ws]);
 
   const loadTables = useCallback(async () => {
@@ -275,7 +275,7 @@ function TableView({ conn, table }: { conn: DbConnection; table: string }) {
 function SqlView({ conn, table }: { conn: DbConnection; table: string | null }) {
   const t = useT();
   const ws = useStore((s) => s.workspaceId);
-  const key = `bouvio.dev.sql.${conn.id}`;
+  const key = `cuna.dev.sql.${conn.id}`;
   const [sql, setSql] = useState(() => prefs.get(key) ?? (table ? `SELECT * FROM ${/^[a-z_][a-z0-9_.]*$/i.test(table) ? table : `"${table}"`} LIMIT 50;` : "SELECT 1;"));
   const [data, setData] = useState<DbRows | null>(null);
   const [error, setError] = useState<string | null>(null);

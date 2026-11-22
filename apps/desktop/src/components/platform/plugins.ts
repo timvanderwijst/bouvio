@@ -1,4 +1,4 @@
-// Runtime plugins: each enabled folder in ~/.bouvio/plugins is loaded as an ES
+// Runtime plugins: each enabled folder in ~/.cuna/plugins is loaded as an ES
 // module from a blob URL and gets a small API to add pages, panels, settings,
 // palette commands and overlays. See docs/plugins.md.
 

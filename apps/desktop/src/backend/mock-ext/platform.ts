@@ -76,13 +76,13 @@ const plugins: PluginInfo[] = [
   {
     manifest: { id: "hello", name: "Hello", version: "0.1.0", description: "An example: a page in the rail and a command in Ctrl+K.", entry: "index.js", permissions: ["rpc"] },
     enabled: false,
-    path: "~/.bouvio/plugins/hello",
+    path: "~/.cuna/plugins/hello",
     error: null,
   },
   {
     manifest: { id: "standup", name: "Standup notes", version: "1.2.0", description: "Collects what every thread did yesterday into one note.", entry: "index.js", permissions: ["rpc", "network"] },
     enabled: true,
-    path: "~/.bouvio/plugins/standup",
+    path: "~/.cuna/plugins/standup",
     error: null,
   },
 ];
@@ -104,7 +104,7 @@ export const handlers: Record<string, (p: Record<string, any>) => unknown> = {
 export const app: Record<string, (p: Record<string, any>) => unknown> = {
   app_info: () => ({ version: "0.1.0", updater: true }),
   plugins_list: () => plugins,
-  plugins_dir: () => "~/.bouvio/plugins",
+  plugins_dir: () => "~/.cuna/plugins",
   plugin_set_enabled: (p) => {
     const x = plugins.find((x) => x.manifest.id === p.id);
     if (x) x.enabled = p.enabled;

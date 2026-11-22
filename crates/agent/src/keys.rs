@@ -1,15 +1,16 @@
 //! API keys. They belong to the user and live in the OS keychain (service
-//! `bouvio`, account = provider id); environment variables are a fallback.
+//! `cuna`, account = provider id); environment variables are a fallback.
 
 use anyhow::{Context, Result};
-use bouvio_protocol::{ProviderInfo, ProviderKind};
+use cuna_protocol::{ProviderInfo, ProviderKind};
 use std::collections::HashMap;
 
 pub trait KeyStore: Send + Sync {
     fn get(&self, p: ProviderKind) -> Option<String>;
 }
 
-const SERVICE: &str = "bouvio";
+const SERVICE: &str = "cuna";
+const OLD_SERVICE: &str = "bouvio";
 
 /// Environment variables read when the keychain has no key.
 pub fn env_vars(p: ProviderKind) -> &'static [&'static str] {
@@ -73,14 +74,18 @@ impl KeyringStore {
 
 impl KeyStore for KeyringStore {
     fn get(&self, p: ProviderKind) -> Option<String> {
-        let stored = Self::entry(p).ok().and_then(|e| match e.get_password() {
-            Ok(k) => Some(k),
-            Err(keyring::Error::NoEntry) => None,
-            Err(e) => {
-                tracing::debug!("keychain read for {} failed: {e}", p.id());
-                None
-            }
-        });
+        let read = |service: &str| {
+            keyring::Entry::new(service, p.id()).ok().and_then(|e| match e.get_password() {
+                Ok(k) => Some(k),
+                Err(keyring::Error::NoEntry) => None,
+                Err(e) => {
+                    tracing::debug!("keychain read for {} failed: {e}", p.id());
+                    None
+                }
+            })
+        };
+        // Keys saved while the app was called Bouvio still count.
+        let stored = read(SERVICE).or_else(|| read(OLD_SERVICE));
         stored.map(|k| k.trim().to_string()).filter(|k| !k.is_empty()).or_else(|| from_env(p))
     }
 }

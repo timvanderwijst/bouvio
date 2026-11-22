@@ -1,6 +1,6 @@
-//! Shared types between the Bouvio desktop app, the runner and (later) the hub.
+//! Shared types between the Cuna desktop app, the runner and (later) the hub.
 //!
-//! Every type derives `ts_rs::TS`, so `cargo test -p bouvio-protocol` writes
+//! Every type derives `ts_rs::TS`, so `cargo test -p cuna-protocol` writes
 //! matching TypeScript to `apps/desktop/src/protocol/`.
 
 use chrono::{DateTime, Utc};
@@ -26,7 +26,7 @@ pub enum HarnessKind {
     Codex,
     OpenCode,
     GeminiCli,
-    /// Bouvio's own agent loop for API keys and OpenRouter (phase 2).
+    /// Cuna's own agent loop for API keys and OpenRouter (phase 2).
     Api,
 }
 

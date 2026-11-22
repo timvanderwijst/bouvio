@@ -1,7 +1,7 @@
 //! Ollama's native endpoints (tags, show, pull, embed) against a mock.
 
 use axum::{extract::State, http::StatusCode, routing::{get, post}, Json, Router};
-use bouvio_agent::StaticKeys;
+use cuna_agent::StaticKeys;
 use serde_json::{json, Value};
 use std::sync::{Arc, Mutex};
 
@@ -64,17 +64,17 @@ async fn ollama_listing_pull_and_embeddings() {
         .route("/api/embed", post(embed))
         .with_state(mock.clone());
     tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
-    std::env::set_var("BOUVIO_OLLAMA_BASE_URL", &root);
+    std::env::set_var("CUNA_OLLAMA_BASE_URL", &root);
     // Nothing listens here: LM Studio is "not running".
-    std::env::set_var("BOUVIO_LMSTUDIO_BASE_URL", "http://127.0.0.1:9");
+    std::env::set_var("CUNA_LMSTUDIO_BASE_URL", "http://127.0.0.1:9");
 
-    let models = bouvio_agent::local::list_chat_models().await;
+    let models = cuna_agent::local::list_chat_models().await;
     assert_eq!(models.len(), 1, "embedding models are not chat models");
     assert_eq!(models[0].id, "local:qwen3:8b");
     assert_eq!(models[0].context, Some(40960));
-    assert!(bouvio_agent::local::reachable_cached());
+    assert!(cuna_agent::local::reachable_cached());
 
-    let status = bouvio_agent::local::status().await;
+    let status = cuna_agent::local::status().await;
     let ollama = &status.engines[0];
     assert!(ollama.ready);
     assert_eq!(ollama.version.as_deref(), Some("0.12.6"));
@@ -82,14 +82,14 @@ async fn ollama_listing_pull_and_embeddings() {
     assert!(!status.engines[1].ready, "LM Studio is down");
 
     let mut seen = Vec::new();
-    bouvio_agent::local::pull("qwen3:4b", |p| seen.push(p)).await.unwrap();
+    cuna_agent::local::pull("qwen3:4b", |p| seen.push(p)).await.unwrap();
     assert_eq!(seen.first().unwrap().status, "pulling manifest");
     assert!(seen.last().unwrap().done);
     assert!(seen.iter().any(|p| p.total == Some(1000)));
 
     // The embedding model is pulled on first use, then used.
-    let v = bouvio_agent::embed(&StaticKeys::new(), &["a".into(), "b".into()]).await.unwrap();
+    let v = cuna_agent::embed(&StaticKeys::new(), &["a".into(), "b".into()]).await.unwrap();
     assert_eq!(v, vec![vec![0.25f32, -0.5, 1.0]; 2]);
     assert_eq!(*mock.pulled.lock().unwrap(), ["qwen3:4b", "nomic-embed-text"]);
-    assert!(bouvio_agent::embed(&StaticKeys::new(), &[]).await.unwrap().is_empty());
+    assert!(cuna_agent::embed(&StaticKeys::new(), &[]).await.unwrap().is_empty());
 }

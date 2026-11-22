@@ -1,13 +1,13 @@
 {
-  "name": "bouvio",
+  "name": "cuna",
   "private": true,
   "license": "MIT",
   "packageManager": "pnpm@10.28.0",
   "scripts": {
-    "dev": "pnpm --filter @bouvio/desktop dev",
-    "build": "pnpm --filter @bouvio/desktop build",
-    "tauri": "pnpm --filter @bouvio/desktop tauri",
+    "dev": "pnpm --filter @cuna/desktop dev",
+    "build": "pnpm --filter @cuna/desktop build",
+    "tauri": "pnpm --filter @cuna/desktop tauri",
     "typecheck": "pnpm -r typecheck",
-    "types": "cargo test -p bouvio-protocol export_bindings"
+    "types": "cargo test -p cuna-protocol export_bindings"
   }
 }

@@ -3,7 +3,7 @@
 //! unknown model gives no cost rather than a wrong one.
 
 use crate::provider::Usage;
-use bouvio_protocol::ProviderKind;
+use cuna_protocol::ProviderKind;
 
 use ProviderKind::{Anthropic as A, Google as G, OpenAi as O};
 

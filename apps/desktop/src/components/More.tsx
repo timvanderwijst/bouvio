@@ -195,7 +195,7 @@ export function RunnersPage() {
   const harnesses = useStore((s) => s.harnesses);
   const hub = useStore((s) => s.hub);
   const [copied, setCopied] = useState(false);
-  const cmd = `bouvio-runner serve --hub ${hub.url ?? "https://your-hub"} --token <token>`;
+  const cmd = `cuna-runner serve --hub ${hub.url ?? "https://your-hub"} --token <token>`;
   return (
     <div className="page">
       <h1 className="page-title">{t("nav.runners")}</h1>

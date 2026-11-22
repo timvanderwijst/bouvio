@@ -9,8 +9,8 @@
 use crate::{store, Runner};
 use anyhow::{anyhow, bail, Context, Result};
 use base64::Engine;
-use bouvio_protocol::knowledge::*;
-use bouvio_protocol::{Artifact, ArtifactKind, McpServer, ThreadEvent};
+use cuna_protocol::knowledge::*;
+use cuna_protocol::{Artifact, ArtifactKind, McpServer, ThreadEvent};
 use chrono::{DateTime, Utc};
 use serde::de::DeserializeOwned;
 use serde_json::{json, Value};
@@ -1273,7 +1273,7 @@ fn index_thread(
     r: &Runner,
     kb: &Kb,
     ix: &WsIndex,
-    t: &bouvio_protocol::Thread,
+    t: &cuna_protocol::Thread,
     semantic: bool,
 ) -> Result<()> {
     let doc = Doc {
@@ -1292,7 +1292,7 @@ fn index_thread(
     Ok(())
 }
 
-fn index_issue(kb: &Kb, ix: &WsIndex, i: &bouvio_protocol::Issue, semantic: bool) -> Result<()> {
+fn index_issue(kb: &Kb, ix: &WsIndex, i: &cuna_protocol::Issue, semantic: bool) -> Result<()> {
     let title = format!("{} {}", i.key, i.title);
     let doc = Doc {
         key: format!("issue:{}", i.id),
@@ -2287,7 +2287,7 @@ fn imports_dir(r: &Runner, ws: Uuid) -> PathBuf {
         .map(PathBuf::from)
         .filter(|p| p.is_dir())
     {
-        Some(root) => root.join(".bouvio").join("imports"),
+        Some(root) => root.join(".cuna").join("imports"),
         None => kb_of(r).dir.join(ws.to_string()).join("imports"),
     }
 }
@@ -2436,7 +2436,7 @@ fn http() -> &'static reqwest::Client {
     static C: OnceLock<reqwest::Client> = OnceLock::new();
     C.get_or_init(|| {
         reqwest::Client::builder()
-            .user_agent("Mozilla/5.0 (compatible; Bouvio)")
+            .user_agent("Mozilla/5.0 (compatible; Cuna)")
             .timeout(Duration::from_secs(30))
             .connect_timeout(Duration::from_secs(10))
             .build()
@@ -2696,12 +2696,12 @@ fn install_mcp(
     r: &Runner,
     ws: Uuid,
     server: McpServer,
-) -> Result<bouvio_protocol::WorkspaceSettings> {
+) -> Result<cuna_protocol::WorkspaceSettings> {
     if server.name.trim().is_empty() || server.command.trim().is_empty() {
         bail!("a server needs a name and a command");
     }
-    if server.name == "bouvio" {
-        bail!("`bouvio` is reserved for the fleet tools");
+    if server.name == "cuna" {
+        bail!("`cuna` is reserved for the fleet tools");
     }
     let mut s = r.settings(ws);
     match s.mcp_servers.iter_mut().find(|m| m.name == server.name) {
@@ -2712,7 +2712,7 @@ fn install_mcp(
     Ok(s)
 }
 
-fn remove_mcp(r: &Runner, ws: Uuid, name: &str) -> Result<bouvio_protocol::WorkspaceSettings> {
+fn remove_mcp(r: &Runner, ws: Uuid, name: &str) -> Result<cuna_protocol::WorkspaceSettings> {
     let mut s = r.settings(ws);
     s.mcp_servers.retain(|m| m.name != name);
     r.set_settings(ws, &s)?;
@@ -3149,7 +3149,7 @@ mod tests {
     fn index_search_and_unindex() {
         let dir = tempfile::tempdir().unwrap();
         let r = Runner::open(dir.path()).unwrap();
-        let ws = r.create_workspace("Bouvio".into(), None).unwrap();
+        let ws = r.create_workspace("Cuna".into(), None).unwrap();
         index(
             &r,
             ws.id,
@@ -3351,7 +3351,7 @@ mod tests {
         assert_eq!(status(&r, ws.id).vectors, 2);
     }
 
-    /// `cargo test --release -p bouvio-runner search_is_fast -- --ignored`
+    /// `cargo test --release -p cuna-runner search_is_fast -- --ignored`
     #[test]
     #[ignore]
     fn search_is_fast() {
@@ -3624,7 +3624,7 @@ mod tests {
             &r,
             ws.id,
             McpServer {
-                name: "bouvio".into(),
+                name: "cuna".into(),
                 command: "x".into(),
                 ..Default::default()
             }

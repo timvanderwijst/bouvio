@@ -8,7 +8,7 @@ import react from "@vitejs/plugin-react";
 function webEntry(): Plugin {
   let base = "/";
   return {
-    name: "bouvio-web-entry",
+    name: "cuna-web-entry",
     configResolved(c) {
       base = c.base;
     },

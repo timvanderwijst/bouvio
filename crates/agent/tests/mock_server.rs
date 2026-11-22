@@ -3,8 +3,8 @@
 
 mod common;
 
-use bouvio_agent::{Agent, AgentConfig, CancellationToken, StaticKeys};
-use bouvio_protocol::{ApprovalLevel, ProviderKind, ThreadEvent};
+use cuna_agent::{Agent, AgentConfig, CancellationToken, StaticKeys};
+use cuna_protocol::{ApprovalLevel, ProviderKind, ThreadEvent};
 use common::*;
 use serde_json::json;
 use std::sync::Arc;
@@ -21,7 +21,7 @@ async fn openai_tool_call_then_answer() {
     let dir = tempfile::tempdir().unwrap();
     std::fs::write(dir.path().join("hello.txt"), "hi there\n").unwrap();
     let mock = start(
-        "BOUVIO_OPENAI_BASE_URL",
+        "CUNA_OPENAI_BASE_URL",
         "/chat/completions",
         vec![
             chat_tool_call("call_1", "read_file", json!({"file_path":"hello.txt"}), json!({"prompt_tokens":1000,"completion_tokens":50})),
@@ -72,7 +72,7 @@ async fn openai_tool_call_then_answer() {
 async fn openrouter_risky_tool_denied() {
     let dir = tempfile::tempdir().unwrap();
     let mock = start(
-        "BOUVIO_OPENROUTER_BASE_URL",
+        "CUNA_OPENROUTER_BASE_URL",
         "/chat/completions",
         vec![
             chat_tool_call("call_9", "bash", json!({"command":"echo ran > ran.txt"}), json!({"prompt_tokens":10,"completion_tokens":5,"cost":0.01})),
@@ -102,7 +102,7 @@ async fn openrouter_risky_tool_denied() {
     assert!((cost(&events).unwrap() - 0.03).abs() < 1e-12);
     let reqs = mock.requests();
     assert_eq!(reqs[0].1["usage"], json!({"include": true}));
-    assert_eq!(reqs[0].0["x-title"], "Bouvio");
+    assert_eq!(reqs[0].0["x-title"], "Cuna");
     assert!(reqs[1].1["messages"][3]["content"].as_str().unwrap().starts_with("Denied by the user"));
 }
 
@@ -110,7 +110,7 @@ async fn openrouter_risky_tool_denied() {
 async fn google_risky_tool_allowed() {
     let dir = tempfile::tempdir().unwrap();
     start(
-        "BOUVIO_GOOGLE_BASE_URL",
+        "CUNA_GOOGLE_BASE_URL",
         "/chat/completions",
         vec![
             // Gemini may send an empty id; the agent makes one up.
@@ -147,7 +147,7 @@ async fn anthropic_messages_flow() {
     let dir = tempfile::tempdir().unwrap();
     std::fs::write(dir.path().join("a.txt"), "old value\n").unwrap();
     let mock = start(
-        "BOUVIO_ANTHROPIC_BASE_URL",
+        "CUNA_ANTHROPIC_BASE_URL",
         "/messages",
         vec![
             json!({

@@ -1,12 +1,12 @@
 [package]
-name = "bouvio-agent"
-description = "Bouvio's own agent loop, tools, model listing and media generation for API keys"
+name = "cuna-agent"
+description = "Cuna's own agent loop, tools, model listing and media generation for API keys"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [dependencies]
-bouvio-protocol.workspace = true
+cuna-protocol.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 tokio.workspace = true

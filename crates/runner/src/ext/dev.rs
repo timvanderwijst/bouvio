@@ -182,8 +182,8 @@ pub fn start(_r: &Arc<Runner>) {}
 #[cfg(test)]
 mod tests {
     use super::*;
-    use bouvio_protocol::dev::*;
-    use bouvio_protocol::*;
+    use cuna_protocol::dev::*;
+    use cuna_protocol::*;
     use serde_json::json;
 
     #[tokio::test]
@@ -248,7 +248,7 @@ mod tests {
 
     #[test]
     fn branch_names() {
-        assert!(valid_branch("bouvio/3f9a2c1e"));
+        assert!(valid_branch("cuna/3f9a2c1e"));
         assert!(!valid_branch("--upload-pack=x"));
         assert!(!valid_branch("a b"));
     }

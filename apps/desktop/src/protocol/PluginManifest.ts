@@ -2,6 +2,6 @@
 import type { PluginPermission } from "./PluginPermission";
 
 /**
- * `~/.bouvio/plugins/<id>/plugin.json`.
+ * `~/.cuna/plugins/<id>/plugin.json`.
  */
 export type PluginManifest = { id: string, name: string, version: string, description: string, entry: string, permissions: Array<PluginPermission>, };

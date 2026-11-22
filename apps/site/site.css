@@ -1,10 +1,14 @@
-/* Bouvio site: the app's own tokens and component styles, laid out as one page.
+/* Cuna site: the app's own tokens and component styles, laid out as one page.
    Layout: one centred column; app parts sit on white sheets, the page is the app's grey ground. */
 
 html { scroll-behavior: smooth; scroll-padding-top: 84px; }
 a { color: inherit; text-decoration: none; }
 body { overflow: auto; user-select: auto; background: var(--bg); color: var(--ink); font-size: 15px; height: auto; }
 .site { min-height: 100vh; overflow-x: clip; }
+/* One typeface on the site: labels, times and ids use the UI font with even digits.
+   Only real code (terminal, inline code) keeps a monospace. */
+.site { --font-mono: var(--font-ui); font-variant-numeric: tabular-nums; }
+.site .tm, .site code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
 
 /* ---- page frame ---- */

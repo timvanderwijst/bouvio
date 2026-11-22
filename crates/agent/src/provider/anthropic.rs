@@ -3,7 +3,7 @@
 
 use super::{base_url, send_json, Part, Reply, Request, Role, Stop, Usage};
 use anyhow::{bail, Result};
-use bouvio_protocol::ProviderKind;
+use cuna_protocol::ProviderKind;
 use serde_json::{json, Value};
 use tokio_util::sync::CancellationToken;
 

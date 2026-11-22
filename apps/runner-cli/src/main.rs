@@ -1,18 +1,18 @@
-//! `bouvio-runner`: the runner without a window.
+//! `cuna-runner`: the runner without a window.
 //!
 //! Phase 1 uses it to drive a thread from a shell; phase 3 adds `serve`,
 //! which connects to a hub and keeps agents working while laptops are closed.
 
 use anyhow::Result;
-use bouvio_protocol::{AgentStatus, ApprovalLevel, Effort, HarnessKind, NewThread, ThreadEvent};
-use bouvio_runner::Runner;
+use cuna_protocol::{AgentStatus, ApprovalLevel, Effort, HarnessKind, NewThread, ThreadEvent};
+use cuna_runner::Runner;
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 
 #[derive(Parser)]
-#[command(name = "bouvio-runner", version, about)]
+#[command(name = "cuna-runner", version, about)]
 struct Cli {
-    /// Data dir (default: ~/.bouvio)
+    /// Data dir (default: ~/.cuna)
     #[arg(long, global = true)]
     data: Option<PathBuf>,
     #[command(subcommand)]
@@ -21,16 +21,16 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Cmd {
-    /// Serve the `bouvio` MCP server on stdio (started by agents, not by people).
+    /// Serve the `cuna` MCP server on stdio (started by agents, not by people).
     Mcp,
     /// Keep running and host this runner's shared workspaces through a hub,
     /// so agents keep working while laptops are closed.
     Serve {
         /// Hub address, e.g. https://hub.example.com
-        #[arg(long, env = "BOUVIO_HUB")]
+        #[arg(long, env = "CUNA_HUB")]
         hub: String,
         /// Hub token of the account that owns the workspaces.
-        #[arg(long, env = "BOUVIO_HUB_TOKEN")]
+        #[arg(long, env = "CUNA_HUB_TOKEN")]
         token: String,
     },
     /// List the agent CLIs found on this machine.
@@ -54,17 +54,17 @@ enum Cmd {
 async fn main() -> Result<()> {
     let cli = Cli::parse();
     match cli.cmd {
-        Cmd::Mcp => bouvio_runner::mcp::serve_stdio().await?,
+        Cmd::Mcp => cuna_runner::mcp::serve_stdio().await?,
         Cmd::Serve { hub, token } => {
             let runner = Runner::open(cli.data.unwrap_or_else(Runner::default_dir))?;
             runner.start().await?;
-            let client = bouvio_runner::hub::HubClient::connect(runner.clone(), hub.clone(), token);
-            println!("bouvio-runner: hosting {} shared workspace(s) through {hub}", runner.workspaces().iter().filter(|w| w.kind == bouvio_protocol::WorkspaceKind::Shared).count());
+            let client = cuna_runner::hub::HubClient::connect(runner.clone(), hub.clone(), token);
+            println!("cuna-runner: hosting {} shared workspace(s) through {hub}", runner.workspaces().iter().filter(|w| w.kind == cuna_protocol::WorkspaceKind::Shared).count());
             let _keep = client;
             tokio::signal::ctrl_c().await?;
         }
         Cmd::Detect => {
-            for h in bouvio_runner::detect_harnesses().await {
+            for h in cuna_runner::detect_harnesses().await {
                 let state = if h.available { h.version.unwrap_or_else(|| "available".into()) } else { "not found".into() };
                 println!("{:<12} {}", serde_json::to_value(h.kind)?.as_str().unwrap_or(""), state);
             }

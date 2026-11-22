@@ -1,8 +1,8 @@
-// Bouvio element picker. Served by the preview proxy and injected into HTML
+// Cuna element picker. Served by the preview proxy and injected into HTML
 // pages, so the panel can point at an element and hand it to an agent.
 (() => {
-  if (window.__bouvioPicker || window.parent === window) return;
-  window.__bouvioPicker = true;
+  if (window.__cunaPicker || window.parent === window) return;
+  window.__cunaPicker = true;
   const post = (msg) => window.parent.postMessage(msg, "*");
   let on = false;
   let box = null;
@@ -10,7 +10,7 @@
   let current = null;
 
   // ---- where we are, so the panel can show the path ----
-  const where = () => post({ type: "bouvio:location", href: location.href, path: location.pathname + location.search + location.hash, title: document.title });
+  const where = () => post({ type: "cuna:location", href: location.href, path: location.pathname + location.search + location.hash, title: document.title });
   for (const k of ["pushState", "replaceState"]) {
     const orig = history[k];
     history[k] = function (...a) {
@@ -151,7 +151,7 @@
     const r = el.getBoundingClientRect();
     const html = el.outerHTML;
     post({
-      type: "bouvio:picked",
+      type: "cuna:picked",
       selector: selector(el),
       tag: el.tagName.toLowerCase(),
       text: (el.innerText || el.textContent || "").replace(/\s+/g, " ").trim().slice(0, 300),
@@ -166,7 +166,7 @@
     if (on && e.key === "Escape") {
       block(e);
       setPicking(false);
-      post({ type: "bouvio:pick-cancel" });
+      post({ type: "cuna:pick-cancel" });
     }
   }
   function setPicking(v) {
@@ -184,12 +184,12 @@
   addEventListener("message", (e) => {
     const d = e.data;
     if (!d || typeof d !== "object" || e.source !== window.parent) return;
-    if (d.type === "bouvio:pick") setPicking(!!d.on);
-    else if (d.type === "bouvio:nav") {
+    if (d.type === "cuna:pick") setPicking(!!d.on);
+    else if (d.type === "cuna:nav") {
       if (d.action === "back") history.back();
       else if (d.action === "forward") history.forward();
       else if (d.action === "reload") location.reload();
-    } else if (d.type === "bouvio:where") where();
+    } else if (d.type === "cuna:where") where();
   });
-  post({ type: "bouvio:ready" });
+  post({ type: "cuna:ready" });
 })();

@@ -76,7 +76,7 @@ pub(crate) fn page_in(class: &str, title: &str, body: &str) -> String {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
 <title>{title}</title><style>{STYLE}</style></head>
-<body><main class="{class}"><div class="brand">Bouvio</div>{body}</main></body></html>"#,
+<body><main class="{class}"><div class="brand">Cuna</div>{body}</main></body></html>"#,
         title = escape(title),
         class = escape(class)
     )
@@ -93,9 +93,9 @@ fn code_block(code: &str) -> String {
 /// After OAuth: the code the person pastes into the app.
 pub fn exchange_code(code: &str, name: &str) -> Html<String> {
     Html(page(
-        "Paste this code in Bouvio",
+        "Paste this code in Cuna",
         &format!(
-            r#"<h1>Paste this code in Bouvio</h1><p>Signed in as {name}. You can close this tab afterwards.</p>{}
+            r#"<h1>Paste this code in Cuna</h1><p>Signed in as {name}. You can close this tab afterwards.</p>{}
 <p class="small">The code works once, for 10 minutes.</p>"#,
             code_block(code),
             name = escape(name)
@@ -105,7 +105,7 @@ pub fn exchange_code(code: &str, name: &str) -> Html<String> {
 
 pub fn error(status: StatusCode, message: &str) -> Response {
     let body = format!("<h1>Something went wrong</h1><p>{}</p>", escape(message));
-    (status, Html(page("Bouvio", &body))).into_response()
+    (status, Html(page("Cuna", &body))).into_response()
 }
 
 /// `GET /invite/:code`: what an invite link shows in a browser.
@@ -120,11 +120,11 @@ pub async fn invite(State(st): State<AppState>, Path(code): Path<String>) -> Res
     match row {
         Ok(Some((name,))) => {
             let body = format!(
-                r#"<h1>You are invited to {name}</h1><p>Open Bouvio and paste this code.</p>{}"#,
+                r#"<h1>You are invited to {name}</h1><p>Open Cuna and paste this code.</p>{}"#,
                 code_block(&code),
                 name = escape(&name)
             );
-            Html(page(&format!("Join {name} on Bouvio"), &body)).into_response()
+            Html(page(&format!("Join {name} on Cuna"), &body)).into_response()
         }
         Ok(None) => error(
             StatusCode::NOT_FOUND,

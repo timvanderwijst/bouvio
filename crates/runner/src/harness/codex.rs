@@ -7,7 +7,7 @@
 use super::{HarnessOut, HarnessSession, SessionConfig};
 use anyhow::{Context, Result};
 use async_trait::async_trait;
-use bouvio_protocol::{AgentStatus, ApprovalLevel, ThreadEvent};
+use cuna_protocol::{AgentStatus, ApprovalLevel, ThreadEvent};
 use serde_json::Value;
 use std::process::Stdio;
 use std::sync::Mutex as StdMutex;

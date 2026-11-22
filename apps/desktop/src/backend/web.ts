@@ -9,7 +9,7 @@ import { t } from "../i18n";
 import type { Backend, Unlisten } from "./types";
 import { RpcTable, eventFor, toWorkspaces } from "./web-rpc";
 
-const TOKEN_KEY = "bouvio.hub.token";
+const TOKEN_KEY = "cuna.hub.token";
 
 const store = {
   get(): string | null {

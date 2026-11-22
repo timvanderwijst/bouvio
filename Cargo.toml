@@ -6,11 +6,11 @@ members = ["crates/protocol", "crates/runner", "crates/agent", "apps/runner-cli"
 version = "0.1.0"
 edition = "2021"
 license = "MIT"
-repository = "https://github.com/bouvio/bouvio"
+repository = "https://github.com/timvanderwijst/bouvio"
 
 [workspace.dependencies]
-bouvio-protocol = { path = "crates/protocol" }
-bouvio-runner = { path = "crates/runner" }
+cuna-protocol = { path = "crates/protocol" }
+cuna-runner = { path = "crates/runner" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tokio = { version = "1", features = ["full"] }

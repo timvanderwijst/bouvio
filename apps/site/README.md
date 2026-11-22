@@ -1,6 +1,6 @@
 # Site
 
-The Bouvio landing page, built from the app's own styles
+The Cuna landing page, built from the app's own styles
 (`apps/desktop/src/styles`) and parts of a real project. `ui.js` renders the
 app parts into `[data-ui]` elements; `site.css` lays out the page and
 `parts.css` holds compact versions of app screens.

@@ -6,7 +6,7 @@
 
 use crate::Runner;
 use anyhow::{bail, Context, Result};
-use bouvio_protocol::*;
+use cuna_protocol::*;
 use serde::de::DeserializeOwned;
 use serde_json::{json, Value};
 use std::sync::Arc;
@@ -214,12 +214,12 @@ impl Runner {
         Ok(())
     }
 
-    /// Fleet tools for agents that are not behind MCP (Bouvio's own API loop).
+    /// Fleet tools for agents that are not behind MCP (Cuna's own API loop).
     pub async fn fleet_call(self: &Arc<Self>, thread_id: Uuid, method: &str, params: Value) -> Result<Value> {
         self.control_call(thread_id, method, params).await
     }
 
-    /// Calls from the `bouvio` MCP server running inside an agent.
+    /// Calls from the `cuna` MCP server running inside an agent.
     pub(crate) async fn control_call(self: &Arc<Self>, thread_id: Uuid, method: &str, params: Value) -> Result<Value> {
         let thread = self.thread(thread_id).context("unknown thread")?;
         match method {
@@ -231,7 +231,7 @@ impl Runner {
                 let answer = if allowed {
                     json!({ "behavior": "allow", "updatedInput": input })
                 } else {
-                    json!({ "behavior": "deny", "message": "A person in Bouvio declined this. Ask what they want instead." })
+                    json!({ "behavior": "deny", "message": "A person in Cuna declined this. Ask what they want instead." })
                 };
                 Ok(Value::String(answer.to_string()))
             }

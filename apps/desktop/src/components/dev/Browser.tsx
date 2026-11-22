@@ -38,7 +38,7 @@ function proxyFor(threadId: string, ws: string | null) {
 }
 
 /**
- * The thread's app through Bouvio's preview proxy (with the element picker),
+ * The thread's app through Cuna's preview proxy (with the element picker),
  * starting its dev server when needed. Null until it is ready or when there
  * is no dev command.
  */
@@ -124,10 +124,10 @@ function Browser({ thread }: { thread: Thread }) {
   const t = useT();
   const { proxy, error, retry } = useProxy(thread.id);
   const frame = useRef<HTMLIFrameElement>(null);
-  const [path, setPath] = useState(() => prefs.get(`bouvio.dev.path.${thread.id}`) ?? "/");
+  const [path, setPath] = useState(() => prefs.get(`cuna.dev.path.${thread.id}`) ?? "/");
   const [typed, setTyped] = useState(path);
   const [src, setSrc] = useState<string | null>(null);
-  const [device, setDevice] = useState<Device>(() => (prefs.get("bouvio.dev.device") as Device) || "desktop");
+  const [device, setDevice] = useState<Device>(() => (prefs.get("cuna.dev.device") as Device) || "desktop");
   const [picking, setPicking] = useState(false);
   const [chip, setChip] = useState<Picked | null>(null);
   const pickRef = useRef(picking);
@@ -145,13 +145,13 @@ function Browser({ thread }: { thread: Thread }) {
       if (!frame.current || e.source !== frame.current.contentWindow) return;
       const d = e.data;
       if (!d || typeof d !== "object") return;
-      if (d.type === "bouvio:ready" && pickRef.current) post({ type: "bouvio:pick", on: true });
-      else if (d.type === "bouvio:location" && typeof d.path === "string") {
+      if (d.type === "cuna:ready" && pickRef.current) post({ type: "cuna:pick", on: true });
+      else if (d.type === "cuna:location" && typeof d.path === "string") {
         setPath(d.path);
         setTyped(d.path);
-        prefs.set(`bouvio.dev.path.${thread.id}`, d.path);
-      } else if (d.type === "bouvio:pick-cancel") setPicking(false);
-      else if (d.type === "bouvio:picked") {
+        prefs.set(`cuna.dev.path.${thread.id}`, d.path);
+      } else if (d.type === "cuna:pick-cancel") setPicking(false);
+      else if (d.type === "cuna:picked") {
         setPicking(false);
         const p = d as Picked;
         const s = useStore.getState();
@@ -165,7 +165,7 @@ function Browser({ thread }: { thread: Thread }) {
   }, [post, thread.id]);
 
   useEffect(() => {
-    post({ type: "bouvio:pick", on: picking });
+    post({ type: "cuna:pick", on: picking });
   }, [picking, post]);
 
   useEffect(() => {
@@ -198,7 +198,7 @@ function Browser({ thread }: { thread: Thread }) {
   return (
     <div className="dv-browser">
       <div className="dv-browser-bar">
-        <button className="icon-btn" title={t("dev.browser.back")} aria-label={t("dev.browser.back")} disabled={!proxy} onClick={() => post({ type: "bouvio:nav", action: "back" })}>
+        <button className="icon-btn" title={t("dev.browser.back")} aria-label={t("dev.browser.back")} disabled={!proxy} onClick={() => post({ type: "cuna:nav", action: "back" })}>
           <ArrowLeft size={14} />
         </button>
         <button
@@ -207,7 +207,7 @@ function Browser({ thread }: { thread: Thread }) {
           aria-label={t("dev.browser.reload")}
           disabled={!proxy}
           onClick={() => {
-            post({ type: "bouvio:nav", action: "reload" });
+            post({ type: "cuna:nav", action: "reload" });
           }}
         >
           <RotateCw size={13} />
@@ -232,7 +232,7 @@ function Browser({ thread }: { thread: Thread }) {
           })}
           onChange={(d) => {
             setDevice(d);
-            prefs.set("bouvio.dev.device", d);
+            prefs.set("cuna.dev.device", d);
           }}
         />
         <button className={`btn small dv-pick ${picking ? "on" : ""}`} disabled={!proxy} onClick={() => setPicking((p) => !p)} aria-pressed={picking} title={t("dev.browser.pickHint")}>

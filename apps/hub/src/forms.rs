@@ -10,8 +10,8 @@ use axum::extract::{ConnectInfo, Path, State};
 use axum::http::{HeaderMap, StatusCode};
 use axum::response::{Html, IntoResponse, Response};
 use axum::Form;
-use bouvio_protocol::office::{PublicForm, PublicQuestion};
-use bouvio_protocol::{HubUser, Role};
+use cuna_protocol::office::{PublicForm, PublicQuestion};
+use cuna_protocol::{HubUser, Role};
 use serde_json::{json, Map, Value};
 use uuid::Uuid;
 

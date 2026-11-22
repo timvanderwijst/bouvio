@@ -5,7 +5,7 @@ use super::dev_dir;
 use crate::{store, Runner};
 use anyhow::{bail, Context, Result};
 use base64::Engine;
-use bouvio_protocol::dev::*;
+use cuna_protocol::dev::*;
 use chrono::Utc;
 use serde_json::json;
 use std::collections::HashMap;

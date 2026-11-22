@@ -1,4 +1,4 @@
-//! The Bouvio runner: the part that actually runs agents.
+//! The Cuna runner: the part that actually runs agents.
 //!
 //! It lives inside the desktop app, and the same code runs headless on a VPS.
 //! It owns the threads on this machine, drives their harness, keeps their
@@ -18,7 +18,7 @@ pub mod terminal;
 pub mod work;
 
 use anyhow::{Context, Result};
-use bouvio_protocol::*;
+use cuna_protocol::*;
 use chrono::Utc;
 use harness::{HarnessOut, HarnessSession, SessionConfig};
 use std::collections::HashMap;
@@ -49,7 +49,7 @@ pub struct Runner {
     seqs: Mutex<HashMap<Uuid, u64>>,
     pending: Mutex<HashMap<String, (Uuid, tokio::sync::oneshot::Sender<bool>)>>,
     control: std::sync::OnceLock<control::ControlAddr>,
-    /// Executable that serves `mcp` (the app itself, or bouvio-runner).
+    /// Executable that serves `mcp` (the app itself, or cuna-runner).
     self_exe: Mutex<Option<PathBuf>>,
     pub(crate) issues: Collection<Issue>,
     pub(crate) automations: Collection<Automation>,
@@ -68,7 +68,7 @@ pub struct Runner {
 pub type ApiFactory = Arc<dyn Fn(Arc<Runner>, &Thread, SessionConfig, mpsc::UnboundedSender<HarnessOut>) -> Result<Box<dyn HarnessSession>> + Send + Sync>;
 
 impl Runner {
-    /// Open the runner on its data dir (`~/.bouvio` by default).
+    /// Open the runner on its data dir (`~/.cuna` by default).
     pub fn open(dir: impl Into<PathBuf>) -> Result<Arc<Self>> {
         let store = Store::open(dir)?;
         let (events, _) = broadcast::channel(4096);
@@ -106,7 +106,14 @@ impl Runner {
     }
 
     pub fn default_dir() -> PathBuf {
-        dirs::home_dir().unwrap_or_else(|| PathBuf::from(".")).join(".bouvio")
+        let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("."));
+        let dir = home.join(".cuna");
+        // The app used to be called Bouvio: move its data over once.
+        let old = home.join(".bouvio");
+        if !dir.exists() && old.is_dir() {
+            let _ = std::fs::rename(&old, &dir);
+        }
+        dir
     }
 
     pub fn subscribe_events(&self) -> broadcast::Receiver<ThreadEnvelope> {
@@ -136,7 +143,7 @@ impl Runner {
         Ok(())
     }
 
-    /// The executable Claude Code should run as the `bouvio` MCP server.
+    /// The executable Claude Code should run as the `cuna` MCP server.
     pub fn set_mcp_exe(&self, exe: PathBuf) {
         *self.self_exe.lock().unwrap() = Some(exe);
     }
@@ -231,7 +238,7 @@ impl Runner {
         if let Some(root) = ws.root.as_deref().map(Path::new) {
             if git::is_repo(root).await {
                 if new.isolate {
-                    let b = format!("bouvio/{}", &id.simple().to_string()[..8]);
+                    let b = format!("cuna/{}", &id.simple().to_string()[..8]);
                     let base = self.store.dir().join("worktrees").join(ws.id.to_string());
                     let path = git::add_worktree(root, &base, &b).await?;
                     cwd = Some(path.to_string_lossy().into_owned());
@@ -414,7 +421,7 @@ impl Runner {
 }
 
 fn compose_instructions(lead: Option<&Lead>, s: &WorkspaceSettings) -> String {
-    let mut parts = vec!["You work inside Bouvio, a shared workspace where people and agents collaborate. People in this workspace watch your work live. The `bouvio` tools let you split work into parallel threads (spawn_thread), follow them up, file issues and keep workspace memory.".to_string()];
+    let mut parts = vec!["You work inside Cuna, a shared workspace where people and agents collaborate. People in this workspace watch your work live. The `cuna` tools let you split work into parallel threads (spawn_thread), follow them up, file issues and keep workspace memory.".to_string()];
     if let Some(c) = lead {
         parts.push(format!("You are the lead \"{}\". {}", c.name, c.instructions));
     }
@@ -449,7 +456,7 @@ mod tests {
     async fn thread_lifecycle_without_harness() {
         let dir = tempfile::tempdir().unwrap();
         let r = Runner::open(dir.path()).unwrap();
-        let ws = r.create_workspace("Bouvio".into(), None).unwrap();
+        let ws = r.create_workspace("Cuna".into(), None).unwrap();
         let t = r
             .create_thread(NewThread {
                 workspace_id: ws.id,
@@ -504,7 +511,7 @@ mod tests {
             })
             .await
             .unwrap();
-        assert!(t.branch.as_deref().unwrap().starts_with("bouvio/"));
+        assert!(t.branch.as_deref().unwrap().starts_with("cuna/"));
         let cwd = PathBuf::from(t.cwd.unwrap());
         std::fs::write(cwd.join("hello.txt"), "hi\n").unwrap();
         let diff = r.thread_diff(t.id).await.unwrap();

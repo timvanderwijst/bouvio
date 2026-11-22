@@ -2,7 +2,7 @@
 
 mod common;
 
-use bouvio_protocol::{ClientMsg, Role, ServerMsg};
+use cuna_protocol::{ClientMsg, Role, ServerMsg};
 use common::*;
 use serde_json::json;
 use uuid::Uuid;
@@ -166,7 +166,7 @@ async fn shared_workspace_end_to_end() {
         .text()
         .await
         .unwrap();
-    assert!(page.contains("Acme") && page.contains("Open Bouvio and paste this code"));
+    assert!(page.contains("Acme") && page.contains("Open Cuna and paste this code"));
 
     let (status, joined) = hub
         .post(&member, &format!("/invites/{code}/accept"), json!({}))

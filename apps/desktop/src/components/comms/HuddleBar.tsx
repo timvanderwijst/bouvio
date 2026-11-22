@@ -38,7 +38,7 @@ function Face({ user, speaking, muted, size = 28 }: { user: Pick<HubUser, "name"
   );
 }
 
-const POS_KEY = "bouvio.comms.huddlePos";
+const POS_KEY = "cuna.ioms.huddlePos";
 function savedPos() {
   try {
     const p = JSON.parse(localStorage.getItem(POS_KEY) ?? "");

@@ -49,7 +49,7 @@ function GraphSvg({ commits, lanes, head }: { commits: GraphCommit[]; lanes: num
 function RefBadge({ name, color, thread, head }: { name: string; color: string; thread?: Thread; head: boolean }) {
   const leads = useWorkspaceLeads();
   const openThread = useStore((s) => s.openThread);
-  const remote = /^[^/]+\/.+/.test(name) && !name.startsWith("bouvio/") && name.split("/")[0] === "origin";
+  const remote = /^[^/]+\/.+/.test(name) && !name.startsWith("cuna/") && name.split("/")[0] === "origin";
   const tag = /^v?\d+(\.\d+)+/.test(name);
   if (thread) {
     const c = leads.find((x) => x.id === thread.lead_id);
@@ -106,7 +106,7 @@ export function GitTab() {
 
   const byBranch = useMemo(() => {
     const m = new Map<string, Thread>();
-    for (const th of threads) if (th.branch?.startsWith("bouvio/")) m.set(th.branch, th);
+    for (const th of threads) if (th.branch?.startsWith("cuna/")) m.set(th.branch, th);
     return m;
   }, [threads]);
 

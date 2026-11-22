@@ -4,8 +4,8 @@
 mod common;
 
 use axum::{extract::State, http::{HeaderMap, StatusCode}, routing::{get, post}, Json, Router};
-use bouvio_agent::{Agent, AgentConfig, CancellationToken, StaticKeys};
-use bouvio_protocol::{ApprovalLevel, ProviderKind, ThreadEvent};
+use cuna_agent::{Agent, AgentConfig, CancellationToken, StaticKeys};
+use cuna_protocol::{ApprovalLevel, ProviderKind, ThreadEvent};
 use common::{chat_text, chat_tool_call, cost, kinds, run_turn};
 use serde_json::{json, Value};
 use std::collections::VecDeque;
@@ -34,11 +34,11 @@ async fn local_chat_models() {
     let mock = Mock::default();
     let app = Router::new().route("/v1/chat/completions", post(chat)).route("/v1/models", get(models)).with_state(mock.clone());
     tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
-    std::env::set_var("BOUVIO_LOCAL_BASE_URL", &base);
+    std::env::set_var("CUNA_LOCAL_BASE_URL", &base);
     let push = |status: u16, v: Value| mock.replies.lock().unwrap().push_back((status, v));
 
     // Listing: chat models only, free, provider Local.
-    let listed = bouvio_agent::local::list_chat_models().await;
+    let listed = cuna_agent::local::list_chat_models().await;
     assert_eq!(listed.len(), 1);
     assert_eq!(listed[0].id, "local:qwen3:8b");
     assert_eq!(listed[0].provider, ProviderKind::Local);
@@ -76,7 +76,7 @@ async fn local_chat_models() {
 
     // One-shot completion.
     push(200, chat_text("A short brief.", json!({})));
-    let text = bouvio_agent::complete(&StaticKeys::new(), Some("local:qwen3:8b"), "Summarize.", "Long text").await.unwrap();
+    let text = cuna_agent::complete(&StaticKeys::new(), Some("local:qwen3:8b"), "Summarize.", "Long text").await.unwrap();
     assert_eq!(text, "A short brief.");
     let last = mock.requests.lock().unwrap().last().unwrap().1.clone();
     assert_eq!(last["messages"][0], json!({"role":"system","content":"Summarize."}));
@@ -84,8 +84,8 @@ async fn local_chat_models() {
 
     // With nothing chosen, the local model is the default.
     push(200, chat_text("ok", json!({})));
-    assert_eq!(bouvio_agent::resolve_model(&StaticKeys::new(), None).await.unwrap(), "local:qwen3:8b");
-    assert_eq!(bouvio_agent::complete(&StaticKeys::new(), None, "s", "u").await.unwrap(), "ok");
+    assert_eq!(cuna_agent::resolve_model(&StaticKeys::new(), None).await.unwrap(), "local:qwen3:8b");
+    assert_eq!(cuna_agent::complete(&StaticKeys::new(), None, "s", "u").await.unwrap(), "ok");
 
     // A server error (not retried) surfaces as a turn error.
     push(400, json!({"error":"model runner crashed"}));

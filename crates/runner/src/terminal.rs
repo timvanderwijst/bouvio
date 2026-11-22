@@ -1,7 +1,7 @@
 //! Real terminals (pty on Unix, ConPTY on Windows) that anyone in a thread can watch.
 
 use anyhow::{Context, Result};
-use bouvio_protocol::{TerminalChunk, TerminalExit};
+use cuna_protocol::{TerminalChunk, TerminalExit};
 use portable_pty::{native_pty_system, ChildKiller, CommandBuilder, MasterPty, PtySize};
 use std::collections::HashMap;
 use std::io::{Read, Write};

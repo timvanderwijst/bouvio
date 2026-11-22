@@ -1,19 +1,19 @@
 # Plugins
 
-A plugin adds pages, panels, settings, palette commands or always-on pieces to the Bouvio desktop app. It is one folder with a manifest and an ES module, loaded while the app runs.
+A plugin adds pages, panels, settings, palette commands or always-on pieces to the Cuna desktop app. It is one folder with a manifest and an ES module, loaded while the app runs.
 
-> **Trust.** A plugin runs inside the app with the same access as Bouvio itself. With the `rpc` permission it can read every workspace and start agents. Enable only plugins you wrote or trust. Plugins are off until you turn them on in **Settings → Plugins**.
+> **Trust.** A plugin runs inside the app with the same access as Cuna itself. With the `rpc` permission it can read every workspace and start agents. Enable only plugins you wrote or trust. Plugins are off until you turn them on in **Settings → Plugins**.
 
 ## Where plugins live
 
 ```
-~/.bouvio/plugins/            (or $BOUVIO_DATA/plugins)
+~/.cuna/plugins/            (or $CUNA_DATA/plugins)
   hello/
     plugin.json
     index.js
 ```
 
-**Settings → Plugins → Create plugin** writes a working example (`hello`): a page in the rail and a command in `Ctrl+K`. **Open folder** opens this folder, **Reload** loads changed files again. Which plugins are on is kept in `~/.bouvio/plugins.json`.
+**Settings → Plugins → Create plugin** writes a working example (`hello`): a page in the rail and a command in `Ctrl+K`. **Open folder** opens this folder, **Reload** loads changed files again. Which plugins are on is kept in `~/.cuna/plugins.json`.
 
 ## `plugin.json`
 

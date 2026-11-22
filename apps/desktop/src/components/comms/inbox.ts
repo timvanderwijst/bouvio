@@ -58,16 +58,16 @@ function ensureOwner() {
   if (useInbox.getState().owner === owner) return;
   useInbox.setState({
     owner,
-    items: ls.get<InboxItem[]>(`bouvio.comms.inbox.${owner}`, []),
-    read: ls.get<Record<string, true>>(`bouvio.comms.read.${owner}`, {}),
+    items: ls.get<InboxItem[]>(`cuna.ioms.inbox.${owner}`, []),
+    read: ls.get<Record<string, true>>(`cuna.ioms.read.${owner}`, {}),
   });
 }
 
 function persist() {
   const s = useInbox.getState();
-  ls.set(`bouvio.comms.inbox.${s.owner}`, s.items);
+  ls.set(`cuna.ioms.inbox.${s.owner}`, s.items);
   // Keep read marks only for things that still exist or may come back.
-  ls.set(`bouvio.comms.read.${s.owner}`, s.read);
+  ls.set(`cuna.ioms.read.${s.owner}`, s.read);
 }
 
 function add(item: InboxItem) {
@@ -155,7 +155,7 @@ export interface NotifyPrefs {
   longRuns: boolean;
   huddles: boolean;
 }
-const PREFS_KEY = "bouvio.comms.notify";
+const PREFS_KEY = "cuna.ioms.notify";
 const DEFAULT_PREFS: NotifyPrefs = { approvals: true, mentions: true, longRuns: true, huddles: true };
 
 export const useNotifyPrefs = create<NotifyPrefs>(() => ({ ...DEFAULT_PREFS, ...ls.get<Partial<NotifyPrefs>>(PREFS_KEY, {}) }));

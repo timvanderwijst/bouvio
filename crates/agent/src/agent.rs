@@ -6,7 +6,7 @@ use crate::pricing;
 use crate::provider::{self, Message, ModelRef, Part, Request, Role, Stop, ToolSpec};
 use crate::tools::{self, Tool, ToolCtx};
 use anyhow::{anyhow, bail, Result};
-use bouvio_protocol::{AgentStatus, ApprovalLevel, ThreadEvent};
+use cuna_protocol::{AgentStatus, ApprovalLevel, ThreadEvent};
 use serde_json::{json, Value};
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -120,7 +120,7 @@ impl Agent {
         };
         let shell = if cfg!(windows) { "cmd.exe" } else { "bash" };
         let mut s = format!(
-            "You are a capable coding agent working inside Bouvio, a workspace where people and AI agents work together. \
+            "You are a capable coding agent working inside Cuna, a workspace where people and AI agents work together. \
 You help with software engineering and other tasks in the project, using the tools you have.\n\n\
 - Use the tools to look things up instead of guessing. Read a file before you change it; prefer edit_file for changes to existing files.\n\
 - Keep paths relative to the working directory. Do not touch files outside it unless asked.\n\

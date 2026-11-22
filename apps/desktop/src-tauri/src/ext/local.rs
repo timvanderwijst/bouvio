@@ -9,8 +9,8 @@
 
 use crate::App;
 use anyhow::{anyhow, bail, Result};
-use bouvio_agent::local::{self, LocalConfig, LocalProgress};
-use bouvio_agent::KeyringStore;
+use cuna_agent::local::{self, LocalConfig, LocalProgress};
+use cuna_agent::KeyringStore;
 use serde_json::{json, Value};
 use std::collections::HashSet;
 use std::path::PathBuf;
@@ -115,9 +115,9 @@ pub fn setup(app: &Arc<App>, handle: &tauri::AppHandle) {
 
     // Model access for the other areas (briefs, search, evals): local first, then keys.
     *app.runner.hooks.embed.lock().unwrap() =
-        Some(Arc::new(|texts: Vec<String>| Box::pin(async move { bouvio_agent::embed(&KeyringStore, &texts).await })));
+        Some(Arc::new(|texts: Vec<String>| Box::pin(async move { cuna_agent::embed(&KeyringStore, &texts).await })));
     *app.runner.hooks.complete.lock().unwrap() = Some(Arc::new(|model: Option<String>, system: String, user: String| {
-        Box::pin(async move { bouvio_agent::complete(&KeyringStore, model.as_deref(), &system, &user).await })
+        Box::pin(async move { cuna_agent::complete(&KeyringStore, model.as_deref(), &system, &user).await })
     }));
 
     // Warm the detection cache so the first `providers` call already knows.

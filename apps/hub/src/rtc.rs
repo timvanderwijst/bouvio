@@ -4,8 +4,8 @@
 use axum::extract::{Path, State};
 use axum::Json;
 use base64::Engine;
-use bouvio_protocol::comms::{HuddleState, IceConfig, IceServer};
-use bouvio_protocol::Role;
+use cuna_protocol::comms::{HuddleState, IceConfig, IceServer};
+use cuna_protocol::Role;
 use hmac::{Hmac, Mac};
 use sha1::Sha1;
 use uuid::Uuid;

@@ -1,4 +1,6 @@
-# The Bouvio hub (apps/hub) on bouvio.com: accounts, invites, relay, and the web client under /app/.
+# The Cuna hub (apps/hub) on cuna.io: the landing page at /, the web client under /app/,
+# accounts, invites and the relay. Kubernetes names (namespace, volume, image) stay "bouvio"
+# so the existing volume, secret and autodeploy keep working.
 # SQLite lives on the PVC. Optional settings (SMTP_URL, SMTP_FROM, GITHUB_/GOOGLE_CLIENT_*, TURN_*)
 # go in Secret bouvio-secrets; without SMTP, login codes are written to the log.
 apiVersion: v1
@@ -40,10 +42,10 @@ spec:
         - name: hub
           image: bouvio-hub # registry + tag pinned by kustomization.yaml
           env:
-            - name: BOUVIO_HUB_PUBLIC_URL
-              value: https://bouvio.com
+            - name: CUNA_HUB_PUBLIC_URL
+              value: https://cuna.io
             - name: SMTP_FROM
-              value: Bouvio <noreply@bouvio.com>
+              value: Cuna <noreply@cuna.io>
           envFrom:
             - secretRef:
                 name: bouvio-secrets
@@ -99,16 +101,15 @@ metadata:
   namespace: bouvio
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
-    traefik.ingress.kubernetes.io/router.middlewares: bouvio-root-to-app@kubernetescrd
 spec:
   ingressClassName: traefik
   tls:
     - hosts:
-        - bouvio.com
-        - www.bouvio.com
-      secretName: bouvio-tls
+        - cuna.io
+        - www.cuna.io
+      secretName: cuna-tls
   rules:
-    - host: bouvio.com
+    - host: cuna.io
       http: &routes
         paths:
           - path: /
@@ -118,16 +119,5 @@ spec:
                 name: bouvio
                 port:
                   name: http
-    - host: www.bouvio.com
+    - host: www.cuna.io
       http: *routes
----
-# The hub has nothing at / ; send visitors of the bare domain to the web client.
-apiVersion: traefik.io/v1alpha1
-kind: Middleware
-metadata:
-  name: root-to-app
-  namespace: bouvio
-spec:
-  redirectRegex:
-    regex: ^https?://(www\.)?bouvio\.com/?$
-    replacement: https://bouvio.com/app/

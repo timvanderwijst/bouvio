@@ -1,12 +1,12 @@
-//! Plugs Bouvio's own agent loop (API keys, OpenRouter) into the runner as the
+//! Plugs Cuna's own agent loop (API keys, OpenRouter) into the runner as the
 //! `api` harness.
 
 use anyhow::Result;
 use async_trait::async_trait;
-use bouvio_agent::{Agent, AgentConfig, AgentOut, KeyringStore, Tool, ToolCtx};
-use bouvio_protocol::{AgentStatus, ThreadEvent};
-use bouvio_runner::harness::{HarnessOut, HarnessSession, SessionConfig};
-use bouvio_runner::Runner;
+use cuna_agent::{Agent, AgentConfig, AgentOut, KeyringStore, Tool, ToolCtx};
+use cuna_protocol::{AgentStatus, ThreadEvent};
+use cuna_runner::harness::{HarnessOut, HarnessSession, SessionConfig};
+use cuna_runner::Runner;
 use serde_json::Value;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -14,7 +14,7 @@ use tokio::sync::{mpsc, Mutex};
 use tokio_util::sync::CancellationToken;
 use uuid::Uuid;
 
-pub fn factory() -> bouvio_runner::ApiFactory {
+pub fn factory() -> cuna_runner::ApiFactory {
     Arc::new(|runner, thread, cfg, out| Ok(Box::new(ApiSession::new(runner, thread.id, thread.model.clone(), cfg, out)?)))
 }
 
@@ -30,7 +30,7 @@ struct ApiSession {
 impl ApiSession {
     fn new(runner: Arc<Runner>, thread_id: Uuid, model: Option<String>, cfg: SessionConfig, out: mpsc::UnboundedSender<HarnessOut>) -> Result<Self> {
         let model = model.ok_or_else(|| anyhow::anyhow!("choose a model for this thread"))?;
-        let tools: Vec<Arc<dyn Tool>> = bouvio_runner::mcp::tools()
+        let tools: Vec<Arc<dyn Tool>> = cuna_runner::mcp::tools()
             .as_array()
             .into_iter()
             .flatten()
@@ -106,7 +106,7 @@ impl HarnessSession for ApiSession {
     }
 }
 
-/// The `bouvio` fleet tools (spawn_thread, …) for API agents.
+/// The `cuna` fleet tools (spawn_thread, …) for API agents.
 struct FleetTool {
     runner: Arc<Runner>,
     thread_id: Uuid,

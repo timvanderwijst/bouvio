@@ -1,4 +1,4 @@
-//! Connection to a Bouvio hub over WebSocket.
+//! Connection to a Cuna hub over WebSocket.
 //!
 //! One connection does two jobs: it *hosts* this runner's shared workspaces
 //! (answers members' RPCs, publishes events) and it lets this app *join*
@@ -6,7 +6,7 @@
 
 use crate::{terminal::TerminalOut, Runner};
 use anyhow::{Context, Result};
-use bouvio_protocol::*;
+use cuna_protocol::*;
 use futures_util::{SinkExt, StreamExt};
 use serde_json::Value;
 use std::collections::{HashMap, HashSet};

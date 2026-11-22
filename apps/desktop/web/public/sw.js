@@ -1,6 +1,6 @@
-// Bouvio web: keeps the app shell so the app starts offline. Hub calls
+// Cuna web: keeps the app shell so the app starts offline. Hub calls
 // (REST, the WebSocket) always go to the network and are never cached.
-const CACHE = "bouvio-shell-v1";
+const CACHE = "cuna-shell-v1";
 const SCOPE = new URL(self.registration.scope);
 const SHELL = ["./", "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png"];
 

@@ -27,9 +27,9 @@ const main = async () => (await import("../mock")).mockBackend;
 
 const C = (sha: string, parents: string[], subject: string, author: string, min: number, refs: string[] = []) => ({ sha, parents, subject, author, min, refs });
 const HISTORY = [
-  C("7be04d55a1", ["5e0f2b9c4d"], "Widen the rail's hover zone to 8px on Windows", "Desktop", 3, ["bouvio/7be04d55"]),
-  C("3f9a2c1e77", ["9d41c0a2e3"], "Keep a draft per thread in the composer", "Desktop", 5, ["bouvio/3f9a2c1e"]),
-  C("c01d9e72f0", ["5e0f2b9c4d"], "Look for codex.cmd next to codex on Windows", "Runner", 9, ["bouvio/c01d9e72"]),
+  C("7be04d55a1", ["5e0f2b9c4d"], "Widen the rail's hover zone to 8px on Windows", "Desktop", 3, ["cuna/7be04d55"]),
+  C("3f9a2c1e77", ["9d41c0a2e3"], "Keep a draft per thread in the composer", "Desktop", 5, ["cuna/3f9a2c1e"]),
+  C("c01d9e72f0", ["5e0f2b9c4d"], "Look for codex.cmd next to codex on Windows", "Runner", 9, ["cuna/c01d9e72"]),
   C("9d41c0a2e3", ["5e0f2b9c4d"], "Move composer drafts into the store", "Desktop", 14),
   C("5e0f2b9c4d", ["a17c3e0f88", "e2b8d4416a"], "Merge pull request #41 from feature/hub-invites", "Maya Peters", 62, ["HEAD", "main", "origin/main"]),
   C("e2b8d4416a", ["4c7a9e01b2"], "Invite links carry a role", "Hub", 95, ["origin/feature/hub-invites"]),
@@ -37,7 +37,7 @@ const HISTORY = [
   C("4c7a9e01b2", ["0b6f3d2c91"], "Hub: members table with roles", "Hub", 180),
   C("0b6f3d2c91", ["f83e1a5d07"], "Diff colours in the dark theme", "Design", 600, ["v0.4.0"]),
   C("f83e1a5d07", ["2a9c6b4e13"], "One terminal per thread, kept across tabs", "Maya Peters", 1500),
-  C("2a9c6b4e13", ["8e1d07f5c2"], "Worktree per thread on its own bouvio/ branch", "Runner", 2900),
+  C("2a9c6b4e13", ["8e1d07f5c2"], "Worktree per thread on its own cuna/ branch", "Runner", 2900),
   C("8e1d07f5c2", [], "Initial commit", "Maya Peters", 9000),
 ];
 
@@ -105,7 +105,7 @@ function graph(limit = 300) {
     parents: c.parents.map((p) => p.padEnd(40, "0")),
     refs: c.refs,
     author: c.author,
-    email: `${c.author.split(" ")[0].toLowerCase()}@bouvio.dev`,
+    email: `${c.author.split(" ")[0].toLowerCase()}@cuna.dev`,
     date: ago(c.min),
     subject: c.subject,
     lane: 0,
@@ -133,7 +133,7 @@ function commit(sha: string) {
     sha: c.sha.padEnd(40, "0"),
     parents: c.parents.map((p) => p.padEnd(40, "0")),
     author: c.author,
-    email: `${c.author.split(" ")[0].toLowerCase()}@bouvio.dev`,
+    email: `${c.author.split(" ")[0].toLowerCase()}@cuna.dev`,
     date: ago(c.min),
     subject: c.subject,
     body: c.parents.length > 1 ? "Invites with roles on the hub: viewer, commenter, prompter, operator and admin." : "",
@@ -153,15 +153,15 @@ const run = (id: number, workflow: string, title: string, branch: string, event:
   status,
   conclusion,
   created_at: ago(min),
-  url: `https://github.com/bouvio/bouvio/actions/runs/${id}`,
+  url: `https://github.com/timvanderwijst/bouvio/actions/runs/${id}`,
   thread_id: null,
 });
 const RUNS: CiRun[] = [
-  run(4013, "CI", "Widen the rail's hover zone to 8px on Windows", "bouvio/7be04d55", "push", "in_progress", null, 2),
-  run(4012, "CI", "Keep a draft per thread in the composer", "bouvio/3f9a2c1e", "push", "completed", "failure", 6),
+  run(4013, "CI", "Widen the rail's hover zone to 8px on Windows", "cuna/7be04d55", "push", "in_progress", null, 2),
+  run(4012, "CI", "Keep a draft per thread in the composer", "cuna/3f9a2c1e", "push", "completed", "failure", 6),
   run(4011, "CI", "Merge pull request #41 from feature/hub-invites", "main", "push", "completed", "success", 61),
   run(4010, "Release", "v0.4.0", "main", "release", "completed", "success", 590),
-  run(4009, "CI", "Look for codex.cmd next to codex on Windows", "bouvio/c01d9e72", "pull_request", "completed", "failure", 8),
+  run(4009, "CI", "Look for codex.cmd next to codex on Windows", "cuna/c01d9e72", "pull_request", "completed", "failure", 8),
   run(4008, "Lint", "Bump vite to 6.2.1", "renovate/vite", "pull_request", "completed", "cancelled", 240),
   run(4007, "CI", "Invite links carry a role", "feature/hub-invites", "pull_request", "completed", "success", 96),
 ];
@@ -178,14 +178,14 @@ const LOGS: Record<number, string> = {
     `typecheck\tRun pnpm -r typecheck\t${T(61)} apps/desktop typecheck: src/components/Composer.tsx(44,11): error TS2554: Expected 2 arguments, but got 1.`,
     `typecheck\tRun pnpm -r typecheck\t${T(61)} apps/desktop typecheck: src/components/ThreadView.tsx(88,7): error TS2339: Property 'draft' does not exist on type 'State'.`,
     `typecheck\tRun pnpm -r typecheck\t${T(62)} apps/desktop typecheck: Failed`,
-    `typecheck\tRun pnpm -r typecheck\t${T(62)} /home/runner/work/bouvio/bouvio/apps/desktop:`,
-    `typecheck\tRun pnpm -r typecheck\t${T(62)} ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @bouvio/desktop@0.4.0 typecheck: \`tsc -b --noEmit\``,
+    `typecheck\tRun pnpm -r typecheck\t${T(62)} /home/runner/work/cuna/cuna/apps/desktop:`,
+    `typecheck\tRun pnpm -r typecheck\t${T(62)} ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @cuna/desktop@0.4.0 typecheck: \`tsc -b --noEmit\``,
     `typecheck\tRun pnpm -r typecheck\t${T(62)} Exit status 2`,
     `typecheck\tRun pnpm -r typecheck\t${T(62)} ##[error]Process completed with exit code 2.`,
   ].join("\n"),
   4009: [
     `test (windows-latest)\tRun cargo test --workspace\t${T(0)} ##[group]Run cargo test --workspace`,
-    `test (windows-latest)\tRun cargo test --workspace\t${T(190)}      Running unittests src\\lib.rs (target\\debug\\deps\\bouvio_runner-5d1c.exe)`,
+    `test (windows-latest)\tRun cargo test --workspace\t${T(190)}      Running unittests src\\lib.rs (target\\debug\\deps\\cuna_runner-5d1c.exe)`,
     `test (windows-latest)\tRun cargo test --workspace\t${T(191)} running 41 tests`,
     `test (windows-latest)\tRun cargo test --workspace\t${T(196)} test detect::tests::finds_codex_cmd ... FAILED`,
     `test (windows-latest)\tRun cargo test --workspace\t${T(197)} failures:`,
@@ -240,7 +240,7 @@ const conns = (ws: string) => {
   if (!connections.has(ws))
     connections.set(ws, [
       { id: uid(), name: "App", kind: "sqlite", url: "data/app.db", read_only: true },
-      { id: uid(), name: "Hub (staging)", kind: "postgres", url: "postgres://bouvio:****@10.0.0.4:5432/hub", read_only: true },
+      { id: uid(), name: "Hub (staging)", kind: "postgres", url: "postgres://cuna:****@10.0.0.4:5432/hub", read_only: true },
     ]);
   return connections.get(ws)!;
 };
@@ -261,7 +261,7 @@ const TABLES: Record<string, { kind: string; columns: string[]; rows: (i: number
     kind: "table",
     columns: ["id", "name", "owner_id", "shared", "created_at"],
     total: 37,
-    rows: (i) => [`ws_${(1e6 + i * 7919).toString(36)}`, ["Bouvio", "northwind.dev", "Q1 planning", "Jonas's studio", "Hub ops"][i % 5] + (i > 4 ? ` ${i}` : ""), (i % 10) + 1, i % 3 === 0, ago(60 * 24 * (200 - i))],
+    rows: (i) => [`ws_${(1e6 + i * 7919).toString(36)}`, ["Cuna", "northwind.dev", "Q1 planning", "Jonas's studio", "Hub ops"][i % 5] + (i > 4 ? ` ${i}` : ""), (i % 10) + 1, i % 3 === 0, ago(60 * 24 * (200 - i))],
   },
   invites: {
     kind: "table",
@@ -279,7 +279,7 @@ const TABLES: Record<string, { kind: string; columns: string[]; rows: (i: number
     kind: "view",
     columns: ["workspace", "members", "last_seen"],
     total: 5,
-    rows: (i) => [["Bouvio", "northwind.dev", "Q1 planning", "Jonas's studio", "Hub ops"][i], 2 + ((i * 3) % 7), ago(i * 13)],
+    rows: (i) => [["Cuna", "northwind.dev", "Q1 planning", "Jonas's studio", "Hub ops"][i], 2 + ((i * 3) % 7), ago(i * 13)],
   },
 };
 
@@ -335,17 +335,17 @@ const api = (ws: string) => {
       requests: [
         req("Health", "GET", "{{base_url}}/api/health"),
         req("List workspaces", "GET", "{{base_url}}/api/workspaces"),
-        req("Create invite", "POST", "{{base_url}}/api/workspaces/ws_bouvio/invites", '{\n  "role": "prompter",\n  "uses": 5\n}'),
+        req("Create invite", "POST", "{{base_url}}/api/workspaces/ws_cuna/invites", '{\n  "role": "prompter",\n  "uses": 5\n}'),
         req("Revoke invite", "DELETE", "{{base_url}}/api/invites/K3F9QX"),
       ],
       environments: [
         { id: local, name: "Local hub", variables: [{ key: "base_url", value: "http://127.0.0.1:8787" }, { key: "token", value: "dev-7f3a91" }] },
-        { id: uid(), name: "Staging", variables: [{ key: "base_url", value: "https://hub.staging.bouvio.dev" }, { key: "token", value: "" }] },
+        { id: uid(), name: "Staging", variables: [{ key: "base_url", value: "https://hub.staging.cuna.dev" }, { key: "token", value: "" }] },
       ],
       active_env: local,
       history: [
         { id: uid(), at: ago(4), request: req("", "GET", "{{base_url}}/api/workspaces"), status: 200, time_ms: 18, size: 612 },
-        { id: uid(), at: ago(11), request: req("", "POST", "{{base_url}}/api/workspaces/ws_bouvio/invites", '{ "role": "viewer" }'), status: 201, time_ms: 41, size: 143 },
+        { id: uid(), at: ago(11), request: req("", "POST", "{{base_url}}/api/workspaces/ws_cuna/invites", '{ "role": "viewer" }'), status: 201, time_ms: 41, size: 143 },
         { id: uid(), at: ago(26), request: req("", "GET", "{{base_url}}/api/me"), status: 401, time_ms: 6, size: 37 },
       ],
     });
@@ -359,7 +359,7 @@ function respond(method: string, url: string, body: string): Omit<HttpResponse, 
     return {
       status,
       status_text: statusText,
-      headers: [H("content-type", "application/json"), H("content-length", String(text.length)), H("date", new Date().toUTCString()), H("x-request-id", uid().slice(0, 13)), H("server", "bouvio-hub/0.4.0")],
+      headers: [H("content-type", "application/json"), H("content-length", String(text.length)), H("date", new Date().toUTCString()), H("x-request-id", uid().slice(0, 13)), H("server", "cuna-hub/0.4.0")],
       body: text,
       base64: false,
       size: text.length,
@@ -369,7 +369,7 @@ function respond(method: string, url: string, body: string): Omit<HttpResponse, 
   if (path === "/api/health") return json(200, "OK", { ok: true, version: "0.4.0", uptime_s: 86_412, db: "sqlite", runners_online: 2 });
   if (path === "/api/workspaces")
     return json(200, "OK", [
-      { id: "ws_bouvio", name: "Bouvio", role: "admin", members: 4, host_online: true },
+      { id: "ws_cuna", name: "Cuna", role: "admin", members: 4, host_online: true },
       { id: "ws_northwind", name: "northwind.dev", role: "operator", members: 2, host_online: false },
       { id: "ws_q1", name: "Q1 planning", role: "viewer", members: 7, host_online: true },
     ]);
@@ -392,7 +392,7 @@ function respond(method: string, url: string, body: string): Omit<HttpResponse, 
 let pageUrl: string | null = null;
 function page() {
   if (pageUrl) return pageUrl;
-  const html = `<!doctype html><html><head><meta charset="utf-8"><title>Settings · Bouvio</title>
+  const html = `<!doctype html><html><head><meta charset="utf-8"><title>Settings · Cuna</title>
 <style>
 *{box-sizing:border-box}body{margin:0;font:14px/1.5 -apple-system,system-ui,sans-serif;color:#1b1b1a;background:#fafaf9}
 header{display:flex;align-items:center;gap:20px;height:56px;padding:0 24px;border-bottom:1px solid #eee;background:#fff}
@@ -404,7 +404,7 @@ label{display:block;font-size:13px;font-weight:600;margin:0 0 6px}input{width:10
 button.primary{background:#3e63dd;border-color:#3e63dd;color:#fff}.toggle{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-top:1px solid #f0f0f0}
 .toggle:first-of-type{border-top:0}.sw{width:34px;height:20px;border-radius:10px;background:#3e63dd;position:relative}.sw:after{content:"";position:absolute;right:3px;top:3px;width:14px;height:14px;border-radius:50%;background:#fff}
 </style></head><body>
-<header data-source="src/components/Header.tsx:12"><b>Bouvio</b><nav><a href="#">Threads</a><a href="#">Issues</a><a class="on" href="#">Settings</a></nav></header>
+<header data-source="src/components/Header.tsx:12"><b>Cuna</b><nav><a href="#">Threads</a><a href="#">Issues</a><a class="on" href="#">Settings</a></nav></header>
 <main data-source="src/pages/Settings.tsx:18">
 <h1>Profile</h1><p class="sub">How you show up to people and agents in shared workspaces.</p>
 <section class="card" data-source="src/pages/Settings.tsx:24">
@@ -417,7 +417,7 @@ button.primary{background:#3e63dd;border-color:#3e63dd;color:#fff}.toggle{displa
 <div class="toggle"><span>Weekly cost summary</span><span class="sw"></span></div>
 </section></main>
 <script>${pickerJs}</script>
-<script>setTimeout(()=>parent.postMessage({type:"bouvio:location",path:"/settings/profile",href:"",title:document.title},"*"),30)</script>
+<script>setTimeout(()=>parent.postMessage({type:"cuna:location",path:"/settings/profile",href:"",title:document.title},"*"),30)</script>
 </body></html>`;
   pageUrl = URL.createObjectURL(new Blob([html], { type: "text/html" }));
   return pageUrl;

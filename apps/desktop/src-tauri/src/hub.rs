@@ -2,15 +2,15 @@
 //! calls, and the list of workspaces other people host.
 
 use anyhow::{bail, Context, Result};
-use bouvio_protocol::*;
-use bouvio_runner::hub::HubClient;
-use bouvio_runner::Runner;
+use cuna_protocol::*;
+use cuna_runner::hub::HubClient;
+use cuna_runner::Runner;
 use serde_json::{json, Value};
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use uuid::Uuid;
 
-const KEYCHAIN: &str = "bouvio-hub";
+const KEYCHAIN: &str = "cuna-hub";
 
 #[derive(Default)]
 pub struct Hub {

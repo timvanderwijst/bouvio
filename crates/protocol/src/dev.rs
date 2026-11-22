@@ -9,7 +9,7 @@ use uuid::Uuid;
 
 // ---- preview proxy -------------------------------------------------------------------
 
-/// A thread's dev server behind Bouvio's proxy, which adds the element picker.
+/// A thread's dev server behind Cuna's proxy, which adds the element picker.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "../../../apps/desktop/src/protocol/")]
 pub struct DevProxy {

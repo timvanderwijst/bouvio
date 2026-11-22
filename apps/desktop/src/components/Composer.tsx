@@ -67,7 +67,7 @@ export function Composer({ thread }: { thread: Thread | null }) {
         disabled: !h.available,
       })),
     );
-  // Models from the user's own keys run in Bouvio's agent loop.
+  // Models from the user's own keys run in Cuna's agent loop.
   const keyed = new Set(providers.filter((p) => p.configured).map((p) => p.kind));
   for (const m of models.filter((m) => keyed.has(m.provider) || m.provider === "open_router").slice(0, 60)) {
     runItems.push({

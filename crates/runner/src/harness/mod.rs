@@ -5,7 +5,7 @@ pub mod codex;
 
 use anyhow::Result;
 use async_trait::async_trait;
-use bouvio_protocol::{ApprovalLevel, Effort, HarnessKind, ThreadEvent};
+use cuna_protocol::{ApprovalLevel, Effort, HarnessKind, ThreadEvent};
 use std::path::PathBuf;
 use tokio::sync::mpsc::UnboundedSender;
 
@@ -24,9 +24,9 @@ pub struct SessionConfig {
     pub approval: ApprovalLevel,
     pub resume: Option<String>,
     pub instructions: Option<String>,
-    /// `--mcp-config` file with the `bouvio` server and the workspace's servers.
+    /// `--mcp-config` file with the `cuna` server and the workspace's servers.
     pub mcp_config: Option<PathBuf>,
-    /// Route permission prompts to people through `mcp__bouvio__approve`.
+    /// Route permission prompts to people through `mcp__cuna__approve`.
     pub prompt_tool: bool,
 }
 

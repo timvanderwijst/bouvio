@@ -11,7 +11,7 @@ use crate::keys::KeyStore;
 use crate::provider::{api_error, base_override, base_url, http, missing_key, provider_from_id, provider_name, send_json};
 use anyhow::{anyhow, bail, Context, Result};
 use base64::Engine;
-use bouvio_protocol::{ArtifactKind, ProviderKind};
+use cuna_protocol::{ArtifactKind, ProviderKind};
 use serde_json::{json, Value};
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};

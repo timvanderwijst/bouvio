@@ -5,8 +5,8 @@ export const en: Record<string, string> = {
   "platform.updates.version": "Version",
   "platform.updates.check": "Check for updates",
   "platform.updates.checking": "Checking…",
-  "platform.updates.upToDate": "Bouvio is up to date",
-  "platform.updates.available": "Bouvio {version} is available",
+  "platform.updates.upToDate": "Cuna is up to date",
+  "platform.updates.available": "Cuna {version} is available",
   "platform.updates.download": "Download and install",
   "platform.updates.downloading": "Downloading {percent}%",
   "platform.updates.downloadingUnknown": "Downloading…",
@@ -14,13 +14,13 @@ export const en: Record<string, string> = {
   "platform.updates.restart": "Restart now",
   "platform.updates.off": "Updates are not configured in this build.",
   "platform.updates.lastChecked": "Checked {when}",
-  "platform.updates.auto": "Bouvio checks once a day and never installs without you.",
+  "platform.updates.auto": "Cuna checks once a day and never installs without you.",
   "platform.updates.failed": "Could not check for updates: {error}",
 
   // plugins
   "platform.plugins": "Plugins",
   "platform.plugins.trust":
-    "Plugins run inside Bouvio with the same access as the app: they can read your workspaces and, with the rpc permission, start agents. Only enable plugins you wrote or trust.",
+    "Plugins run inside Cuna with the same access as the app: they can read your workspaces and, with the rpc permission, start agents. Only enable plugins you wrote or trust.",
   "platform.plugins.empty": "No plugins yet. Put a folder with a plugin.json in the plugins folder, or create the example.",
   "platform.plugins.openFolder": "Open folder",
   "platform.plugins.create": "Create plugin",
@@ -43,7 +43,7 @@ export const en: Record<string, string> = {
   "platform.backup.noWorkspace": "Open a workspace first.",
   "platform.backup.remote": "Shared workspaces are exported by the person who hosts them.",
   "platform.backup.working": "Working…",
-  "platform.backup.fileType": "Bouvio backup",
+  "platform.backup.fileType": "Cuna backup",
 
   // templates
   "platform.templates.new": "New workspace from template…",
@@ -56,7 +56,7 @@ export const en: Record<string, string> = {
   "platform.templates.none": "Templates come with the desktop app.",
 
   // web client
-  "platform.web.title": "Sign in to Bouvio",
+  "platform.web.title": "Sign in to Cuna",
   "platform.web.lead": "Follow and steer the workspaces shared with you on this hub.",
   "platform.web.email": "Email",
   "platform.web.sendCode": "Email me a code",
@@ -79,8 +79,8 @@ export const nl: Record<string, string> = {
   "platform.updates.version": "Versie",
   "platform.updates.check": "Zoek naar updates",
   "platform.updates.checking": "Zoeken…",
-  "platform.updates.upToDate": "Bouvio is up-to-date",
-  "platform.updates.available": "Bouvio {version} is beschikbaar",
+  "platform.updates.upToDate": "Cuna is up-to-date",
+  "platform.updates.available": "Cuna {version} is beschikbaar",
   "platform.updates.download": "Downloaden en installeren",
   "platform.updates.downloading": "Downloaden {percent}%",
   "platform.updates.downloadingUnknown": "Downloaden…",
@@ -88,12 +88,12 @@ export const nl: Record<string, string> = {
   "platform.updates.restart": "Nu herstarten",
   "platform.updates.off": "Updates zijn in deze versie niet ingesteld.",
   "platform.updates.lastChecked": "Gecontroleerd {when}",
-  "platform.updates.auto": "Bouvio kijkt één keer per dag en installeert nooit zonder jou.",
+  "platform.updates.auto": "Cuna kijkt één keer per dag en installeert nooit zonder jou.",
   "platform.updates.failed": "Kon niet naar updates zoeken: {error}",
 
   "platform.plugins": "Plugins",
   "platform.plugins.trust":
-    "Plugins draaien in Bouvio met dezelfde toegang als de app: ze kunnen je werkruimtes lezen en, met de rpc-permissie, agents starten. Zet alleen plugins aan die je zelf schreef of vertrouwt.",
+    "Plugins draaien in Cuna met dezelfde toegang als de app: ze kunnen je werkruimtes lezen en, met de rpc-permissie, agents starten. Zet alleen plugins aan die je zelf schreef of vertrouwt.",
   "platform.plugins.empty": "Nog geen plugins. Zet een map met een plugin.json in de pluginmap, of maak het voorbeeld.",
   "platform.plugins.openFolder": "Open map",
   "platform.plugins.create": "Maak plugin",
@@ -115,7 +115,7 @@ export const nl: Record<string, string> = {
   "platform.backup.noWorkspace": "Open eerst een werkruimte.",
   "platform.backup.remote": "Gedeelde werkruimtes exporteert degene die ze host.",
   "platform.backup.working": "Bezig…",
-  "platform.backup.fileType": "Bouvio-back-up",
+  "platform.backup.fileType": "Cuna-back-up",
 
   "platform.templates.new": "Nieuwe werkruimte uit sjabloon…",
   "platform.templates.title": "Nieuwe werkruimte uit een sjabloon",
@@ -126,7 +126,7 @@ export const nl: Record<string, string> = {
   "platform.templates.create": "Werkruimte maken",
   "platform.templates.none": "Sjablonen zitten in de desktop-app.",
 
-  "platform.web.title": "Inloggen bij Bouvio",
+  "platform.web.title": "Inloggen bij Cuna",
   "platform.web.lead": "Volg en stuur de werkruimtes die op deze hub met je gedeeld zijn.",
   "platform.web.email": "E-mail",
   "platform.web.sendCode": "Mail me een code",

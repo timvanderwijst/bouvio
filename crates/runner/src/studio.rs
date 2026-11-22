@@ -4,7 +4,7 @@
 use crate::{git, store, Runner};
 use anyhow::{bail, Context, Result};
 use base64::Engine;
-use bouvio_protocol::*;
+use cuna_protocol::*;
 use chrono::Utc;
 use serde_json::{json, Value};
 use std::path::{Path, PathBuf};
@@ -302,14 +302,14 @@ impl Runner {
         let exe = self.self_exe.lock().unwrap().clone().context("no executable for the MCP server")?;
         let mut servers = serde_json::Map::new();
         servers.insert(
-            "bouvio".into(),
+            "cuna".into(),
             json!({
                 "command": exe.to_string_lossy(),
                 "args": ["mcp"],
                 "env": {
-                    "BOUVIO_CONTROL": addr.port.to_string(),
-                    "BOUVIO_TOKEN": addr.token,
-                    "BOUVIO_THREAD": thread.id.to_string(),
+                    "CUNA_CONTROL": addr.port.to_string(),
+                    "CUNA_TOKEN": addr.token,
+                    "CUNA_THREAD": thread.id.to_string(),
                 }
             }),
         );

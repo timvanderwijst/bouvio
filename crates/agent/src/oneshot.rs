@@ -5,7 +5,7 @@ use crate::keys::KeyStore;
 use crate::local;
 use crate::provider::{self, Message, ModelRef, Part, Request};
 use anyhow::{anyhow, bail, Result};
-use bouvio_protocol::ProviderKind;
+use cuna_protocol::ProviderKind;
 use serde_json::{json, Value};
 use tokio_util::sync::CancellationToken;
 

@@ -66,7 +66,7 @@ function WorkspaceDialog() {
       >
         <label className="field">
           <span>{t("ws.name")}</span>
-          <input className={`input ${shake ? "nudge" : ""}`} autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="Bouvio" />
+          <input className={`input ${shake ? "nudge" : ""}`} autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="Cuna" />
         </label>
         <div className="field">
           <span>{t("ws.folder")}</span>

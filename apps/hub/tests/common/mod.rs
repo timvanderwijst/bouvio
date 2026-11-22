@@ -3,7 +3,7 @@
 
 use std::time::Duration;
 
-use bouvio_protocol::{ClientMsg, ServerMsg};
+use cuna_protocol::{ClientMsg, ServerMsg};
 use futures_util::{SinkExt, StreamExt};
 pub use reqwest::StatusCode;
 use serde_json::{json, Value};
@@ -24,14 +24,14 @@ impl Hub {
     }
 
     /// Starts a hub after `tweak` adjusts its configuration.
-    pub async fn start_with(tweak: impl FnOnce(&mut bouvio_hub::Config)) -> Hub {
+    pub async fn start_with(tweak: impl FnOnce(&mut cuna_hub::Config)) -> Hub {
         let dir = tempfile::tempdir().unwrap();
         let mut config =
-            bouvio_hub::Config::for_tests(format!("sqlite://{}/hub.db", dir.path().display()));
+            cuna_hub::Config::for_tests(format!("sqlite://{}/hub.db", dir.path().display()));
         tweak(&mut config);
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
         let base = format!("http://{}", listener.local_addr().unwrap());
-        tokio::spawn(async move { bouvio_hub::serve(config, listener).await.unwrap() });
+        tokio::spawn(async move { cuna_hub::serve(config, listener).await.unwrap() });
         let http = reqwest::Client::new();
         for _ in 0..100 {
             if let Ok(r) = http.get(format!("{base}/health")).send().await {

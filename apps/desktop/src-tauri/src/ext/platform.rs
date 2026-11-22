@@ -9,7 +9,7 @@
 
 use crate::App;
 use anyhow::{bail, Context, Result};
-use bouvio_protocol::platform::{AppInfo, PluginInfo, PluginManifest, PluginPermission};
+use cuna_protocol::platform::{AppInfo, PluginInfo, PluginManifest, PluginPermission};
 use serde::Deserialize;
 use serde_json::{json, Value};
 use std::path::{Component, Path, PathBuf};
@@ -192,7 +192,7 @@ fn create(data: &Path) -> Result<PluginInfo> {
     list(data).into_iter().find(|p| p.manifest.id == id).context("the new plugin did not load")
 }
 
-const EXAMPLE: &str = r#"// A Bouvio plugin is an ES module. Bouvio calls activate(api) when the plugin
+const EXAMPLE: &str = r#"// A Cuna plugin is an ES module. Cuna calls activate(api) when the plugin
 // is enabled and deactivate() when it is turned off. See docs/plugins.md.
 
 export function activate(api) {
@@ -268,7 +268,7 @@ mod tests {
 
     #[test]
     fn plugins_scaffold_list_enable_and_read() {
-        let dir = std::env::temp_dir().join(format!("bouvio-plugins-{}", uuid::Uuid::new_v4()));
+        let dir = std::env::temp_dir().join(format!("cuna-plugins-{}", uuid::Uuid::new_v4()));
         let made = create(&dir).unwrap();
         assert_eq!(made.manifest.id, "hello");
         assert!(made.enabled);

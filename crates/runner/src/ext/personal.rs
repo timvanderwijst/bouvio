@@ -7,8 +7,8 @@
 
 use crate::{store, title_from, Runner};
 use anyhow::{bail, Context, Result};
-use bouvio_protocol::personal::*;
-use bouvio_protocol::*;
+use cuna_protocol::personal::*;
+use cuna_protocol::*;
 use chrono::{DateTime, Datelike, Duration, Local, NaiveDate, TimeZone, Utc};
 use serde::de::DeserializeOwned;
 use serde_json::Value;
@@ -559,7 +559,7 @@ pub fn set_budget(r: &Runner, workspace_id: Uuid, scope: BudgetScope, id: Option
 }
 
 /// Refuse a new turn when the thread's lead or workspace is over its budget.
-pub fn check_budget(r: &Runner, thread: &bouvio_protocol::Thread) -> Result<()> {
+pub fn check_budget(r: &Runner, thread: &cuna_protocol::Thread) -> Result<()> {
     let budgets: Vec<Budget> = load_budgets(r).into_iter().filter(|b| b.workspace_id == thread.workspace_id).collect();
     if budgets.is_empty() {
         return Ok(());
@@ -1215,7 +1215,7 @@ mod tests {
     #[tokio::test]
     async fn costs_aggregate_from_event_logs() {
         let (_d, r) = runner();
-        let ws = r.create_workspace("Bouvio".into(), None).unwrap();
+        let ws = r.create_workspace("Cuna".into(), None).unwrap();
         let cap = lead(&r, ws.id, "Runner");
         let a = thread(&r, ws.id, Some(cap.id), Some("opus")).await;
         let b = thread(&r, ws.id, None, None).await;
@@ -1248,7 +1248,7 @@ mod tests {
     #[tokio::test]
     async fn budget_refuses_turns_over_the_limit() {
         let (_d, r) = runner();
-        let ws = r.create_workspace("Bouvio".into(), None).unwrap();
+        let ws = r.create_workspace("Cuna".into(), None).unwrap();
         let cap = lead(&r, ws.id, "Runner");
         let a = thread(&r, ws.id, Some(cap.id), None).await;
         let b = thread(&r, ws.id, None, None).await;
@@ -1264,7 +1264,7 @@ mod tests {
         set_budget(&r, ws.id, BudgetScope::Workspace, None, 5.0).unwrap();
         assert!(check_budget(&r, &b).is_ok());
         set_budget(&r, ws.id, BudgetScope::Workspace, None, 1.2).unwrap();
-        assert!(check_budget(&r, &b).unwrap_err().to_string().starts_with("Budget reached for Bouvio ($1.20 of $1.20"));
+        assert!(check_budget(&r, &b).unwrap_err().to_string().starts_with("Budget reached for Cuna ($1.20 of $1.20"));
 
         // Zero removes; send_message goes through again.
         set_budget(&r, ws.id, BudgetScope::Workspace, None, 0.0).unwrap();
@@ -1319,7 +1319,7 @@ mod tests {
             kind,
             id: Uuid::new_v4(),
             workspace_id: None,
-            workspace: Some("Bouvio".into()),
+            workspace: Some("Cuna".into()),
             title: title.into(),
             detail: detail.map(String::from),
             thread_id: None,
@@ -1333,7 +1333,7 @@ mod tests {
         ]);
         assert_eq!(
             md,
-            "**Waiting on you**\n- Magic link sign-in · Bouvio\n\n**Issues**\n- BOU-12 Drafts · Bouvio (in progress)\n- BOU-9 Rail · Bouvio (done)\n\n**Your tasks for today**\n- Reply to Jonas · Bouvio (overdue)"
+            "**Waiting on you**\n- Magic link sign-in · Cuna\n\n**Issues**\n- BOU-12 Drafts · Cuna (in progress)\n- BOU-9 Rail · Cuna (done)\n\n**Your tasks for today**\n- Reply to Jonas · Cuna (overdue)"
         );
         assert_eq!(fallback_markdown(&[]), "Nothing happened in the last 24 hours.");
     }
@@ -1341,7 +1341,7 @@ mod tests {
     #[tokio::test]
     async fn brief_without_model_lists_facts_and_caches() {
         let (_d, r) = runner();
-        let ws = r.create_workspace("Bouvio".into(), None).unwrap();
+        let ws = r.create_workspace("Cuna".into(), None).unwrap();
         let t = thread(&r, ws.id, None, None).await;
         r.store().update_thread(t.id, |t| t.status = AgentStatus::Blocked).unwrap();
         let today = local_date(Utc::now()).format("%Y-%m-%d").to_string();

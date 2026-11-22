@@ -29,11 +29,11 @@ interface Item {
 
 // Files and docs the preview pretends to have indexed, next to the sample threads and issues.
 const FILES: [string, string][] = [
-  ["README.md", "Bouvio is a desktop workspace where people and agent fleets work together, live, without pushing to Git first. Data lives in ~/.bouvio."],
-  ["crates/runner/src/lib.rs", "The Bouvio runner: the part that actually runs agents. It owns the threads on this machine, drives their harness, keeps their event log and status."],
+  ["README.md", "Cuna is a desktop workspace where people and agent fleets work together, live, without pushing to Git first. Data lives in ~/.cuna."],
+  ["crates/runner/src/lib.rs", "The Cuna runner: the part that actually runs agents. It owns the threads on this machine, drives their harness, keeps their event log and status."],
   ["crates/runner/src/work.rs", "Own issue tracker with GitHub sync, pull requests and merges through gh, commits from a thread, scheduled automations (cron)."],
   ["apps/hub/README.md", "Host a hub on your VPS with docker compose. Members sign in with email codes, Google or GitHub, and get a role from viewer to admin."],
-  ["apps/desktop/src/styles/tokens.css", "Bouvio design tokens. Light and dark are equals, not inversions. One accent, soft surfaces, one easing curve."],
+  ["apps/desktop/src/styles/tokens.css", "Cuna design tokens. Light and dark are equals, not inversions. One accent, soft surfaces, one easing curve."],
   ["docs/search.md", "Search fuses BM25 keyword ranking with embeddings through reciprocal rank fusion, so exact names and loose meaning both find their way to the top."],
 ];
 const DOCS: [string, string, string][] = [
@@ -263,12 +263,12 @@ export const handlers: Record<string, (p: Record<string, any>) => unknown> = {
   async install_skill({ workspace_id, source }) {
     const entry = CATALOG.find((c) => c.source.path === source.path);
     const name = entry?.name ?? String(source.path).split("/").pop()!;
-    const s: InstalledSkill = { name, description: entry?.description ?? "", path: `~/code/bouvio/.claude/skills/${name}` };
+    const s: InstalledSkill = { name, description: entry?.description ?? "", path: `~/code/cuna/.claude/skills/${name}` };
     installedSkills[workspace_id] = [...(installedSkills[workspace_id] ?? []).filter((x) => x.name !== name), s].sort((a, b) => a.name.localeCompare(b.name));
     await new Promise((r) => setTimeout(r, 400));
     return s;
   },
-  list_installed_skills: ({ workspace_id }) => (installedSkills[workspace_id] ??= [{ name: "pdf", description: CATALOG[4].description, path: "~/code/bouvio/.claude/skills/pdf" }]),
+  list_installed_skills: ({ workspace_id }) => (installedSkills[workspace_id] ??= [{ name: "pdf", description: CATALOG[4].description, path: "~/code/cuna/.claude/skills/pdf" }]),
   remove_skill({ workspace_id, name }) {
     installedSkills[workspace_id] = (installedSkills[workspace_id] ?? []).filter((x) => x.name !== name);
     return null;
@@ -283,7 +283,7 @@ function addImport(workspace_id: string, name: string, text: string): Artifact {
     thread_id: null,
     kind: "markdown",
     title: name,
-    path: `~/code/bouvio/.bouvio/imports/${slug}.md`,
+    path: `~/code/cuna/.cuna/imports/${slug}.md`,
     size: text.length + 80,
     created_at: new Date().toISOString(),
     prompt: null,

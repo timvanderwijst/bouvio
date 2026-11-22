@@ -125,13 +125,13 @@ export function sidebar({ active = "Desktop", page = null } = {}) {
     return `<div class="lead"><div class="sb-row lead-row ${on && !page ? "active" : ""}"><span class="avatar-wrap">${avatar(c.seed)}</span><span class="truncate">${c.name}</span>${right}</div>${kids}</div>`;
   }).join("");
   return `<aside class="sidebar">
-    <div class="sb-top"><div class="ws-btn"><span class="ws-mark">${mark(16)}</span><span>Bouvio</span></div><div class="sb-top-actions"><span class="icon-btn">${icon("search")}</span></div></div>
+    <div class="sb-top"><div class="ws-btn"><span class="ws-mark">${mark(16)}</span><span>Cuna</span></div><div class="sb-top-actions"><span class="icon-btn">${icon("search")}</span></div></div>
     <nav class="sb-nav">${row("pen", "New thread")}${row("list", "Threads")}${row("chat", "Chat", page === "Chat")}${row("cal", "Planning", page === "Planning", 5)}${row("book", "Library", page === "Library")}${row("studio", "Studio", page === "Studio")}${row("code", "Build")}${row("chart", "Insights")}</nav>
     <div class="sb-scroll"><div class="sb-section"><span class="sb-heading static">Leads</span></div>${leads}
       <div class="sb-section"><span class="sb-heading static">People</span></div>
       <div class="sb-row person">${person("Maya")}<span class="truncate">Maya</span><span class="sb-meta">Desktop</span></div>
     </div>
-    <div class="user-row"><span class="user-avatar">N</span><span class="user-text"><span class="user-name">Noor</span><span class="user-ws">Bouvio</span></span></div>
+    <div class="user-row"><span class="user-avatar">N</span><span class="user-text"><span class="user-name">Noor</span><span class="user-ws">Cuna</span></span></div>
   </aside>`;
 }
 
@@ -147,8 +147,8 @@ export const approval = (open = true) => `<div class="approval ${open ? "open" :
 </div>`;
 
 export const spawned = () => `
-  <div class="spawned">${status("working", 13)}<span class="truncate">Keep a draft per thread in the composer</span><span class="mono spawned-branch">bouvio/3f9a2c1e</span>${icon("arrow", 13)}</div>
-  <div class="spawned">${status("working", 13)}<span class="truncate">Rail shows on hover at the left edge</span><span class="mono spawned-branch">bouvio/7be04d55</span>${icon("arrow", 13)}</div>`;
+  <div class="spawned">${status("working", 13)}<span class="truncate">Keep a draft per thread in the composer</span><span class="mono spawned-branch">cuna/3f9a2c1e</span>${icon("arrow", 13)}</div>
+  <div class="spawned">${status("working", 13)}<span class="truncate">Rail shows on hover at the left edge</span><span class="mono spawned-branch">cuna/7be04d55</span>${icon("arrow", 13)}</div>`;
 
 export function thread({ withApproval = false, withSpawn = true, typing = "" } = {}) {
   return `<div class="thread">
@@ -167,9 +167,9 @@ export function overview() {
   const row = (s, title, meta, when, seed) => `<div class="ov-row">${status(s)}<span class="ov-text"><span class="ov-title truncate">${title}</span><span class="ov-meta truncate">${seed ? avatar(seed, 12) : ""}${meta}</span></span><span class="ov-when">${when}</span></div>`;
   const group = (t, n, rows) => `<div class="group"><div class="group-head"><span>${t}</span><span class="group-count">${n}</span></div>${rows}</div>`;
   return `<div class="overview">
-    ${group("Needs you", 2, row("blocked", "Magic link sign-in", "Hub · bouvio/a4410b9f", "12m ago", 37) + row("error", "Diff colors in the dark theme", "Design · bouvio/5d2e7a03", "2h ago", 41))}
-    ${group("In progress", 2, row("working", "Rail shows on hover at the left edge", "Desktop · bouvio/7be04d55", "1m ago", 11) + row("working", "Find Codex on the Windows PATH", "Runner · bouvio/c01d9e72", "2m ago", 23))}
-    ${group("Recent", 3, row("idle", "Keep a draft per thread in the composer", "Desktop · bouvio/3f9a2c1e", "4m ago", 11) + row("idle", "Resume Claude sessions after a restart", "Runner · main", "55m ago", 23))}
+    ${group("Needs you", 2, row("blocked", "Magic link sign-in", "Hub · cuna/a4410b9f", "12m ago", 37) + row("error", "Diff colors in the dark theme", "Design · cuna/5d2e7a03", "2h ago", 41))}
+    ${group("In progress", 2, row("working", "Rail shows on hover at the left edge", "Desktop · cuna/7be04d55", "1m ago", 11) + row("working", "Find Codex on the Windows PATH", "Runner · cuna/c01d9e72", "2m ago", 23))}
+    ${group("Recent", 3, row("idle", "Keep a draft per thread in the composer", "Desktop · cuna/3f9a2c1e", "4m ago", 11) + row("idle", "Resume Claude sessions after a restart", "Runner · main", "55m ago", 23))}
   </div>`;
 }
 
@@ -179,7 +179,7 @@ export function panel() {
 
 /** The whole app window: rail, sidebar, a lead's thread and the overview panel. */
 export function windowUI({ approvalCard = false, typing = "" } = {}) {
-  return `<div class="win-fit"><div class="win" role="img" aria-label="The Bouvio app with leads, a thread and the overview">${rail()}${sidebar()}
+  return `<div class="win-fit"><div class="win" role="img" aria-label="The Cuna app with leads, a thread and the overview">${rail()}${sidebar()}
     <div class="w-sheet"><section class="main">${tabbar()}${thread({ withApproval: approvalCard, typing })}</section>${panel()}</div></div></div>`;
 }
 
@@ -248,7 +248,7 @@ export function issues() {
 
 export function prs() {
   const row = (n, t, br, checks, state, cls) => `<div class="pr-row"><span class="pr-ic ${cls}">${icon("pr", 15)}</span><span class="pr-text"><span class="truncate"><b>#${n}</b> ${t}</span><span class="mono pr-br truncate">${br}</span></span><span class="pr-checks">${checks}</span><span class="pr-state ${cls}">${state}</span></div>`;
-  return `<div class="pr">${row(44, "Keep a draft per thread", "bouvio/3f9a2c1e → main", "✓ 3/3", "Ready", "ok")}${row(43, "Rail shows on hover", "bouvio/7be04d55 → main", "● 1/3", "Checks", "run")}${row(42, "Look for codex.cmd on Windows", "bouvio/c01d9e72 → main", "✓ 3/3", "Merged", "merged")}</div>`;
+  return `<div class="pr">${row(44, "Keep a draft per thread", "cuna/3f9a2c1e → main", "✓ 3/3", "Ready", "ok")}${row(43, "Rail shows on hover", "cuna/7be04d55 → main", "● 1/3", "Checks", "run")}${row(42, "Look for codex.cmd on Windows", "cuna/c01d9e72 → main", "✓ 3/3", "Merged", "merged")}</div>`;
 }
 
 export function calendar() {
@@ -284,17 +284,17 @@ export function localModels() {
 export function terminal() {
   return `<pre class="tm"><span class="muted"># on your VPS</span>
 docker compose -f apps/hub/compose.yml up -d
-bouvio-runner serve --hub https://hub.example.com --token $TOKEN
-<span class="ok">bouvio-runner: hosting 2 shared workspaces</span></pre>`;
+cuna-runner serve --hub https://hub.example.com --token $TOKEN
+<span class="ok">cuna-runner: hosting 2 shared workspaces</span></pre>`;
 }
 
 export function devTerminal() {
-  return `<pre class="tm"><span class="muted">~/bouvio $</span> pnpm test --filter desktop
+  return `<pre class="tm"><span class="muted">~/cuna $</span> pnpm test --filter desktop
  <span class="ok">✓</span> composer keeps a draft per thread
  <span class="ok">✓</span> rail opens at the left edge
  <span class="ok">✓</span> tooltip stays inside the window
 <span class="ok">Tests  3 passed</span>
-<span class="muted">~/bouvio $</span> pnpm dev
+<span class="muted">~/cuna $</span> pnpm dev
 <span class="muted">Preview at</span> http://localhost:5173</pre>`;
 }
 
@@ -346,7 +346,7 @@ export function marquees() {
 const REPO = "https://github.com/timvanderwijst/bouvio";
 const LINKS = [["agents", "Agents"], ["team", "Team"], ["work", "Work"], ["studio", "Studio"], ["build", "Build"], ["free", "Free"]];
 export const nav = () => `<nav class="nav" data-nav><div class="nav-in">
-  <a class="brand" href="#top"><span class="ws-mark">${mark(17)}</span>Bouvio</a>
+  <a class="brand" href="#top"><span class="ws-mark">${mark(17)}</span>Cuna</a>
   <div class="nav-links" data-links>${LINKS.map(([id, l]) => `<a href="#${id}" data-to="${id}">${l}</a>`).join("")}<i class="nav-ind" data-ind></i></div>
   <div class="grow"></div>
   <a class="btn ghost nav-gh" href="${REPO}">${icon("github", 15)}GitHub</a>
@@ -356,10 +356,10 @@ export const foot = () => `<footer class="foot">
     <div><h6>Product</h6><a href="${REPO}/releases/latest">Download</a><a href="#agents">Agents</a><a href="#work">Docs and planning</a><a href="#studio">Studio</a></div>
     <div><h6>Self-host</h6><a href="${REPO}/blob/main/apps/hub/README.md">Run the hub</a><a href="#free">Local models</a><a href="#build">Runners</a></div>
     <div><h6>Build on it</h6><a href="${REPO}/blob/main/docs/plugins.md">Plugins</a><a href="${REPO}">Source code</a><a href="${REPO}/issues">Issues</a></div>
-    <div><h6>Bouvio</h6><span>Free and open source</span><span>MIT licensed</span><span>Windows, macOS, Linux</span></div>
+    <div><h6>Cuna</h6><span>Free and open source</span><span>MIT licensed</span><span>Windows, macOS, Linux</span></div>
   </div>
-  <div class="foot-wm" aria-hidden="true">bouvio</div>
-  <div class="wrap foot-bt"><span>© Bouvio contributors</span><span>Your keys, your machines</span></div>
+  <div class="foot-wm" aria-hidden="true">cuna</div>
+  <div class="wrap foot-bt"><span>© Cuna contributors</span><span>Your keys, your machines</span></div>
 </footer>`;
 export const cta = (second = "Self-host the hub") => `<div class="cta">
   <a class="btn primary lg" href="${REPO}/releases/latest">${icon("download", 16)}Download for Windows</a>

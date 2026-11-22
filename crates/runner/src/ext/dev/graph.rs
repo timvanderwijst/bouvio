@@ -2,7 +2,7 @@
 
 use super::{run, valid_sha};
 use anyhow::{bail, Result};
-use bouvio_protocol::dev::*;
+use cuna_protocol::dev::*;
 use std::path::Path;
 
 const FS: char = '\x1f';

@@ -1,9 +1,9 @@
 //! A minimal MCP server (stdio, JSON-RPC 2.0) that Claude Code loads as
-//! `bouvio`. It gives agents fleet tools and routes permission prompts to the
+//! `cuna`. It gives agents fleet tools and routes permission prompts to the
 //! people in the thread.
 //!
-//! Started by the runner as `<own exe> mcp` with BOUVIO_CONTROL, BOUVIO_TOKEN
-//! and BOUVIO_THREAD in the environment.
+//! Started by the runner as `<own exe> mcp` with CUNA_CONTROL, CUNA_TOKEN
+//! and CUNA_THREAD in the environment.
 
 use crate::control;
 use anyhow::{Context, Result};
@@ -14,7 +14,7 @@ pub fn tools() -> Value {
     json!([
         {
             "name": "approve",
-            "description": "Bouvio permission prompt: asks the people in this thread whether a tool call may run.",
+            "description": "Cuna permission prompt: asks the people in this thread whether a tool call may run.",
             "inputSchema": { "type": "object", "properties": {
                 "tool_name": { "type": "string" }, "input": { "type": "object" }, "tool_use_id": { "type": "string" }
             }, "required": ["tool_name", "input"] }
@@ -54,9 +54,9 @@ pub fn tools() -> Value {
 }
 
 pub async fn serve_stdio() -> Result<()> {
-    let port: u16 = std::env::var("BOUVIO_CONTROL").context("BOUVIO_CONTROL")?.parse()?;
-    let token = std::env::var("BOUVIO_TOKEN").context("BOUVIO_TOKEN")?;
-    let thread = std::env::var("BOUVIO_THREAD").context("BOUVIO_THREAD")?;
+    let port: u16 = std::env::var("CUNA_CONTROL").context("CUNA_CONTROL")?.parse()?;
+    let token = std::env::var("CUNA_TOKEN").context("CUNA_TOKEN")?;
+    let thread = std::env::var("CUNA_THREAD").context("CUNA_THREAD")?;
 
     let mut lines = BufReader::new(tokio::io::stdin()).lines();
     let mut out = tokio::io::stdout();
@@ -67,7 +67,7 @@ pub async fn serve_stdio() -> Result<()> {
             "initialize" => Ok(json!({
                 "protocolVersion": req["params"]["protocolVersion"].as_str().unwrap_or("2025-06-18"),
                 "capabilities": { "tools": {} },
-                "serverInfo": { "name": "bouvio", "version": env!("CARGO_PKG_VERSION") }
+                "serverInfo": { "name": "cuna", "version": env!("CARGO_PKG_VERSION") }
             })),
             "ping" => Ok(json!({})),
             "tools/list" => Ok(json!({ "tools": tools() })),

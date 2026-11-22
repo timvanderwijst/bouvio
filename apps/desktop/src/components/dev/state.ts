@@ -32,11 +32,11 @@ interface DevState {
 }
 
 export const useDev = create<DevState>((set) => ({
-  tab: (DEV_TABS as string[]).includes(ls.get("bouvio.dev.tab") ?? "") ? (ls.get("bouvio.dev.tab") as DevTab) : "checks",
+  tab: (DEV_TABS as string[]).includes(ls.get("cuna.dev.tab") ?? "") ? (ls.get("cuna.dev.tab") as DevTab) : "checks",
   dataMode: "rows",
   sqlFocus: 0,
   setTab(tab) {
-    ls.set("bouvio.dev.tab", tab);
+    ls.set("cuna.dev.tab", tab);
     set({ tab });
   },
   setDataMode(dataMode) {

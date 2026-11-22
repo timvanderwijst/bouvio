@@ -10,14 +10,14 @@ The app only installs updates signed with your key.
 
    ```bash
    cd apps/desktop
-   pnpm tauri signer generate -w ~/.tauri/bouvio.key
+   pnpm tauri signer generate -w ~/.tauri/cuna.key
    ```
 
-2. Put the **public** key (the contents of `~/.tauri/bouvio.key.pub`) in `apps/desktop/src-tauri/tauri.conf.json` under `plugins.updater.pubkey`, replacing `REPLACE_WITH_UPDATER_PUBLIC_KEY`, and commit it.
+2. Put the **public** key (the contents of `~/.tauri/cuna.key.pub`) in `apps/desktop/src-tauri/tauri.conf.json` under `plugins.updater.pubkey`, replacing `REPLACE_WITH_UPDATER_PUBLIC_KEY`, and commit it.
 
 3. In the repository on GitHub, **Settings → Secrets and variables → Actions**, add:
 
-   - `TAURI_SIGNING_PRIVATE_KEY`: the contents of `~/.tauri/bouvio.key`
+   - `TAURI_SIGNING_PRIVATE_KEY`: the contents of `~/.tauri/cuna.key`
    - `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`: its password
 
 Never commit the private key. If it is lost, installed apps cannot verify new updates; people then install the next version by hand once.
@@ -36,8 +36,8 @@ Until the public key is set, the app runs normally and **Settings → Updates** 
 
 3. The **Release** workflow creates a draft release and adds:
    - the desktop app for Windows, macOS (universal) and Linux, with `latest.json` and signatures for the updater,
-   - `bouvio-runner` binaries for Linux (x86_64, arm64), macOS (arm64, x86_64) and Windows,
-   - the hub image `ghcr.io/timvanderwijst/bouvio-hub:<version>` (and `:latest`), for amd64 and arm64.
+   - `cuna-runner` binaries for Linux (x86_64, arm64), macOS (arm64, x86_64) and Windows,
+   - the hub image `ghcr.io/timvanderwijst/cuna-hub:<version>` (and `:latest`), for amd64 and arm64.
 4. Read the draft on GitHub and publish it. Apps see the update within a day, or at once with **Settings → Updates → Check for updates**.
 
 The macOS and Windows builds are not code-signed by an Apple or Microsoft certificate (those cost money), so the first install shows the system's warning for unknown developers. Updates after that install quietly.
@@ -47,5 +47,5 @@ The macOS and Windows builds are not code-signed by an Apple or Microsoft certif
 `pnpm tauri build` makes updater artifacts and needs `TAURI_SIGNING_PRIVATE_KEY` in the environment. Without a key, use:
 
 ```bash
-pnpm --filter @bouvio/desktop tauri:build-unsigned
+pnpm --filter @cuna/desktop tauri:build-unsigned
 ```

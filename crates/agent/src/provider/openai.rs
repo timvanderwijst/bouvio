@@ -3,7 +3,7 @@
 
 use super::{base_url, send_json, Message, Part, Reply, Request, Role, Stop, Usage};
 use anyhow::{bail, Result};
-use bouvio_protocol::ProviderKind;
+use cuna_protocol::ProviderKind;
 use serde_json::{json, Value};
 use tokio_util::sync::CancellationToken;
 
@@ -30,7 +30,7 @@ pub(crate) async fn complete(
                         b = b.bearer_auth(key);
                     }
                     if provider == ProviderKind::OpenRouter {
-                        b = b.header("HTTP-Referer", "https://github.com/bouvio/bouvio").header("X-Title", "Bouvio");
+                        b = b.header("HTTP-Referer", "https://github.com/timvanderwijst/bouvio").header("X-Title", "Cuna");
                     }
                     b
                 },

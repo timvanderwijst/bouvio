@@ -118,7 +118,7 @@ pub(crate) async fn transcribe(size: Option<&str>, file: &Path) -> Result<String
     let input = if whisper_ready(&head) {
         file.to_path_buf()
     } else if let Some(ff) = which("ffmpeg") {
-        let out = std::env::temp_dir().join(format!("bouvio-{}.wav", uuid::Uuid::new_v4().simple()));
+        let out = std::env::temp_dir().join(format!("cuna-{}.wav", uuid::Uuid::new_v4().simple()));
         let mut cmd = command(&ff);
         cmd.arg("-nostdin").arg("-y").arg("-i").arg(file).args(["-ar", "16000", "-ac", "1", "-c:a", "pcm_s16le"]).arg(&out);
         run(cmd, "ffmpeg", None).await?;
@@ -202,7 +202,7 @@ pub(crate) fn comfy_workflow(ckpt: &str, prompt: &str, seed: u64, p: &ComfyParam
             "model": ["4", 0], "positive": ["6", 0], "negative": ["7", 0], "latent_image": ["5", 0]
         } },
         "8": { "class_type": "VAEDecode", "inputs": { "samples": ["3", 0], "vae": ["4", 2] } },
-        "9": { "class_type": "SaveImage", "inputs": { "filename_prefix": "bouvio", "images": ["8", 0] } }
+        "9": { "class_type": "SaveImage", "inputs": { "filename_prefix": "cuna", "images": ["8", 0] } }
     })
 }
 
@@ -243,7 +243,7 @@ pub(crate) async fn comfy_image(ckpt: &str, prompt: &str) -> Result<(Vec<u8>, Op
         ckpt.to_string()
     };
     let seed = (uuid::Uuid::new_v4().as_u128() as u64) & ((1u64 << 48) - 1);
-    let body = json!({ "prompt": comfy_workflow(&ckpt, prompt, seed, &comfy_params(&ckpt)), "client_id": "bouvio" });
+    let body = json!({ "prompt": comfy_workflow(&ckpt, prompt, seed, &comfy_params(&ckpt)), "client_id": "cuna" });
     let resp = http().post(format!("{root}/prompt")).json(&body).send().await.map_err(unreachable)?;
     let status = resp.status();
     let v: Value = resp.json().await.unwrap_or(Value::Null);
@@ -340,9 +340,9 @@ mod tests {
 
     #[test]
     fn reads_comfy_history() {
-        let done = json!({"outputs":{"9":{"images":[{"filename":"bouvio_00001_.png","subfolder":"","type":"output"}]}},"status":{"status_str":"success","completed":true}});
+        let done = json!({"outputs":{"9":{"images":[{"filename":"cuna_00001_.png","subfolder":"","type":"output"}]}},"status":{"status_str":"success","completed":true}});
         let (f, s, t) = comfy_result(&done).unwrap().unwrap();
-        assert_eq!((f.as_str(), s.as_str(), t.as_str()), ("bouvio_00001_.png", "", "output"));
+        assert_eq!((f.as_str(), s.as_str(), t.as_str()), ("cuna_00001_.png", "", "output"));
         let failed = json!({"outputs":{},"status":{"status_str":"error","messages":[["execution_start",{}],["execution_error",{"exception_message":"CUDA out of memory\n"}]]}});
         assert_eq!(comfy_result(&failed).unwrap().unwrap_err().to_string(), "ComfyUI: CUDA out of memory");
         assert!(comfy_result(&Value::Null).is_none());

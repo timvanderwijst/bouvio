@@ -3,7 +3,7 @@
 
 use crate::{title_from, Runner};
 use anyhow::{bail, Context, Result};
-use bouvio_protocol::*;
+use cuna_protocol::*;
 use chrono::{Local, Utc};
 use serde_json::Value;
 use std::path::Path;
@@ -191,7 +191,7 @@ impl Runner {
         }
         run(&cwd, "git", &["push", "-u", "origin", &branch]).await?;
         let title = title.unwrap_or(t.title);
-        let body = "Opened from Bouvio.";
+        let body = "Opened from Cuna.";
         let url = run(&cwd, "gh", &["pr", "create", "--head", &branch, "--title", &title, "--body", body]).await?;
         self.notice(t.workspace_id, "pull-requests-changed", serde_json::json!({}));
         Ok(url.trim().to_string())

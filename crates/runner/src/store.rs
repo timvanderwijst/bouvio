@@ -4,7 +4,7 @@
 //! SQLite once the hub needs queries across them.
 
 use anyhow::{Context, Result};
-use bouvio_protocol::{Lead, Thread, ThreadEnvelope, Workspace};
+use cuna_protocol::{Lead, Thread, ThreadEnvelope, Workspace};
 use serde::{de::DeserializeOwned, Serialize};
 use std::fs::{self, OpenOptions};
 use std::io::{BufRead, BufReader, Write};
