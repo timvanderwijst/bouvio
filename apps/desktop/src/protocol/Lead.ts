@@ -6,7 +6,7 @@ import type { HarnessKind } from "./HarnessKind";
 /**
  * A long-lived agent for one domain, that splits work into threads.
  */
-export type Captain = { id: string, workspace_id: string, name: string, instructions: string, harness: HarnessKind, model: string | null, effort: Effort, approval: ApprovalLevel, 
+export type Lead = { id: string, workspace_id: string, name: string, instructions: string, harness: HarnessKind, model: string | null, effort: Effort, approval: ApprovalLevel, 
 /**
  * Seed for the pixel avatar.
  */

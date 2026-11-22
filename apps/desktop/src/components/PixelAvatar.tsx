@@ -1,5 +1,5 @@
-// A small symmetric pixel character per captain, stable for its seed.
-// Recognisable at 18px without a label, like the captains in the sidebar.
+// A small symmetric pixel character per lead, stable for its seed.
+// Recognisable at 18px without a label, like the leads in the sidebar.
 
 const PALETTES = [
   ["#F6E7D8", "#C2653A", "#3A2418"],

@@ -46,7 +46,7 @@ export function CommandPalette() {
     const close = () => setPalette(false);
     const ws = (id: string) => s.workspaces.find((w) => w.id === id)?.name ?? "";
     const list: Cmd[] = [
-      { id: "new", label: t("ws.newThread"), icon: <PenSquare size={15} />, run: () => (s.go({ kind: "draft", captainId: null }), close()) },
+      { id: "new", label: t("ws.newThread"), icon: <PenSquare size={15} />, run: () => (s.go({ kind: "draft", leadId: null }), close()) },
       {
         id: "theme",
         label: t("palette.toggleTheme"),
@@ -65,8 +65,8 @@ export function CommandPalette() {
     for (const p of [...extPages("workspace"), ...extPages("rail")])
       list.push({ id: `xp${p.id}`, label: t(p.label), icon: <p.icon size={15} />, run: () => (s.go({ kind: "ext", id: p.id }), close()) });
     for (const w of s.workspaces) list.push({ id: `w${w.id}`, label: w.name, hint: t("nav.workspaces"), icon: <Layers size={15} />, run: () => (s.selectWorkspace(w.id), close()) });
-    for (const [wid, cs] of Object.entries(s.captains))
-      for (const c of cs) list.push({ id: `c${c.id}`, label: c.name, hint: ws(wid), icon: <PixelAvatar seed={c.avatar_seed} size={15} />, run: () => (s.openCaptain(c), close()) });
+    for (const [wid, cs] of Object.entries(s.leads))
+      for (const c of cs) list.push({ id: `c${c.id}`, label: c.name, hint: ws(wid), icon: <PixelAvatar seed={c.avatar_seed} size={15} />, run: () => (s.openLead(c), close()) });
     for (const th of Object.values(s.threads).flat().sort((a, b) => b.updated_at.localeCompare(a.updated_at)))
       list.push({ id: `t${th.id}`, label: th.title, hint: ws(th.workspace_id), icon: <MessageSquare size={15} />, run: () => (s.openThread(th.id), close()) });
     return list;

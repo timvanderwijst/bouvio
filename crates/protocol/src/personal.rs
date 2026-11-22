@@ -139,7 +139,7 @@ pub struct Note {
 #[derive(Debug, Clone, Default, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "../../../apps/desktop/src/protocol/")]
 pub struct CostRow {
-    /// Captain id, model id, person name, …; empty for "none".
+    /// Lead id, model id, person name, …; empty for "none".
     pub key: String,
     pub label: String,
     pub cost_usd: f64,
@@ -177,7 +177,7 @@ pub struct CostSummary {
     pub unknown_turns: u32,
     /// One entry per day of the period, oldest first, zero days included.
     pub per_day: Vec<CostDay>,
-    pub per_captain: Vec<CostRow>,
+    pub per_lead: Vec<CostRow>,
     /// `harness · model`.
     pub per_model: Vec<CostRow>,
     /// Who sent the message that started each turn.
@@ -191,7 +191,8 @@ pub struct CostSummary {
 #[ts(export, export_to = "../../../apps/desktop/src/protocol/")]
 pub enum BudgetScope {
     Workspace,
-    Captain,
+    #[serde(alias = "captain")]
+    Lead,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
@@ -199,7 +200,7 @@ pub enum BudgetScope {
 pub struct Budget {
     pub workspace_id: Uuid,
     pub scope: BudgetScope,
-    /// The captain, for a captain budget.
+    /// The lead, for a lead budget.
     pub id: Option<Uuid>,
     pub monthly_usd: f64,
 }
@@ -208,7 +209,7 @@ pub struct Budget {
 #[ts(export, export_to = "../../../apps/desktop/src/protocol/")]
 pub struct BudgetStatus {
     pub budget: Budget,
-    /// Workspace or captain name.
+    /// Workspace or lead name.
     pub label: String,
     /// Spent this calendar month (local time).
     pub spent_usd: f64,

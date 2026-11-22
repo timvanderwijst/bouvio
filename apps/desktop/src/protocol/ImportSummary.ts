@@ -4,4 +4,4 @@ import type { Workspace } from "./Workspace";
 /**
  * What `import_workspace` created.
  */
-export type ImportSummary = { workspace: Workspace, captains: number, threads: number, issues: number, automations: number, artifacts: number, };
+export type ImportSummary = { workspace: Workspace, leads: number, threads: number, issues: number, automations: number, artifacts: number, };

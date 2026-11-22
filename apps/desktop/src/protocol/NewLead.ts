@@ -3,4 +3,4 @@ import type { ApprovalLevel } from "./ApprovalLevel";
 import type { Effort } from "./Effort";
 import type { HarnessKind } from "./HarnessKind";
 
-export type NewCaptain = { workspace_id: string, name: string, instructions: string, harness: HarnessKind, model: string | null, effort: Effort, approval: ApprovalLevel, };
+export type NewLead = { workspace_id: string, name: string, instructions: string, harness: HarnessKind, model: string | null, effort: Effort, approval: ApprovalLevel, };

@@ -6,7 +6,7 @@ import { ago } from "../../lib/format";
 import type { CiLog } from "../../protocol/CiLog";
 import type { CiRun } from "../../protocol/CiRun";
 import type { Thread } from "../../protocol/Thread";
-import { rpc, useStore, useWorkspaceCaptains, useWorkspaceThreads } from "../../store";
+import { rpc, useStore, useWorkspaceLeads, useWorkspaceThreads } from "../../store";
 import { Empty } from "../Panel";
 import { PixelAvatar } from "../PixelAvatar";
 import { StatusIcon } from "../StatusIcon";
@@ -113,9 +113,9 @@ export function ChecksTab() {
 }
 
 function ThreadChip({ thread }: { thread: Thread }) {
-  const captains = useWorkspaceCaptains();
+  const leads = useWorkspaceLeads();
   const openThread = useStore((s) => s.openThread);
-  const c = captains.find((x) => x.id === thread.captain_id);
+  const c = leads.find((x) => x.id === thread.lead_id);
   return (
     <span
       className="dv-thread"

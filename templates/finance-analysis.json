@@ -1,17 +1,17 @@
 {
   "id": "finance-analysis",
   "name": "Finance analysis",
-  "description": "An analyst captain for budgets, statements and forecasts, working from your own spreadsheets.",
+  "description": "An analyst lead for budgets, statements and forecasts, working from your own spreadsheets.",
   "icon": "chart-line",
   "instructions": "This workspace analyses financial data. Work from the files in the workspace folder and never invent numbers. Show your calculations, state every assumption, and keep source files unchanged: write results to new files. Round money to two decimals and name the currency.",
-  "captains": [
+  "leads": [
     { "name": "Analyst", "instructions": "Reads statements, exports and spreadsheets, builds tables and charts, and explains what changed and why. Flag anything that looks wrong instead of smoothing it over." }
   ],
   "issues": [
-    { "title": "List the data sources and what each one covers", "captain": "Analyst" },
-    { "title": "Build a monthly income and expense overview", "captain": "Analyst" },
-    { "title": "Compare this quarter with the same quarter last year", "captain": "Analyst" },
-    { "title": "Draft a 12-month cash forecast with assumptions", "captain": "Analyst" }
+    { "title": "List the data sources and what each one covers", "lead": "Analyst" },
+    { "title": "Build a monthly income and expense overview", "lead": "Analyst" },
+    { "title": "Compare this quarter with the same quarter last year", "lead": "Analyst" },
+    { "title": "Draft a 12-month cash forecast with assumptions", "lead": "Analyst" }
   ],
   "automations": []
 }

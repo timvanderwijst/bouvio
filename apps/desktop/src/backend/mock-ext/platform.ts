@@ -7,11 +7,11 @@ const templates: WorkspaceTemplate[] = [
   {
     id: "web-app",
     name: "Web app",
-    description: "Frontend, backend and tests captains for a web project, with a dev server for live previews.",
+    description: "Frontend, backend and tests leads for a web project, with a dev server for live previews.",
     icon: "app-window",
     instructions: "",
     dev_command: "npm run dev -- --port {port}",
-    captains: [
+    leads: [
       { name: "Frontend", instructions: "" },
       { name: "Backend", instructions: "" },
       { name: "Tests", instructions: "" },
@@ -22,11 +22,11 @@ const templates: WorkspaceTemplate[] = [
   {
     id: "marketing-campaign",
     name: "Marketing campaign",
-    description: "Copy, design and research captains for a campaign, with a weekly report every Monday.",
+    description: "Copy, design and research leads for a campaign, with a weekly report every Monday.",
     icon: "megaphone",
     instructions: "",
     dev_command: null,
-    captains: [
+    leads: [
       { name: "Copy", instructions: "" },
       { name: "Design", instructions: "" },
       { name: "Research", instructions: "" },
@@ -37,11 +37,11 @@ const templates: WorkspaceTemplate[] = [
   {
     id: "finance-analysis",
     name: "Finance analysis",
-    description: "An analyst captain for budgets, statements and forecasts, working from your own spreadsheets.",
+    description: "An analyst lead for budgets, statements and forecasts, working from your own spreadsheets.",
     icon: "chart-line",
     instructions: "",
     dev_command: null,
-    captains: [{ name: "Analyst", instructions: "" }],
+    leads: [{ name: "Analyst", instructions: "" }],
     issues: [],
     automations: [],
   },
@@ -52,7 +52,7 @@ const templates: WorkspaceTemplate[] = [
     icon: "book-open",
     instructions: "",
     dev_command: null,
-    captains: [
+    leads: [
       { name: "Researcher", instructions: "" },
       { name: "Writer", instructions: "" },
     ],
@@ -66,7 +66,7 @@ const templates: WorkspaceTemplate[] = [
     icon: "sparkles",
     instructions: "",
     dev_command: null,
-    captains: [{ name: "Assistant", instructions: "" }],
+    leads: [{ name: "Assistant", instructions: "" }],
     issues: [],
     automations: [],
   },

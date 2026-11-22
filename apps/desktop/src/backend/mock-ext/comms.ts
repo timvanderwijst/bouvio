@@ -3,7 +3,7 @@
 //
 // Comms talks to the hub, not the runner, so this mock wraps the preview hub
 // (`mockBackend.hub`) once it exists: channels, threads, reactions, pins,
-// @captain replies, and a fake huddle participant.
+// @lead replies, and a fake huddle participant.
 
 import type { ChatMessage } from "../../protocol/ChatMessage";
 import type { ClientMsg } from "../../protocol/ClientMsg";
@@ -33,7 +33,7 @@ async function state(orig: { request: (m: string, p: string, b?: unknown) => Pro
   const me = (await orig.status()).user!;
   const members = (((await orig.request("GET", `/workspaces/${ws}/members`)) as Member[]) ?? []).map((m) => m.user);
   const seed = (((await orig.request("GET", `/workspaces/${ws}/chat?channel=general`)) as ChatMessage[]) ?? []).map((m) => ({ ...m }));
-  const [isa, noor] = [members.find((u) => u.name === "Isa") ?? me, members.find((u) => u.name === "Noor") ?? me];
+  const [jonas, noor] = [members.find((u) => u.name === "Jonas") ?? me, members.find((u) => u.name === "Noor") ?? me];
   const at = (min: number) => ago(min);
   const msg = (author: HubUser, text: string, min: number, extra: Partial<ChatMessage> = {}): ChatMessage => ({
     id: uid(),
@@ -49,15 +49,15 @@ async function state(orig: { request: (m: string, p: string, b?: unknown) => Pro
   });
   const earlier = [
     msg(noor, "Release notes for this week are in **#design**. Shout if anything is missing.", 60 * 26, { pinned: true }),
-    msg(isa, "Morning! Picking up the hub invites today.", 60 * 25),
+    msg(jonas, "Morning! Picking up the hub invites today.", 60 * 25),
   ];
   if (seed[0]) seed[0].reactions = [["👀", [me.id]]];
-  if (seed[1]) seed[1].reactions = [["🎉", [isa.id, noor.id]], ["👍", [isa.id]]];
+  if (seed[1]) seed[1].reactions = [["🎉", [jonas.id, noor.id]], ["👍", [jonas.id]]];
   const root = seed[2] ?? seed[0];
   const replies = root
     ? [
         msg(me, "Resend is fine. Free tier covers us, and it is plain SMTP for self-hosters anyway.", 9, { parent: root.id }),
-        msg(isa, `Agreed. @${me.name} can you update the compose file?`, 7, { parent: root.id }),
+        msg(jonas, `Agreed. @${me.name} can you update the compose file?`, 7, { parent: root.id }),
       ]
     : [];
   const design = [msg(noor, "Dark diff colours: two options in the board. I lean to the softer one.", 90, { channel: "design" })];
@@ -140,7 +140,7 @@ function wrap(mock: { hub: Record<string, any> }) {
       case "chat": {
         const m: ChatMessage = { ...base, channel: msg.channel, text: msg.text, parent: null };
         post(m);
-        captain(s, m);
+        lead(s, m);
         if (/\?\s*$/.test(msg.text)) {
           const other = s.members.find((u) => u.id !== s.me.id);
           if (other) setTimeout(() => post({ ...base, id: uid(), author: other, at: new Date().toISOString(), channel: msg.channel, text: "Looking at it now.", parent: null }), 1800);
@@ -187,8 +187,8 @@ function wrap(mock: { hub: Record<string, any> }) {
   };
 }
 
-/** `@Captain …` in the preview: the replies a hosting runner would post. */
-async function captain(s: State, m: ChatMessage) {
+/** `@Lead …` in the preview: the replies a hosting runner would post. */
+async function lead(s: State, m: ChatMessage) {
   const match = m.text.match(/^@(Desktop|Runner|Hub|Design|Docs)\b[:,]?\s*(.*)$/is);
   if (!match) return;
   const reply = (text: string, after: number) =>
@@ -212,11 +212,11 @@ function stopFake() {
 }
 
 function fakeHuddle(s: State, ws: string) {
-  const isa = s.members.find((u) => u.name === "Isa");
-  if (!isa) return;
-  const peer = "preview-isa";
-  s.huddle.set(isa.id, { user: isa, conn: 9001 });
-  const signal = (kind: string, payload: Record<string, unknown>) => mockFire("hub-signal", { workspace_id: ws, from: isa, kind, payload: { peer, conn: 9001, ...payload } });
+  const jonas = s.members.find((u) => u.name === "Jonas");
+  if (!jonas) return;
+  const peer = "preview-jonas";
+  s.huddle.set(jonas.id, { user: jonas, conn: 9001 });
+  const signal = (kind: string, payload: Record<string, unknown>) => mockFire("hub-signal", { workspace_id: ws, from: jonas, kind, payload: { peer, conn: 9001, ...payload } });
   setTimeout(() => signal("join", { media: { muted: false, camera: false, screen: false } }), 900);
   let muted = false;
   stopFake();

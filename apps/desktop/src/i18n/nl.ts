@@ -1,6 +1,12 @@
 import type { MessageKey } from "./en";
 
 export const nl: Partial<Record<MessageKey, string>> = {
+  "nav.inbox": "Inbox",
+  "nav.team": "Team",
+  "ws.planning": "Planning",
+  "ws.library": "Bibliotheek",
+  "ws.build": "Bouwen",
+  "ws.insights": "Inzicht",
   "nav.home": "Home",
   "nav.workspaces": "Workspaces",
   "nav.runners": "Runners",
@@ -15,10 +21,10 @@ export const nl: Partial<Record<MessageKey, string>> = {
   "ws.automations": "Automations",
   "ws.studio": "Studio",
   "ws.files": "Bestanden",
-  "ws.captains": "Captains",
+  "ws.leads": "Leads",
   "ws.people": "Mensen",
   "ws.general": "algemeen",
-  "ws.newCaptain": "Nieuwe captain",
+  "ws.newLead": "Nieuwe lead",
   "ws.personal": "Persoonlijk",
   "ws.shared": "Gedeeld",
   "ws.create": "Nieuwe workspace",
@@ -29,10 +35,10 @@ export const nl: Partial<Record<MessageKey, string>> = {
   "ws.createButton": "Maken",
   "ws.switch": "Wissel van workspace",
 
-  "captain.name": "Naam",
-  "captain.instructions": "Instructies",
-  "captain.instructionsHint": "Waar deze captain over gaat, en hoe hij werkt",
-  "captain.create": "Captain maken",
+  "lead.name": "Naam",
+  "lead.instructions": "Instructies",
+  "lead.instructionsHint": "Waar deze lead over gaat, en hoe hij werkt",
+  "lead.create": "Lead maken",
 
   "thread.empty": "Waar gaan we aan werken?",
   "thread.emptyIn": "Waar moet {name} aan werken?",
@@ -96,7 +102,7 @@ export const nl: Partial<Record<MessageKey, string>> = {
   "soon.studio": "Media, artifacts en borden voor de hele workspace.",
   "soon.files": "De bestanden van deze workspace, live van de runner.",
   "soon.runners": "Je machines en VPS'en, en wie erop werkt.",
-  "soon.library": "Skills, prompts, captain-templates en MCP-servers.",
+  "soon.library": "Skills, prompts, lead-templates en MCP-servers.",
   "soon.people": "Contacten, uitnodigingen en directe berichten.",
 
   "settings.title": "Instellingen",
@@ -113,7 +119,7 @@ export const nl: Partial<Record<MessageKey, string>> = {
   "settings.ready": "Klaar",
   "settings.needsKeys": "Je API-keys of lokale modellen",
 
-  "palette.placeholder": "Zoek threads, captains, workspaces en acties",
+  "palette.placeholder": "Zoek threads, leads, workspaces en acties",
   "palette.actions": "Acties",
   "palette.toggleTheme": "Wissel licht / donker",
   "palette.toggleLanguage": "Wissel taal",

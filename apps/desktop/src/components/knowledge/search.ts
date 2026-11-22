@@ -97,7 +97,7 @@ export async function openHit(hit: SearchHit) {
       if (!a) return;
       const st = useStore.getState();
       st.openArtifact(a);
-      if (st.view.kind !== "thread" && st.view.kind !== "draft") go({ kind: "draft", captainId: null });
+      if (st.view.kind !== "thread" && st.view.kind !== "draft") go({ kind: "draft", leadId: null });
       break;
     }
     case "doc":

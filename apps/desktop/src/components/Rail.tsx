@@ -1,8 +1,9 @@
-import { Home, Layers, Server, Settings, Users } from "lucide-react";
+import { Home, Layers, Settings } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useT } from "../i18n";
-import { useStore, type View } from "../store";
-import { extPages } from "../ext/areas";
+import { useStore } from "../store";
+import { extPages, useExtVersion } from "../ext/areas";
+import { NAV_GROUPS, groupActive, groupKey, groupedIds, openGroup, useGroupBadge, type NavGroup } from "./NavGroups";
 
 /**
  * The outer layer: hidden until the pointer touches the left edge (or Ctrl+\),
@@ -35,18 +36,26 @@ export function Rail() {
     return () => window.removeEventListener("keydown", key);
   }, []);
 
-  const items: { view: View; icon: typeof Home; label: string; active: boolean; badge?: () => number | undefined }[] = [
-    { view: { kind: "home" }, icon: Home, label: t("nav.home"), active: view.kind === "home" },
-    { view: { kind: "workspaces" }, icon: Layers, label: t("nav.workspaces"), active: view.kind === "workspaces" },
-    { view: { kind: "rail", page: "runners" }, icon: Server, label: t("nav.runners"), active: view.kind === "rail" && view.page === "runners" },
-    { view: { kind: "rail", page: "people" }, icon: Users, label: t("nav.people"), active: view.kind === "rail" && view.page === "people" },
-    ...extPages("rail").map((p) => ({
-      view: { kind: "ext", id: p.id } as View,
-      icon: p.icon,
-      label: t(p.label),
-      active: view.kind === "ext" && view.id === p.id,
-      badge: p.useBadge,
-    })),
+  // Rail: Home, Inbox (inbox + my work), Workspaces, Team (people + machines), then plugin pages.
+  useExtVersion();
+  const group = (id: string) => NAV_GROUPS.find((g) => g.id === id)!;
+  type Item = { key: string; icon: typeof Home; label: string; active: boolean; open: () => void; group?: NavGroup; badge?: () => number | undefined };
+  const viaGroup = (g: NavGroup): Item => ({ key: g.id, icon: g.icon, label: t(g.label), active: groupActive(g, view), open: () => openGroup(g), group: g });
+  const items: Item[] = [
+    { key: "home", icon: Home, label: t("nav.home"), active: view.kind === "home", open: () => go({ kind: "home" }) },
+    viaGroup(group("inbox")),
+    { key: "workspaces", icon: Layers, label: t("nav.workspaces"), active: view.kind === "workspaces", open: () => go({ kind: "workspaces" }) },
+    viaGroup(group("team")),
+    ...extPages("rail")
+      .filter((p) => !groupedIds.has(p.id))
+      .map((p) => ({
+        key: p.id,
+        icon: p.icon,
+        label: t(p.label),
+        active: view.kind === "ext" && view.id === p.id,
+        open: () => go({ kind: "ext", id: p.id }),
+        badge: p.useBadge,
+      })),
   ];
 
   return (
@@ -58,17 +67,17 @@ export function Rail() {
         </div>
         {items.map((it) => (
           <button
-            key={it.label}
+            key={it.key}
             className={`rail-btn ${it.active ? "active" : ""}`}
             onClick={() => {
-              go(it.view);
+              it.open();
               setOpen(false);
             }}
             data-tip={it.label}
             aria-label={it.label}
           >
             <it.icon size={18} strokeWidth={1.75} />
-            {it.badge ? <RailBadge use={it.badge} /> : null}
+            {it.group ? <GroupBadge key={groupKey(it.group)} group={it.group} /> : it.badge ? <RailBadge use={it.badge} /> : null}
           </button>
         ))}
         <div className="rail-spacer" />
@@ -86,6 +95,11 @@ export function Rail() {
       </nav>
     </>
   );
+}
+
+function GroupBadge({ group }: { group: NavGroup }) {
+  const n = useGroupBadge(group);
+  return n ? <span className="rail-badge">{n > 99 ? "99+" : n}</span> : null;
 }
 
 function RailBadge({ use }: { use: () => number | undefined }) {

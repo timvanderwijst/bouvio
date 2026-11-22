@@ -148,7 +148,7 @@ export function BoardView({ id }: { id: string }) {
       const base = selection.find((i) => i.kind === "frame");
       for (let n = 0; n < variants; n++) {
         const th = await rpc<Thread>("create_thread", {
-          thread: { workspace_id: workspaceId, captain_id: null, title: variants > 1 ? `${text.slice(0, 40)} · ${n + 1}` : null, harness: s.prefs.harness, model: s.prefs.model, effort: s.prefs.effort, approval: s.prefs.approval, isolate: true },
+          thread: { workspace_id: workspaceId, lead_id: null, title: variants > 1 ? `${text.slice(0, 40)} · ${n + 1}` : null, harness: s.prefs.harness, model: s.prefs.model, effort: s.prefs.effort, approval: s.prefs.approval, isolate: true },
         });
         await rpc("send_message", { thread_id: th.id, text: variants > 1 ? `${prompt}\n\nThis is variant ${n + 1} of ${variants}; make it clearly different from the others.` : prompt });
         if (base) addFrame(th, { x: base.x + (base.w + 60) * (n + 1), y: base.y });

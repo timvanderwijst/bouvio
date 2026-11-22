@@ -64,7 +64,7 @@ test("hub messages map to the desktop's event names", () => {
 });
 
 test("hub workspace entries become shared workspaces", () => {
-  const host = { id: "h", name: "Tim", email: "t@x", avatar_url: null };
+  const host = { id: "h", name: "Maya", email: "t@x", avatar_url: null };
   const [w] = toWorkspaces([{ id: "a", name: "Site", role: "operator", host, host_online: true }]);
   assert.equal(w.kind, "shared");
   assert.equal(w.role, "operator");

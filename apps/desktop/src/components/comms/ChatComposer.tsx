@@ -1,7 +1,7 @@
 import { AtSign, Send } from "lucide-react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useT } from "../../i18n";
-import type { Captain } from "../../protocol/Captain";
+import type { Lead } from "../../protocol/Lead";
 import type { HubUser } from "../../protocol/HubUser";
 import { PixelAvatar } from "../PixelAvatar";
 import { personColor } from "../Sidebar";
@@ -11,7 +11,7 @@ const drafts = new Map<string, string>();
 export interface Mentionable {
   key: string;
   name: string;
-  captain?: Captain;
+  lead?: Lead;
   user?: HubUser;
 }
 
@@ -32,7 +32,7 @@ export function ChatComposer({
   onSend,
   autoFocus,
   draftKey,
-  captainHint = true,
+  leadHint = true,
 }: {
   placeholder: string;
   people: Mentionable[];
@@ -43,8 +43,8 @@ export function ChatComposer({
   autoFocus?: boolean;
   /** Keeps a draft per channel or thread while the page is open. */
   draftKey: string;
-  /** Say that `@Captain …` at the start runs on the host (top-level messages only). */
-  captainHint?: boolean;
+  /** Say that `@Lead …` at the start runs on the host (top-level messages only). */
+  leadHint?: boolean;
 }) {
   const t = useT();
   const [text, setText] = useState(() => drafts.get(draftKey) ?? "");
@@ -72,12 +72,12 @@ export function ChatComposer({
     return people.filter((p) => p.name.toLowerCase().startsWith(q) || p.name.toLowerCase().split(/\s+/).some((w) => w.startsWith(q))).slice(0, 8);
   }, [pick, people]);
 
-  const captainLead = useMemo(() => {
+  const mentionedLead = useMemo(() => {
     const m = text.trimStart().match(/^@(.+)/s);
     if (!m) return null;
     const rest = m[1].toLowerCase();
     return people
-      .filter((p) => p.captain && rest.startsWith(p.name.toLowerCase()))
+      .filter((p) => p.lead && rest.startsWith(p.name.toLowerCase()))
       .sort((a, b) => b.name.length - a.name.length)[0];
   }, [text, people]);
 
@@ -119,10 +119,10 @@ export function ChatComposer({
 
   return (
     <div className="cm-composer-wrap">
-      {captainHint && captainLead?.captain && (
+      {leadHint && mentionedLead?.lead && (
         <div className="cm-composer-hint">
-          <PixelAvatar seed={captainLead.captain.avatar_seed} size={14} />
-          {hostName ? t("comms.captainRunsOn", { name: captainLead.name, host: hostName }) : t("comms.captainRunsHere", { name: captainLead.name })}
+          <PixelAvatar seed={mentionedLead.lead.avatar_seed} size={14} />
+          {hostName ? t("comms.leadRunsOn", { name: mentionedLead.name, host: hostName }) : t("comms.leadRunsHere", { name: mentionedLead.name })}
         </div>
       )}
       <form
@@ -146,8 +146,8 @@ export function ChatComposer({
                 onClick={() => choose(p)}
               >
                 <span className="menu-icon">
-                  {p.captain ? (
-                    <PixelAvatar seed={p.captain.avatar_seed} size={16} />
+                  {p.lead ? (
+                    <PixelAvatar seed={p.lead.avatar_seed} size={16} />
                   ) : (
                     <span className="person-avatar" style={{ background: personColor(p.name) }}>
                       {p.name.slice(0, 1)}
@@ -155,7 +155,7 @@ export function ChatComposer({
                   )}
                 </span>
                 <span className="menu-label">{p.name}</span>
-                <span className="menu-hint">{p.captain ? t("comms.captain") : p.user?.email}</span>
+                <span className="menu-hint">{p.lead ? t("comms.lead") : p.user?.email}</span>
               </button>
             ))}
           </div>

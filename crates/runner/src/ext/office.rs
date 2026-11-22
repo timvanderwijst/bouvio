@@ -887,8 +887,8 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let r = Runner::open(dir.path()).unwrap();
         let ws = r.create_workspace("Test".into(), None).unwrap().id;
-        let db: Doc = serde_json::from_value(call(&r, "create_doc", &json!({ "workspace_id": ws, "kind": "database", "title": "Tasks" }), "Tim").await.unwrap().unwrap()).unwrap();
-        let form: Doc = serde_json::from_value(call(&r, "create_doc", &json!({ "workspace_id": ws, "kind": "form", "title": "Intake", "parent_id": db.id }), "Tim").await.unwrap().unwrap()).unwrap();
+        let db: Doc = serde_json::from_value(call(&r, "create_doc", &json!({ "workspace_id": ws, "kind": "database", "title": "Tasks" }), "Maya").await.unwrap().unwrap()).unwrap();
+        let form: Doc = serde_json::from_value(call(&r, "create_doc", &json!({ "workspace_id": ws, "kind": "form", "title": "Intake", "parent_id": db.id }), "Maya").await.unwrap().unwrap()).unwrap();
         assert_eq!(form.parent_id, Some(db.id));
 
         let public: PublicForm = serde_json::from_value(call(&r, "get_form_public", &json!({ "workspace_id": ws, "form_id": form.id }), "x").await.unwrap().unwrap()).unwrap();
@@ -921,14 +921,14 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let r = Runner::open(dir.path()).unwrap();
         let ws = r.create_workspace("Test".into(), None).unwrap().id;
-        let d: Doc = serde_json::from_value(call(&r, "create_doc", &json!({ "workspace_id": ws, "kind": "doc", "title": "Brief", "template": "project-brief" }), "Tim").await.unwrap().unwrap()).unwrap();
+        let d: Doc = serde_json::from_value(call(&r, "create_doc", &json!({ "workspace_id": ws, "kind": "doc", "title": "Brief", "template": "project-brief" }), "Maya").await.unwrap().unwrap()).unwrap();
         let o = office(&r).unwrap();
         let (_, live) = o.open(d.id).unwrap();
         let text = plain_text(&live.doc.lock().unwrap(), DocKind::Doc);
         assert!(text.contains("Goal") && text.contains("Milestones"), "{text}");
         // Reload from disk after dropping the live copy.
         o.live.lock().unwrap().clear();
-        let state: String = serde_json::from_value(call(&r, "get_doc_state", &json!({ "id": d.id }), "Tim").await.unwrap().unwrap()).unwrap();
+        let state: String = serde_json::from_value(call(&r, "get_doc_state", &json!({ "id": d.id }), "Maya").await.unwrap().unwrap()).unwrap();
         assert!(!state.is_empty());
         let (_, again) = o.open(d.id).unwrap();
         assert_eq!(plain_text(&again.doc.lock().unwrap(), DocKind::Doc), text);

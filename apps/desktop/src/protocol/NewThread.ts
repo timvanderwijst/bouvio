@@ -3,7 +3,7 @@ import type { ApprovalLevel } from "./ApprovalLevel";
 import type { Effort } from "./Effort";
 import type { HarnessKind } from "./HarnessKind";
 
-export type NewThread = { workspace_id: string, captain_id: string | null, title: string | null, harness: HarnessKind, model: string | null, effort: Effort, approval: ApprovalLevel, 
+export type NewThread = { workspace_id: string, lead_id: string | null, title: string | null, harness: HarnessKind, model: string | null, effort: Effort, approval: ApprovalLevel, 
 /**
  * Give the thread its own git worktree and branch.
  */

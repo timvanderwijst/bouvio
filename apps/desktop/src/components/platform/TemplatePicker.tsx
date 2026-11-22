@@ -90,7 +90,7 @@ export function TemplatePicker({
             <span className="pf-template-text">
               <span className="pf-template-name">
                 {tpl ? tpl.name : t("platform.templates.blank")}
-                {tpl && tpl.captains.length > 0 && <span className="pf-template-meta">{t("platform.templates.captains", { count: tpl.captains.length })}</span>}
+                {tpl && tpl.leads.length > 0 && <span className="pf-template-meta">{t("platform.templates.leads", { count: tpl.leads.length })}</span>}
               </span>
               <span className="pf-template-desc">{tpl ? tpl.description : t("platform.templates.blankHint")}</span>
             </span>

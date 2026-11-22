@@ -112,13 +112,13 @@ pub async fn fix_ci_run(r: &Arc<Runner>, ws: Uuid, run_id: u64, actor: &str) -> 
     let log = cap_log(log.text, PROMPT_LOG);
 
     let owner = r.threads(ws).into_iter().find(|t| t.branch.as_deref() == Some(branch.as_str()) && t.cwd.is_some());
-    let captain = owner.as_ref().and_then(|t| t.captain_id).and_then(|c| r.store().captain(c));
+    let lead = owner.as_ref().and_then(|t| t.lead_id).and_then(|c| r.store().lead(c));
     let t = r
         .create_thread(NewThread {
             workspace_id: ws,
-            captain_id: captain.as_ref().map(|c| c.id),
+            lead_id: lead.as_ref().map(|c| c.id),
             title: Some(format!("Fix {workflow} on {}", if branch.is_empty() { "main" } else { &branch })),
-            harness: owner.as_ref().map(|t| t.harness).or(captain.as_ref().map(|c| c.harness)).unwrap_or(HarnessKind::ClaudeCode),
+            harness: owner.as_ref().map(|t| t.harness).or(lead.as_ref().map(|c| c.harness)).unwrap_or(HarnessKind::ClaudeCode),
             model: owner.as_ref().and_then(|t| t.model.clone()),
             effort: owner.as_ref().map(|t| t.effort).unwrap_or(Effort::Medium),
             approval: owner.as_ref().map(|t| t.approval).unwrap_or(ApprovalLevel::AskRisky),
@@ -174,7 +174,7 @@ mod tests {
         Thread {
             id: Uuid::new_v4(),
             workspace_id: Uuid::nil(),
-            captain_id: None,
+            lead_id: None,
             title: "t".into(),
             harness: HarnessKind::ClaudeCode,
             model: None,

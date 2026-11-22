@@ -2,6 +2,6 @@
 
 export type CostRow = { 
 /**
- * Captain id, model id, person name, …; empty for "none".
+ * Lead id, model id, person name, …; empty for "none".
  */
 key: string, label: string, cost_usd: number, turns: number, };

@@ -1,14 +1,15 @@
-import { BookOpen, ChevronDown, CircleDashed, FolderTree, GitPullRequest, Hash, List, Palette, PenSquare, Plus, Search, UserPlus, Workflow } from "lucide-react";
+import { ChevronDown, List, PenSquare, Plus, Search, UserPlus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useT } from "../i18n";
-import type { Captain } from "../protocol/Captain";
+import type { Lead } from "../protocol/Lead";
 import type { Thread } from "../protocol/Thread";
-import { useStore, useWorkspaceCaptains, useWorkspaceThreads, useWsData, type Page } from "../store";
+import { useStore, useWorkspaceLeads, useWorkspaceThreads, useWsData } from "../store";
 import { ago } from "../lib/format";
 import { PixelAvatar } from "./PixelAvatar";
 import { StatusIcon } from "./StatusIcon";
 import { BouvioMark } from "./Rail";
-import { extPages } from "../ext/areas";
+import { extPages, useExtVersion } from "../ext/areas";
+import { NAV_GROUPS, groupActive, groupKey, groupedIds, liveMembers, openGroup, useGroupBadge, type NavGroup } from "./NavGroups";
 import { HuddleSidebarRow } from "./comms";
 import type { ExtPage } from "../ext/types";
 
@@ -19,55 +20,16 @@ export function Sidebar() {
   const workspaces = useStore((s) => s.workspaces);
   const workspaceId = useStore((s) => s.workspaceId);
   const ws = workspaces.find((w) => w.id === workspaceId);
-  const captains = useWorkspaceCaptains();
+  const leads = useWorkspaceLeads();
   const threads = useWorkspaceThreads();
-  const [captainsOpen, setCaptainsOpen] = useState(true);
-  const loose = threads.filter((x) => !x.captain_id);
+  const [leadsOpen, setLeadsOpen] = useState(true);
+  const loose = threads.filter((x) => !x.lead_id);
 
-  const data = useWsData();
-  const openIssues = (data.issues ?? []).filter((i) => i.status === "todo" || i.status === "in_progress").length;
-  // Daily things stay in view; the rest folds under "More" so captains keep their place.
-  const primaryBuiltIn: { page: Page; icon: typeof List; label: string; count?: number }[] = [
-    { page: "issues", icon: CircleDashed, label: t("ws.issues"), count: openIssues || undefined },
-    { page: "pullRequests", icon: GitPullRequest, label: t("ws.pullRequests") },
-    { page: "studio", icon: Palette, label: t("ws.studio") },
-  ];
-  const moreBuiltIn: typeof primaryBuiltIn = [
-    { page: "automations", icon: Workflow, label: t("ws.automations") },
-    { page: "files", icon: FolderTree, label: t("ws.files") },
-    { page: "knowledge", icon: BookOpen, label: t("ws.knowledge") },
-  ];
-  // Search lives behind the search icon and Ctrl+K.
-  const ext = extPages("workspace").filter((p) => p.id !== "knowledge.search");
-  const extPrimary = ext.filter((p) => (p.order ?? 100) < 50);
-  const extMore = ext.filter((p) => (p.order ?? 100) >= 50);
-  const inMore =
-    (view.kind === "page" && moreBuiltIn.some((p) => p.page === view.page)) || (view.kind === "ext" && extMore.some((p) => p.id === view.id));
-  const [moreOpen, setMoreOpen] = useState(() => {
-    try {
-      return localStorage.getItem("bouvio.sb.more") === "1";
-    } catch {
-      return false;
-    }
-  });
-  const toggleMore = () => {
-    const next = !moreOpen;
-    setMoreOpen(next);
-    try {
-      localStorage.setItem("bouvio.sb.more", next ? "1" : "0");
-    } catch {}
-  };
-  const builtInRow = (p: (typeof primaryBuiltIn)[number]) => (
-    <button
-      key={p.page}
-      className={`sb-row ${(view.kind === "page" && view.page === p.page) || (p.page === "studio" && view.kind === "board") ? "active" : ""}`}
-      onClick={() => go({ kind: "page", page: p.page })}
-    >
-      <p.icon size={15} />
-      <span className="truncate">{p.label}</span>
-      {p.count ? <span className="sb-count">{p.count}</span> : null}
-    </button>
-  );
+  // Related pages are bundled into groups; inside a group, tabs switch between them.
+  useExtVersion();
+  const groups = NAV_GROUPS.filter((g) => g.place === "workspace" && liveMembers(g).length > 0);
+  // Pages from plugins that no group claims still get their own row.
+  const loosePages = extPages("workspace").filter((p) => !groupedIds.has(p.id));
 
   return (
     <aside className="sidebar">
@@ -81,7 +43,7 @@ export function Sidebar() {
       </div>
 
       <nav className="sb-nav">
-        <button className={`sb-row ${view.kind === "draft" && !view.captainId ? "active" : ""}`} onClick={() => go({ kind: "draft", captainId: null })}>
+        <button className={`sb-row ${view.kind === "draft" && !view.leadId ? "active" : ""}`} onClick={() => go({ kind: "draft", leadId: null })}>
           <PenSquare size={15} />
           <span>{t("ws.newThread")}</span>
         </button>
@@ -89,35 +51,25 @@ export function Sidebar() {
           <List size={15} />
           <span>{t("ws.threads")}</span>
         </button>
-        {extPrimary.map((p) => (
+        {groups.map((g) => (
+          <GroupRow key={groupKey(g)} group={g} />
+        ))}
+        {loosePages.map((p) => (
           <ExtNav key={p.id} page={p} />
         ))}
-        {primaryBuiltIn.map(builtInRow)}
-        <button className={`sb-row sb-more-toggle ${inMore && !moreOpen ? "active" : ""}`} onClick={toggleMore} aria-expanded={moreOpen}>
-          <ChevronDown size={15} className={moreOpen ? "" : "rot"} />
-          <span>{t("ws.more")}</span>
-        </button>
-        {(moreOpen || inMore) && (
-          <div className="sb-more-list">
-            {moreBuiltIn.map(builtInRow)}
-            {extMore.map((p) => (
-              <ExtNav key={p.id} page={p} />
-            ))}
-          </div>
-        )}
       </nav>
 
       <div className="sb-scroll">
         <div className="sb-section">
-          <button className="sb-heading" onClick={() => setCaptainsOpen((o) => !o)}>
-            <span>{t("ws.captains")}</span>
-            <ChevronDown size={12} className={captainsOpen ? "" : "rot"} />
+          <button className="sb-heading" onClick={() => setLeadsOpen((o) => !o)}>
+            <span>{t("ws.leads")}</span>
+            <ChevronDown size={12} className={leadsOpen ? "" : "rot"} />
           </button>
-          <button className="icon-btn sb-add" aria-label={t("ws.newCaptain")} title={t("ws.newCaptain")} onClick={() => useStore.getState().setDialog("captain")} disabled={!ws}>
+          <button className="icon-btn sb-add" aria-label={t("ws.newLead")} title={t("ws.newLead")} onClick={() => useStore.getState().setDialog("lead")} disabled={!ws}>
             <Plus size={14} />
           </button>
         </div>
-        {captainsOpen && captains.map((c) => <CaptainRow key={c.id} captain={c} threads={threads.filter((x) => x.captain_id === c.id)} />)}
+        {leadsOpen && leads.map((c) => <LeadRow key={c.id} lead={c} threads={threads.filter((x) => x.lead_id === c.id)} />)}
 
         {loose.length > 0 && (
           <>
@@ -136,10 +88,6 @@ export function Sidebar() {
             <UserPlus size={14} />
           </button>
         </div>
-        <button className={`sb-row ${view.kind === "ext" && view.id === "comms.chat" ? "active" : ""}`} onClick={() => go({ kind: "ext", id: "comms.chat" })}>
-          <Hash size={15} />
-          <span>{t("ws.general")}</span>
-        </button>
         <HuddleSidebarRow />
         <PeopleRows />
       </div>
@@ -149,29 +97,29 @@ export function Sidebar() {
   );
 }
 
-function CaptainRow({ captain, threads }: { captain: Captain; threads: Thread[] }) {
+function LeadRow({ lead, threads }: { lead: Lead; threads: Thread[] }) {
   const view = useStore((s) => s.view);
-  const openCaptain = useStore((s) => s.openCaptain);
-  // The oldest thread is the captain's own conversation; the rest nest under it.
+  const openLead = useStore((s) => s.openLead);
+  // The oldest thread is the lead's own conversation; the rest nest under it.
   const sorted = useMemo(() => [...threads].sort((a, b) => a.created_at.localeCompare(b.created_at)), [threads]);
   const own = sorted[0];
   const children = sorted.slice(1).sort((a, b) => b.updated_at.localeCompare(a.updated_at));
   const needs = threads.filter((t) => t.status === "blocked" || t.status === "error").length;
   const working = threads.some((t) => t.status === "working");
-  const active = (view.kind === "thread" && view.id === own?.id) || (view.kind === "draft" && view.captainId === captain.id);
+  const active = (view.kind === "thread" && view.id === own?.id) || (view.kind === "draft" && view.leadId === lead.id);
   const expanded = active || children.some((c) => view.kind === "thread" && view.id === c.id);
 
   return (
-    <div className="captain">
-      <button className={`sb-row captain-row ${active ? "active" : ""}`} onClick={() => openCaptain(captain)}>
+    <div className="lead">
+      <button className={`sb-row lead-row ${active ? "active" : ""}`} onClick={() => openLead(lead)}>
         <span className={`avatar-wrap ${working ? "pulse" : ""}`}>
-          <PixelAvatar seed={captain.avatar_seed} />
+          <PixelAvatar seed={lead.avatar_seed} />
         </span>
-        <span className="truncate">{captain.name}</span>
+        <span className="truncate">{lead.name}</span>
         {needs > 0 ? <span className="badge">{needs}</span> : working ? <StatusIcon status="working" size={13} /> : null}
       </button>
       {expanded && children.length > 0 && (
-        <div className="captain-threads">
+        <div className="lead-threads">
           {children.slice(0, 6).map((t) => (
             <ThreadRow key={t.id} thread={t} nested />
           ))}
@@ -247,6 +195,19 @@ function WorkspaceSwitcher() {
         </>
       )}
     </div>
+  );
+}
+
+function GroupRow({ group }: { group: NavGroup }) {
+  const t = useT();
+  const view = useStore((s) => s.view);
+  const badge = useGroupBadge(group);
+  return (
+    <button className={`sb-row ${groupActive(group, view) ? "active" : ""}`} onClick={() => openGroup(group)}>
+      <group.icon size={15} />
+      <span className="truncate">{t(group.label)}</span>
+      {badge ? <span className="sb-count">{badge}</span> : null}
+    </button>
   );
 }
 

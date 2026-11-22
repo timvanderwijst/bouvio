@@ -8,7 +8,7 @@ Bouvio runs the agents you already have (Claude Code, Codex) and models from you
 
 | Area | What it does |
 | --- | --- |
-| **Captains and threads** | Long-lived agents per domain (captains) split work into threads. Each thread can get its own git worktree and branch. Status per agent: working, needs you, idle, error. |
+| **Leads and threads** | Long-lived agents per domain (leads) split work into threads. Each thread can get its own git worktree and branch. Status per agent: working, needs you, idle, error. |
 | **Harnesses** | Claude Code (`stream-json`, one process per thread, resumed after restarts), Codex (`codex exec --json`), and Bouvio's own agent loop for API keys: OpenRouter, Anthropic, OpenAI, Google. |
 | **Approvals** | Ask for everything, ask when risky, or free. Claude Code's permission prompts and the API loop's risky tools land in the thread as a card anyone with the right role can answer. |
 | **Fleet tools** | Every agent gets a `bouvio` MCP server: `spawn_thread`, `list_threads`, `thread_status`, `create_issue`, `remember`. |
@@ -20,7 +20,7 @@ Bouvio runs the agents you already have (Claude Code, Codex) and models from you
 | **Local AI** | Ollama and LM Studio models in the agent loop, whisper.cpp for voice input, Piper for speech, ComfyUI for images, local embeddings. No keys, no subscription. |
 | **Office** | Docs, Sheets (with a formula engine), Slides, databases with table, board, calendar and gallery views, a calendar, and public forms. All live and collaborative over Yjs. |
 | **Knowledge** | Search over threads, issues, files, docs and imports (full text plus meaning), PDF/Word/Excel import, a web clipper, the MCP registry and a skills catalogue. |
-| **Communication** | Chat with channels, threads, reactions and pins; `@Captain` in chat runs that captain; huddles with voice, video and screen share (WebRTC, TURN on your own VPS); an inbox and OS notifications. |
+| **Communication** | Chat with channels, threads, reactions and pins; `@Lead` in chat runs that lead; huddles with voice, video and screen share (WebRTC, TURN on your own VPS); an inbox and OS notifications. |
 | **Developer tools** | Browser preview with an element picker, line-by-line review sent to the agent, CI checks through `gh`, a database viewer, an API client and a git graph. |
 | **Overview** | A morning brief, personal tasks and notes, costs with monthly budgets, replay of any run, and evals that compare agents and models. |
 | **Platform** | A web/PWA client served by the hub, auto-updates from GitHub Releases, plugins, workspace backup and import, and templates. |

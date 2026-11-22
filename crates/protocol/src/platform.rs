@@ -15,7 +15,7 @@ use crate::Workspace;
 
 // ---- workspace templates ---------------------------------------------------------
 
-/// A starting point for a workspace: captains, instructions, issues, automations.
+/// A starting point for a workspace: leads, instructions, issues, automations.
 /// Shipped as `templates/*.json` at the repository root.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "../../../apps/desktop/src/protocol/")]
@@ -31,7 +31,7 @@ pub struct WorkspaceTemplate {
     #[serde(default)]
     pub dev_command: Option<String>,
     #[serde(default)]
-    pub captains: Vec<TemplateCaptain>,
+    pub leads: Vec<TemplateLead>,
     #[serde(default)]
     pub issues: Vec<TemplateIssue>,
     #[serde(default)]
@@ -40,7 +40,7 @@ pub struct WorkspaceTemplate {
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "../../../apps/desktop/src/protocol/")]
-pub struct TemplateCaptain {
+pub struct TemplateLead {
     pub name: String,
     pub instructions: String,
 }
@@ -51,9 +51,9 @@ pub struct TemplateIssue {
     pub title: String,
     #[serde(default)]
     pub body: String,
-    /// Name of one of the template's captains.
+    /// Name of one of the template's leads.
     #[serde(default)]
-    pub captain: Option<String>,
+    pub lead: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
@@ -64,7 +64,7 @@ pub struct TemplateAutomation {
     pub schedule: String,
     pub prompt: String,
     #[serde(default)]
-    pub captain: Option<String>,
+    pub lead: Option<String>,
     #[serde(default)]
     pub enabled: bool,
 }
@@ -73,7 +73,7 @@ pub struct TemplateAutomation {
 #[derive(Debug, Clone, Default, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "../../../apps/desktop/src/protocol/")]
 pub struct TemplateApplied {
-    pub captains: u32,
+    pub leads: u32,
     pub issues: u32,
     pub automations: u32,
 }
@@ -98,7 +98,7 @@ pub struct ExportSummary {
 #[ts(export, export_to = "../../../apps/desktop/src/protocol/")]
 pub struct ImportSummary {
     pub workspace: Workspace,
-    pub captains: u32,
+    pub leads: u32,
     pub threads: u32,
     pub issues: u32,
     pub automations: u32,

@@ -6,7 +6,7 @@ import type { BudgetScope } from "../../protocol/BudgetScope";
 import type { BudgetStatus } from "../../protocol/BudgetStatus";
 import type { CostRow } from "../../protocol/CostRow";
 import type { CostSummary } from "../../protocol/CostSummary";
-import { rpc, useStore, useWorkspace, useWorkspaceCaptains, useWorkspaceThreads } from "../../store";
+import { rpc, useStore, useWorkspace, useWorkspaceLeads, useWorkspaceThreads } from "../../store";
 import { cost } from "../../lib/format";
 import { Dialog } from "../Dialog";
 import { Empty } from "../Panel";
@@ -100,7 +100,7 @@ export function CostsPage() {
           </section>
 
           <div className="p-breakdowns">
-            <Breakdown title={t("personal.costs.byCaptain")} rows={data.per_captain} kind="captain" />
+            <Breakdown title={t("personal.costs.byLead")} rows={data.per_lead} kind="lead" />
             <Breakdown title={t("personal.costs.byModel")} rows={data.per_model} kind="model" />
             <Breakdown title={t("personal.costs.byPerson")} rows={data.per_person} kind="person" />
             <ThreadBreakdown data={data} />
@@ -114,8 +114,8 @@ export function CostsPage() {
 
 function BudgetRow({ b, onEdit }: { b: BudgetStatus; onEdit: () => void }) {
   const t = useT();
-  const captains = useWorkspaceCaptains();
-  const c = b.budget.scope === "captain" ? captains.find((x) => x.id === b.budget.id) : null;
+  const leads = useWorkspaceLeads();
+  const c = b.budget.scope === "lead" ? leads.find((x) => x.id === b.budget.id) : null;
   const pct = b.budget.monthly_usd > 0 ? b.spent_usd / b.budget.monthly_usd : 0;
   const level = pct >= 1 ? "over" : pct >= 0.8 ? "near" : "";
   return (
@@ -139,17 +139,17 @@ function BudgetRow({ b, onEdit }: { b: BudgetStatus; onEdit: () => void }) {
   );
 }
 
-function Breakdown({ title, rows, kind }: { title: string; rows: CostRow[]; kind: "captain" | "model" | "person" }) {
+function Breakdown({ title, rows, kind }: { title: string; rows: CostRow[]; kind: "lead" | "model" | "person" }) {
   const t = useT();
-  const captains = useWorkspaceCaptains();
+  const leads = useWorkspaceLeads();
   const max = Math.max(0, ...rows.map((r) => r.cost_usd));
   return (
     <section className="p-break">
       <h2 className="p-h">{title}</h2>
       {rows.length === 0 && <p className="p-quiet">{t("personal.costs.nothing")}</p>}
       {rows.slice(0, 8).map((r) => {
-        const c = kind === "captain" ? captains.find((x) => x.id === r.key) : null;
-        const label = r.label || (kind === "captain" ? t("personal.costs.noCaptain") : kind === "person" ? t("personal.costs.someone") : r.key);
+        const c = kind === "lead" ? leads.find((x) => x.id === r.key) : null;
+        const label = r.label || (kind === "lead" ? t("personal.costs.noLead") : kind === "person" ? t("personal.costs.someone") : r.key);
         return (
           <div key={r.key} className="p-brow">
             <span className="p-blabel">
@@ -191,16 +191,16 @@ function ThreadBreakdown({ data }: { data: CostSummary }) {
 function BudgetDialog({ current, onClose, onSaved }: { current: BudgetStatus | null; onClose: () => void; onSaved: () => void }) {
   const t = useT();
   const ws = useWorkspace()!;
-  const captains = useWorkspaceCaptains();
+  const leads = useWorkspaceLeads();
   const notify = useStore((s) => s.notify);
   const [scope, setScope] = useState<BudgetScope>(current?.budget.scope ?? "workspace");
-  const [captain, setCaptain] = useState<string | null>(current?.budget.id ?? captains[0]?.id ?? null);
+  const [lead, setLead] = useState<string | null>(current?.budget.id ?? leads[0]?.id ?? null);
   const [amount, setAmount] = useState(current ? String(current.budget.monthly_usd) : "");
   const [shake, setShake] = useState(false);
 
   const save = async (monthly: number) => {
     try {
-      await rpc("set_budget", { workspace_id: ws.id, scope, id: scope === "captain" ? captain : null, monthly_usd: monthly }, ws.id);
+      await rpc("set_budget", { workspace_id: ws.id, scope, id: scope === "lead" ? lead : null, monthly_usd: monthly }, ws.id);
       onSaved();
       onClose();
     } catch (e) {
@@ -215,7 +215,7 @@ function BudgetDialog({ current, onClose, onSaved }: { current: BudgetStatus | n
         onSubmit={(e) => {
           e.preventDefault();
           const v = Number(amount.replace(",", "."));
-          if (!(v > 0) || (scope === "captain" && !captain)) {
+          if (!(v > 0) || (scope === "lead" && !lead)) {
             setShake(true);
             setTimeout(() => setShake(false), 400);
             return;
@@ -227,18 +227,18 @@ function BudgetDialog({ current, onClose, onSaved }: { current: BudgetStatus | n
           <div className="field">
             <span>{t("personal.costs.scope")}</span>
             <div className="choice small">
-              {(["workspace", "captain"] as const).map((s) => (
-                <button key={s} type="button" className={scope === s ? "on" : ""} onClick={() => setScope(s)} disabled={s === "captain" && !captains.length}>
+              {(["workspace", "lead"] as const).map((s) => (
+                <button key={s} type="button" className={scope === s ? "on" : ""} onClick={() => setScope(s)} disabled={s === "lead" && !leads.length}>
                   {t(`personal.costs.scope.${s}`)}
                 </button>
               ))}
             </div>
           </div>
         )}
-        {scope === "captain" && !current && (
+        {scope === "lead" && !current && (
           <div className="field">
-            <span>{t("personal.costs.captain")}</span>
-            <Menu value={captain} items={captains.map((c) => ({ value: c.id as string | null, label: c.name, icon: <PixelAvatar seed={c.avatar_seed} size={14} /> }))} onChange={setCaptain} />
+            <span>{t("personal.costs.lead")}</span>
+            <Menu value={lead} items={leads.map((c) => ({ value: c.id as string | null, label: c.name, icon: <PixelAvatar seed={c.avatar_seed} size={14} /> }))} onChange={setLead} />
           </div>
         )}
         <label className="field">

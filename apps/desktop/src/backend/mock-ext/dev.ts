@@ -31,14 +31,14 @@ const HISTORY = [
   C("3f9a2c1e77", ["9d41c0a2e3"], "Keep a draft per thread in the composer", "Desktop", 5, ["bouvio/3f9a2c1e"]),
   C("c01d9e72f0", ["5e0f2b9c4d"], "Look for codex.cmd next to codex on Windows", "Runner", 9, ["bouvio/c01d9e72"]),
   C("9d41c0a2e3", ["5e0f2b9c4d"], "Move composer drafts into the store", "Desktop", 14),
-  C("5e0f2b9c4d", ["a17c3e0f88", "e2b8d4416a"], "Merge pull request #41 from feature/hub-invites", "Tim van der Wijst", 62, ["HEAD", "main", "origin/main"]),
+  C("5e0f2b9c4d", ["a17c3e0f88", "e2b8d4416a"], "Merge pull request #41 from feature/hub-invites", "Maya Peters", 62, ["HEAD", "main", "origin/main"]),
   C("e2b8d4416a", ["4c7a9e01b2"], "Invite links carry a role", "Hub", 95, ["origin/feature/hub-invites"]),
   C("a17c3e0f88", ["0b6f3d2c91"], "Resume Claude sessions after a restart", "Runner", 130),
   C("4c7a9e01b2", ["0b6f3d2c91"], "Hub: members table with roles", "Hub", 180),
   C("0b6f3d2c91", ["f83e1a5d07"], "Diff colours in the dark theme", "Design", 600, ["v0.4.0"]),
-  C("f83e1a5d07", ["2a9c6b4e13"], "One terminal per thread, kept across tabs", "Tim van der Wijst", 1500),
+  C("f83e1a5d07", ["2a9c6b4e13"], "One terminal per thread, kept across tabs", "Maya Peters", 1500),
   C("2a9c6b4e13", ["8e1d07f5c2"], "Worktree per thread on its own bouvio/ branch", "Runner", 2900),
-  C("8e1d07f5c2", [], "Initial commit", "Tim van der Wijst", 9000),
+  C("8e1d07f5c2", [], "Initial commit", "Maya Peters", 9000),
 ];
 
 /** The runner's lane assignment, ported for the preview. */
@@ -223,7 +223,7 @@ async function seedReview(thread_id: string) {
       line: 41,
       side: "new",
       text: "Select both in one call with useShallow, so the composer re-renders once per keystroke instead of twice.",
-      author: "Isa",
+      author: "Jonas",
       line_text: text,
       resolved: false,
       outdated: false,
@@ -246,7 +246,7 @@ const conns = (ws: string) => {
 };
 const findConn = (id: string) => [...connections.values()].flat().find((c) => c.id === id);
 
-const NAMES = ["Tim van der Wijst", "Isa de Vries", "Noor Bakker", "Sem Jansen", "Lotte Visser", "Daan Smit", "Eva Mulder", "Finn de Boer", "Mila Bos", "Luuk Meijer"];
+const NAMES = ["Maya Peters", "Jonas de Vries", "Noor Bakker", "Sem Jansen", "Lotte Visser", "Daan Smit", "Eva Mulder", "Finn de Boer", "Mila Bos", "Luuk Meijer"];
 const TABLES: Record<string, { kind: string; columns: string[]; rows: (i: number) => unknown[]; total: number }> = {
   users: {
     kind: "table",
@@ -261,7 +261,7 @@ const TABLES: Record<string, { kind: string; columns: string[]; rows: (i: number
     kind: "table",
     columns: ["id", "name", "owner_id", "shared", "created_at"],
     total: 37,
-    rows: (i) => [`ws_${(1e6 + i * 7919).toString(36)}`, ["Bouvio", "wyst.nl", "Q1 planning", "Isa's studio", "Hub ops"][i % 5] + (i > 4 ? ` ${i}` : ""), (i % 10) + 1, i % 3 === 0, ago(60 * 24 * (200 - i))],
+    rows: (i) => [`ws_${(1e6 + i * 7919).toString(36)}`, ["Bouvio", "northwind.dev", "Q1 planning", "Jonas's studio", "Hub ops"][i % 5] + (i > 4 ? ` ${i}` : ""), (i % 10) + 1, i % 3 === 0, ago(60 * 24 * (200 - i))],
   },
   invites: {
     kind: "table",
@@ -279,7 +279,7 @@ const TABLES: Record<string, { kind: string; columns: string[]; rows: (i: number
     kind: "view",
     columns: ["workspace", "members", "last_seen"],
     total: 5,
-    rows: (i) => [["Bouvio", "wyst.nl", "Q1 planning", "Isa's studio", "Hub ops"][i], 2 + ((i * 3) % 7), ago(i * 13)],
+    rows: (i) => [["Bouvio", "northwind.dev", "Q1 planning", "Jonas's studio", "Hub ops"][i], 2 + ((i * 3) % 7), ago(i * 13)],
   },
 };
 
@@ -370,7 +370,7 @@ function respond(method: string, url: string, body: string): Omit<HttpResponse, 
   if (path === "/api/workspaces")
     return json(200, "OK", [
       { id: "ws_bouvio", name: "Bouvio", role: "admin", members: 4, host_online: true },
-      { id: "ws_wyst", name: "wyst.nl", role: "operator", members: 2, host_online: false },
+      { id: "ws_northwind", name: "northwind.dev", role: "operator", members: 2, host_online: false },
       { id: "ws_q1", name: "Q1 planning", role: "viewer", members: 7, host_online: true },
     ]);
   if (path.endsWith("/invites") && method === "POST") {
@@ -408,8 +408,8 @@ button.primary{background:#3e63dd;border-color:#3e63dd;color:#fff}.toggle{displa
 <main data-source="src/pages/Settings.tsx:18">
 <h1>Profile</h1><p class="sub">How you show up to people and agents in shared workspaces.</p>
 <section class="card" data-source="src/pages/Settings.tsx:24">
-<label for="n">Display name</label><input id="n" value="Tim van der Wijst" data-source="src/pages/Settings.tsx:27">
-<label for="e">Email</label><input id="e" value="tim@example.com" data-source="src/pages/Settings.tsx:31">
+<label for="n">Display name</label><input id="n" value="Maya Peters" data-source="src/pages/Settings.tsx:27">
+<label for="e">Email</label><input id="e" value="maya@example.com" data-source="src/pages/Settings.tsx:31">
 <div class="row"><button data-source="src/pages/Settings.tsx:36">Cancel</button><button class="primary" data-testid="save-profile" data-source="src/pages/Settings.tsx:37">Save changes</button></div>
 </section>
 <section class="card" data-source="src/pages/Settings.tsx:44">
@@ -437,7 +437,7 @@ export const handlers: Record<string, (p: Record<string, any>) => unknown> = {
     const list = await seedReview(thread_id);
     const lt = await lineText(thread_id, path, side, line);
     if (lt === null) throw new Error("that line is not in the diff any more");
-    const c: ReviewComment = { id: uid(), thread_id, path, line, side, text: text.trim(), author: "Tim", line_text: lt, resolved: false, outdated: false, created_at: new Date().toISOString() };
+    const c: ReviewComment = { id: uid(), thread_id, path, line, side, text: text.trim(), author: "Maya", line_text: lt, resolved: false, outdated: false, created_at: new Date().toISOString() };
     list.push(c);
     return { ...c };
   },
@@ -468,7 +468,7 @@ export const handlers: Record<string, (p: Record<string, any>) => unknown> = {
     const r = RUNS.find((x) => x.id === run_id)!;
     const m = await main();
     const t = await m.rpc<Thread>(workspace_id, "create_thread", {
-      thread: { workspace_id, captain_id: null, title: `Fix ${r.workflow} on ${r.branch}`, harness: "claude_code", model: null, effort: "medium", approval: "ask_risky", isolate: true },
+      thread: { workspace_id, lead_id: null, title: `Fix ${r.workflow} on ${r.branch}`, harness: "claude_code", model: null, effort: "medium", approval: "ask_risky", isolate: true },
     });
     await m.rpc(workspace_id, "send_message", {
       thread_id: t.id,

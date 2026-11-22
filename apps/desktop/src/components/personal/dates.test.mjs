@@ -7,8 +7,8 @@ import { daysUntil, parseQuickAdd } from "./dates.ts";
 const fri = new Date(2026, 10, 20); // Friday 20 Nov 2026
 const q = (s, today = fri) => parseQuickAdd(s, today);
 const cases = [
-  ["Call Isa today", { title: "Call Isa", due: "2026-11-20", priority: null }],
-  ["Call Isa tomorrow", { title: "Call Isa", due: "2026-11-21", priority: null }],
+  ["Call Jonas today", { title: "Call Jonas", due: "2026-11-20", priority: null }],
+  ["Call Jonas tomorrow", { title: "Call Jonas", due: "2026-11-21", priority: null }],
   ["Review hub PR tmr !!", { title: "Review hub PR", due: "2026-11-21", priority: "medium" }],
   ["Ship release fri", { title: "Ship release", due: "2026-11-27", priority: null }],
   ["Ship release on mon", { title: "Ship release", due: "2026-11-23", priority: null }],

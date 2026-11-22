@@ -87,7 +87,7 @@ function Tile({ artifact }: { artifact: Artifact }) {
       onClick={() => {
         openArtifact(artifact);
         if (artifact.thread_id) useStore.getState().openThread(artifact.thread_id);
-        else go({ kind: "draft", captainId: null });
+        else go({ kind: "draft", leadId: null });
       }}
     >
       <span className="tile-media">

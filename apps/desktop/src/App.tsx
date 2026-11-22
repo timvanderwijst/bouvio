@@ -13,6 +13,7 @@ import { Rail } from "./components/Rail";
 import { Sidebar } from "./components/Sidebar";
 import { useT } from "./i18n";
 import { extOverlays, findPage, useExtVersion } from "./ext/areas";
+import { GroupTabs } from "./components/NavGroups";
 import { applyTheme, useStore, useWorkspaceThreads } from "./store";
 
 export function App() {
@@ -95,6 +96,7 @@ function PageView() {
   const view = useStore((s) => s.view);
   return (
     <section className={`main page-host ${view.kind === "board" || (view.kind === "page" && view.page === "chat") || (view.kind === "ext" && findPage(view.id)?.flush) ? "flush" : ""}`}>
+      <GroupTabs />
       {view.kind === "home" && <Home />}
       {view.kind === "settings" && <Settings />}
       {view.kind === "workspaces" && <WorkspacesPage />}

@@ -3,6 +3,6 @@ import type { BudgetScope } from "./BudgetScope";
 
 export type Budget = { workspace_id: string, scope: BudgetScope, 
 /**
- * The captain, for a captain budget.
+ * The lead, for a lead budget.
  */
 id: string | null, monthly_usd: number, };

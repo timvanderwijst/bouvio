@@ -1,5 +1,11 @@
 // English is the source language. Messages use ICU syntax.
 export const en = {
+  "nav.inbox": "Inbox",
+  "nav.team": "Team",
+  "ws.planning": "Planning",
+  "ws.library": "Library",
+  "ws.build": "Build",
+  "ws.insights": "Insights",
   "nav.home": "Home",
   "nav.workspaces": "Workspaces",
   "nav.runners": "Runners",
@@ -14,10 +20,10 @@ export const en = {
   "ws.automations": "Automations",
   "ws.studio": "Studio",
   "ws.files": "Files",
-  "ws.captains": "Captains",
+  "ws.leads": "Leads",
   "ws.people": "People",
   "ws.general": "general",
-  "ws.newCaptain": "New captain",
+  "ws.newLead": "New lead",
   "ws.personal": "Personal",
   "ws.shared": "Shared",
   "ws.create": "New workspace",
@@ -28,10 +34,10 @@ export const en = {
   "ws.createButton": "Create",
   "ws.switch": "Switch workspace",
 
-  "captain.name": "Name",
-  "captain.instructions": "Instructions",
-  "captain.instructionsHint": "What this captain is responsible for, and how it works",
-  "captain.create": "Create captain",
+  "lead.name": "Name",
+  "lead.instructions": "Instructions",
+  "lead.instructionsHint": "What this lead is responsible for, and how it works",
+  "lead.create": "Create lead",
 
   "thread.empty": "What should we work on?",
   "thread.emptyIn": "What should {name} work on?",
@@ -95,7 +101,7 @@ export const en = {
   "soon.studio": "Media, artifacts and boards for the whole workspace.",
   "soon.files": "The files of this workspace, live from the runner.",
   "soon.runners": "Your machines and VPSes, and who works on them.",
-  "soon.library": "Skills, prompts, captain templates and MCP servers.",
+  "soon.library": "Skills, prompts, lead templates and MCP servers.",
   "soon.people": "Contacts, invitations and direct messages.",
 
   "settings.title": "Settings",
@@ -112,7 +118,7 @@ export const en = {
   "settings.ready": "Ready",
   "settings.needsKeys": "Your API keys or local models",
 
-  "palette.placeholder": "Search threads, captains, workspaces and actions",
+  "palette.placeholder": "Search threads, leads, workspaces and actions",
   "palette.actions": "Actions",
   "palette.toggleTheme": "Switch light / dark",
   "palette.toggleLanguage": "Switch language",

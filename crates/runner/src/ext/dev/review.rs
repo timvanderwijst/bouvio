@@ -211,7 +211,7 @@ mod tests {
             line,
             side,
             text: "why?".into(),
-            author: "Tim".into(),
+            author: "Maya".into(),
             line_text: text.into(),
             resolved: false,
             outdated: false,

@@ -21,7 +21,7 @@ pub fn tools() -> Value {
         },
         {
             "name": "spawn_thread",
-            "description": "Start a new thread for a separate piece of work. It runs in parallel, in its own git worktree, under the same captain. Use this to split a task into independent parts. Returns the new thread id.",
+            "description": "Start a new thread for a separate piece of work. It runs in parallel, in its own git worktree, under the same lead. Use this to split a task into independent parts. Returns the new thread id.",
             "inputSchema": { "type": "object", "properties": {
                 "title": { "type": "string", "description": "Short title, like an issue title" },
                 "prompt": { "type": "string", "description": "Complete instructions; the new thread has no other context" },

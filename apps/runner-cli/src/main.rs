@@ -83,7 +83,7 @@ async fn main() -> Result<()> {
             let thread = runner
                 .create_thread(NewThread {
                     workspace_id: ws.id,
-                    captain_id: None,
+                    lead_id: None,
                     title: None,
                     harness,
                     model,

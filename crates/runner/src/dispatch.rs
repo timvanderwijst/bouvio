@@ -51,8 +51,8 @@ impl Runner {
                 self.put_workspace(ws.clone())?;
                 ok(ws)
             }
-            "list_captains" => ok(self.captains(w()?)),
-            "create_captain" => ok(self.create_captain(p(&params, "captain")?)?),
+            "list_leads" => ok(self.leads(w()?)),
+            "create_lead" => ok(self.create_lead(p(&params, "lead")?)?),
             "list_threads" => ok(self.threads(w()?)),
             "create_thread" => ok(self.create_thread(p(&params, "thread")?).await?),
             "thread_events" => ok(self.thread_events(th()?)?),
@@ -77,10 +77,10 @@ impl Runner {
             "workspace_settings_set" => ok(self.set_settings(w()?, &p(&params, "settings")?)?),
 
             "list_issues" => ok(self.list_issues(w()?)),
-            "create_issue" => ok(self.create_issue(w()?, p(&params, "title")?, opt(&params, "body").unwrap_or_default(), opt(&params, "status"), opt(&params, "captain_id"))?),
+            "create_issue" => ok(self.create_issue(w()?, p(&params, "title")?, opt(&params, "body").unwrap_or_default(), opt(&params, "status"), opt(&params, "lead_id"))?),
             "update_issue" => ok(self.update_issue(p(&params, "issue")?)?),
             "delete_issue" => ok(self.delete_issue(p(&params, "id")?)?),
-            "start_issue" => ok(self.start_issue(p(&params, "id")?, opt(&params, "captain_id"), actor.to_string()).await?),
+            "start_issue" => ok(self.start_issue(p(&params, "id")?, opt(&params, "lead_id"), actor.to_string()).await?),
             "sync_github_issues" => ok(self.sync_github_issues(w()?).await?),
 
             "list_pull_requests" => ok(self.list_pull_requests(w()?).await?),
@@ -132,7 +132,7 @@ impl Runner {
         if let Some(t) = params.get("thread").and_then(|t| opt::<Uuid>(t, "workspace_id")) {
             return Ok(t);
         }
-        if let Some(c) = params.get("captain").and_then(|t| opt::<Uuid>(t, "workspace_id")) {
+        if let Some(c) = params.get("lead").and_then(|t| opt::<Uuid>(t, "workspace_id")) {
             return Ok(c);
         }
         if let Some(i) = params.get("issue").and_then(|i| opt::<Uuid>(i, "id")) {
@@ -242,7 +242,7 @@ impl Runner {
                 let t = self
                     .create_thread(NewThread {
                         workspace_id: thread.workspace_id,
-                        captain_id: thread.captain_id,
+                        lead_id: thread.lead_id,
                         title: Some(title.clone()),
                         harness: thread.harness,
                         model: thread.model.clone(),
@@ -252,7 +252,7 @@ impl Runner {
                     })
                     .await?;
                 self.emit(thread_id, ThreadEvent::ThreadSpawned { thread_id: t.id, title })?;
-                let author = thread.captain_id.and_then(|c| self.store().captain(c)).map(|c| c.name).unwrap_or_else(|| thread.title.clone());
+                let author = thread.lead_id.and_then(|c| self.store().lead(c)).map(|c| c.name).unwrap_or_else(|| thread.title.clone());
                 let me = self.clone();
                 let id = t.id;
                 tokio::spawn(async move {
@@ -275,7 +275,7 @@ impl Runner {
                 Ok(json!({ "status": t.status, "branch": t.branch, "last_reply": last }))
             }
             "create_issue" => {
-                let i = self.create_issue(thread.workspace_id, p(&params, "title")?, opt(&params, "body").unwrap_or_default(), None, thread.captain_id)?;
+                let i = self.create_issue(thread.workspace_id, p(&params, "title")?, opt(&params, "body").unwrap_or_default(), None, thread.lead_id)?;
                 Ok(Value::String(i.key))
             }
             "remember" => {

@@ -3476,13 +3476,13 @@ mod tests {
 <w:p><w:pPr><w:numPr><w:ilvl w:val="0"/><w:numId w:val="1"/></w:numPr></w:pPr><w:r><w:t>First</w:t></w:r></w:p>
 <w:p><w:pPr><w:numPr><w:ilvl w:val="1"/><w:numId w:val="1"/></w:numPr></w:pPr><w:r><w:t>Nested</w:t></w:r></w:p>
 <w:tbl><w:tr><w:tc><w:p><w:r><w:t>Name</w:t></w:r></w:p></w:tc><w:tc><w:p><w:r><w:t>Owner</w:t></w:r></w:p></w:tc></w:tr>
-<w:tr><w:tc><w:p><w:r><w:t>Hub</w:t></w:r></w:p></w:tc><w:tc><w:p><w:r><w:t>Tim | Ann</w:t></w:r></w:p></w:tc></w:tr></w:tbl>
+<w:tr><w:tc><w:p><w:r><w:t>Hub</w:t></w:r></w:p></w:tc><w:tc><w:p><w:r><w:t>Maya | Ann</w:t></w:r></w:p></w:tc></w:tr></w:tbl>
 </w:body></w:document>"#;
         let bytes = zip_of(&[("word/document.xml", doc)]);
         let md = docx_to_markdown(&bytes).unwrap();
         assert_eq!(
             md,
-            "# Plan\n\n## Goals & scope\n\nShip the beta.\n\n- First\n  - Nested\n\n| Name | Owner |\n| --- | --- |\n| Hub | Tim \\| Ann |\n"
+            "# Plan\n\n## Goals & scope\n\nShip the beta.\n\n- First\n  - Nested\n\n| Name | Owner |\n| --- | --- |\n| Hub | Maya \\| Ann |\n"
         );
         assert!(convert("plan.docx", &bytes).unwrap().contains("## Goals"));
     }

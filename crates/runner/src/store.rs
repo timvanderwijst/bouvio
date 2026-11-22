@@ -1,10 +1,10 @@
-//! Local state of a runner: workspaces, captains, threads and their event logs.
+//! Local state of a runner: workspaces, leads, threads and their event logs.
 //!
 //! Plain JSON files under the data dir. Small, inspectable, easy to move to
 //! SQLite once the hub needs queries across them.
 
 use anyhow::{Context, Result};
-use bouvio_protocol::{Captain, Thread, ThreadEnvelope, Workspace};
+use bouvio_protocol::{Lead, Thread, ThreadEnvelope, Workspace};
 use serde::{de::DeserializeOwned, Serialize};
 use std::fs::{self, OpenOptions};
 use std::io::{BufRead, BufReader, Write};
@@ -20,7 +20,7 @@ pub struct Store {
 #[derive(Default)]
 struct State {
     workspaces: Vec<Workspace>,
-    captains: Vec<Captain>,
+    leads: Vec<Lead>,
     threads: Vec<Thread>,
 }
 
@@ -30,7 +30,7 @@ impl Store {
         fs::create_dir_all(dir.join("events")).with_context(|| format!("create {}", dir.display()))?;
         let state = State {
             workspaces: read_json(&dir.join("workspaces.json"))?,
-            captains: read_json(&dir.join("captains.json"))?,
+            leads: if dir.join("leads.json").exists() { read_json(&dir.join("leads.json"))? } else { read_json(&dir.join("captains.json"))? },
             threads: read_json(&dir.join("threads.json"))?,
         };
         Ok(Self { dir, state: Mutex::new(state) })
@@ -54,19 +54,19 @@ impl Store {
         write_json(&self.dir.join("workspaces.json"), &s.workspaces)
     }
 
-    pub fn captains(&self, workspace_id: Uuid) -> Vec<Captain> {
+    pub fn leads(&self, workspace_id: Uuid) -> Vec<Lead> {
         let s = self.state.lock().unwrap();
-        s.captains.iter().filter(|c| c.workspace_id == workspace_id).cloned().collect()
+        s.leads.iter().filter(|c| c.workspace_id == workspace_id).cloned().collect()
     }
 
-    pub fn captain(&self, id: Uuid) -> Option<Captain> {
-        self.state.lock().unwrap().captains.iter().find(|c| c.id == id).cloned()
+    pub fn lead(&self, id: Uuid) -> Option<Lead> {
+        self.state.lock().unwrap().leads.iter().find(|c| c.id == id).cloned()
     }
 
-    pub fn put_captain(&self, c: Captain) -> Result<()> {
+    pub fn put_lead(&self, c: Lead) -> Result<()> {
         let mut s = self.state.lock().unwrap();
-        upsert(&mut s.captains, c, |c| c.id);
-        write_json(&self.dir.join("captains.json"), &s.captains)
+        upsert(&mut s.leads, c, |c| c.id);
+        write_json(&self.dir.join("leads.json"), &s.leads)
     }
 
     pub fn threads(&self, workspace_id: Uuid) -> Vec<Thread> {

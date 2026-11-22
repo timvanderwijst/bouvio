@@ -123,7 +123,7 @@ pub struct Workspace {
 /// A long-lived agent for one domain, that splits work into threads.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "../../../apps/desktop/src/protocol/")]
-pub struct Captain {
+pub struct Lead {
     pub id: Uuid,
     pub workspace_id: Uuid,
     pub name: String,
@@ -141,7 +141,8 @@ pub struct Captain {
 pub struct Thread {
     pub id: Uuid,
     pub workspace_id: Uuid,
-    pub captain_id: Option<Uuid>,
+    #[serde(alias = "captain_id")]
+    pub lead_id: Option<Uuid>,
     pub title: String,
     pub harness: HarnessKind,
     pub model: Option<String>,
@@ -176,7 +177,7 @@ pub enum ThreadEvent {
     /// The agent wants to do something that needs a person's yes.
     ApprovalRequest { id: String, tool: String, input: serde_json::Value },
     ApprovalResolved { id: String, allowed: bool, by: String },
-    /// This thread started another thread (a captain splitting work).
+    /// This thread started another thread (a lead splitting work).
     ThreadSpawned { thread_id: Uuid, title: String },
     /// A file the agent made that is worth showing: html, image, document.
     ArtifactCreated { artifact: Artifact },
@@ -196,7 +197,8 @@ pub struct ThreadEnvelope {
 #[ts(export, export_to = "../../../apps/desktop/src/protocol/")]
 pub struct NewThread {
     pub workspace_id: Uuid,
-    pub captain_id: Option<Uuid>,
+    #[serde(alias = "captain_id")]
+    pub lead_id: Option<Uuid>,
     pub title: Option<String>,
     pub harness: HarnessKind,
     pub model: Option<String>,
@@ -208,7 +210,7 @@ pub struct NewThread {
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "../../../apps/desktop/src/protocol/")]
-pub struct NewCaptain {
+pub struct NewLead {
     pub workspace_id: Uuid,
     pub name: String,
     pub instructions: String,
@@ -347,7 +349,8 @@ pub struct Issue {
     pub body: String,
     pub status: IssueStatus,
     pub assignee: Option<String>,
-    pub captain_id: Option<Uuid>,
+    #[serde(alias = "captain_id")]
+    pub lead_id: Option<Uuid>,
     pub thread_ids: Vec<Uuid>,
     pub github_number: Option<u32>,
     pub created_at: DateTime<Utc>,
@@ -379,7 +382,8 @@ pub struct Automation {
     /// Five-field cron, local time.
     pub schedule: String,
     pub prompt: String,
-    pub captain_id: Option<Uuid>,
+    #[serde(alias = "captain_id")]
+    pub lead_id: Option<Uuid>,
     pub enabled: bool,
     pub last_run: Option<DateTime<Utc>>,
     pub last_thread: Option<Uuid>,

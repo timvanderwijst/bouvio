@@ -50,8 +50,8 @@ export const en: Record<string, string> = {
   "platform.templates.title": "New workspace from a template",
   "platform.templates.pick": "Template",
   "platform.templates.blank": "Blank",
-  "platform.templates.blankHint": "Start empty and add captains yourself.",
-  "platform.templates.captains": "{count, plural, one {# captain} other {# captains}}",
+  "platform.templates.blankHint": "Start empty and add leads yourself.",
+  "platform.templates.leads": "{count, plural, one {# lead} other {# leads}}",
   "platform.templates.create": "Create workspace",
   "platform.templates.none": "Templates come with the desktop app.",
 
@@ -121,8 +121,8 @@ export const nl: Record<string, string> = {
   "platform.templates.title": "Nieuwe werkruimte uit een sjabloon",
   "platform.templates.pick": "Sjabloon",
   "platform.templates.blank": "Leeg",
-  "platform.templates.blankHint": "Begin leeg en voeg zelf captains toe.",
-  "platform.templates.captains": "{count, plural, one {# captain} other {# captains}}",
+  "platform.templates.blankHint": "Begin leeg en voeg zelf leads toe.",
+  "platform.templates.leads": "{count, plural, one {# lead} other {# leads}}",
   "platform.templates.create": "Werkruimte maken",
   "platform.templates.none": "Sjablonen zitten in de desktop-app.",
 

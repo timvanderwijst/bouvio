@@ -2,7 +2,7 @@ import { ChevronDown, Maximize2, Minimize2, PanelRightClose, RotateCw } from "lu
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useT } from "../i18n";
 import type { Thread } from "../protocol/Thread";
-import { rpc, useStore, useWorkspaceCaptains, useWorkspaceThreads, type PanelTab } from "../store";
+import { rpc, useStore, useWorkspaceLeads, useWorkspaceThreads, type PanelTab } from "../store";
 import { ArtifactPreview } from "./Studio";
 import { DevBar } from "./ThreadExtras";
 import { extPanels } from "../ext/areas";
@@ -99,18 +99,18 @@ function Group({ title, items, showWorkspace }: { title: string; items: Thread[]
 
 function OverviewRow({ thread, showWorkspace }: { thread: Thread; showWorkspace: boolean }) {
   const openThread = useStore((s) => s.openThread);
-  const captains = useWorkspaceCaptains();
-  const allCaptains = useStore((s) => s.captains);
+  const leads = useWorkspaceLeads();
+  const allLeads = useStore((s) => s.leads);
   const wsName = useStore((s) => s.workspaces.find((w) => w.id === thread.workspace_id)?.name);
-  const captain = (showWorkspace ? allCaptains[thread.workspace_id] ?? [] : captains).find((c) => c.id === thread.captain_id);
-  const meta = [showWorkspace ? wsName : null, captain?.name, thread.branch].filter(Boolean).join(" · ");
+  const lead = (showWorkspace ? allLeads[thread.workspace_id] ?? [] : leads).find((c) => c.id === thread.lead_id);
+  const meta = [showWorkspace ? wsName : null, lead?.name, thread.branch].filter(Boolean).join(" · ");
   return (
     <button className="ov-row" onClick={() => openThread(thread.id)}>
       <StatusIcon status={thread.status} />
       <span className="ov-text">
         <span className="ov-title truncate">{thread.title}</span>
         <span className="ov-meta truncate">
-          {captain && <PixelAvatar seed={captain.avatar_seed} size={12} />}
+          {lead && <PixelAvatar seed={lead.avatar_seed} size={12} />}
           {meta}
         </span>
       </span>

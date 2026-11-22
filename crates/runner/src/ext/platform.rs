@@ -106,19 +106,19 @@ fn template(id: &str) -> Result<WorkspaceTemplate> {
     templates().into_iter().find(|t| t.id == id).with_context(|| format!("no template `{id}`"))
 }
 
-/// Add a template's captains, instructions, issues and automations to a
-/// workspace. Captains that already exist by name are reused, not doubled.
+/// Add a template's leads, instructions, issues and automations to a
+/// workspace. Leads that already exist by name are reused, not doubled.
 pub fn apply_template(r: &Runner, workspace_id: Uuid, template_id: &str, harness: Option<HarnessKind>) -> Result<TemplateApplied> {
     let tpl = template(template_id)?;
     r.workspace(workspace_id).context("unknown workspace")?;
     let mut out = TemplateApplied::default();
 
-    let mut by_name: HashMap<String, Uuid> = r.captains(workspace_id).into_iter().map(|c| (c.name.to_lowercase(), c.id)).collect();
-    for c in &tpl.captains {
+    let mut by_name: HashMap<String, Uuid> = r.leads(workspace_id).into_iter().map(|c| (c.name.to_lowercase(), c.id)).collect();
+    for c in &tpl.leads {
         if by_name.contains_key(&c.name.to_lowercase()) {
             continue;
         }
-        let made = r.create_captain(NewCaptain {
+        let made = r.create_lead(NewLead {
             workspace_id,
             name: c.name.clone(),
             instructions: c.instructions.clone(),
@@ -128,9 +128,9 @@ pub fn apply_template(r: &Runner, workspace_id: Uuid, template_id: &str, harness
             approval: ApprovalLevel::AskRisky,
         })?;
         by_name.insert(c.name.to_lowercase(), made.id);
-        out.captains += 1;
+        out.leads += 1;
     }
-    let captain = |name: &Option<String>| name.as_ref().and_then(|n| by_name.get(&n.to_lowercase()).copied());
+    let lead = |name: &Option<String>| name.as_ref().and_then(|n| by_name.get(&n.to_lowercase()).copied());
 
     let mut s = r.settings(workspace_id);
     let mut changed = false;
@@ -148,7 +148,7 @@ pub fn apply_template(r: &Runner, workspace_id: Uuid, template_id: &str, harness
     }
 
     for i in &tpl.issues {
-        r.create_issue(workspace_id, i.title.clone(), i.body.clone(), Some(IssueStatus::Todo), captain(&i.captain))?;
+        r.create_issue(workspace_id, i.title.clone(), i.body.clone(), Some(IssueStatus::Todo), lead(&i.lead))?;
         out.issues += 1;
     }
     for a in &tpl.automations {
@@ -158,7 +158,7 @@ pub fn apply_template(r: &Runner, workspace_id: Uuid, template_id: &str, harness
             name: a.name.clone(),
             schedule: a.schedule.clone(),
             prompt: a.prompt.clone(),
-            captain_id: captain(&a.captain),
+            lead_id: lead(&a.lead),
             enabled: a.enabled,
             last_run: None,
             last_thread: None,
@@ -198,7 +198,7 @@ pub fn export_workspace(r: &Runner, workspace_id: Uuid, path: &Path) -> Result<E
         Ok(())
     };
 
-    let captains = r.captains(workspace_id);
+    let leads = r.leads(workspace_id);
     let threads = r.threads(workspace_id);
     let issues = r.list_issues(workspace_id);
     let automations = r.list_automations(workspace_id);
@@ -217,7 +217,7 @@ pub fn export_workspace(r: &Runner, workspace_id: Uuid, path: &Path) -> Result<E
         }))?,
     )?;
     put(&mut z, "workspace.json", &serde_json::to_vec_pretty(&ws)?)?;
-    put(&mut z, "captains.json", &serde_json::to_vec_pretty(&captains)?)?;
+    put(&mut z, "leads.json", &serde_json::to_vec_pretty(&leads)?)?;
     put(&mut z, "threads.json", &serde_json::to_vec_pretty(&threads)?)?;
     put(&mut z, "issues.json", &serde_json::to_vec_pretty(&issues)?)?;
     put(&mut z, "automations.json", &serde_json::to_vec_pretty(&automations)?)?;
@@ -304,7 +304,7 @@ pub struct ImportOptions {
 }
 
 /// Read a workspace zip. Without `replace`, everything gets fresh ids, remapped
-/// consistently wherever the old ones appear (events, issue links, captains,
+/// consistently wherever the old ones appear (events, issue links, leads,
 /// boards, other areas' JSON).
 pub fn import_workspace(r: &Runner, path: &Path, o: ImportOptions) -> Result<ImportSummary> {
     let file = fs::File::open(path).with_context(|| format!("open {}", path.display()))?;
@@ -334,7 +334,7 @@ pub fn import_workspace(r: &Runner, path: &Path, o: ImportOptions) -> Result<Imp
     }
 
     let ws_old: Workspace = serde_json::from_value(read("workspace.json")?)?;
-    let captains = read("captains.json")?;
+    let leads = read("leads.json")?;
     let threads = read("threads.json")?;
     let issues = read("issues.json")?;
     let automations = read("automations.json")?;
@@ -349,7 +349,7 @@ pub fn import_workspace(r: &Runner, path: &Path, o: ImportOptions) -> Result<Imp
             }
         };
         fresh(Some(&ws_old.id.to_string()));
-        for list in [&captains, &threads, &issues, &automations, &artifacts] {
+        for list in [&leads, &threads, &issues, &automations, &artifacts] {
             for x in list.as_array().into_iter().flatten() {
                 fresh(x["id"].as_str());
             }
@@ -380,9 +380,9 @@ pub fn import_workspace(r: &Runner, path: &Path, o: ImportOptions) -> Result<Imp
     };
     r.put_workspace(ws.clone())?;
 
-    let captains: Vec<Captain> = serde_json::from_value(map(captains))?;
-    for c in &captains {
-        r.store().put_captain(c.clone())?;
+    let leads: Vec<Lead> = serde_json::from_value(map(leads))?;
+    for c in &leads {
+        r.store().put_lead(c.clone())?;
     }
 
     let threads: Vec<Thread> = serde_json::from_value(map(threads))?;
@@ -478,7 +478,7 @@ pub fn import_workspace(r: &Runner, path: &Path, o: ImportOptions) -> Result<Imp
 
     Ok(ImportSummary {
         workspace: ws,
-        captains: captains.len() as u32,
+        leads: leads.len() as u32,
         threads: threads.len() as u32,
         issues: issues.len() as u32,
         automations: automations.len() as u32,
@@ -583,10 +583,10 @@ fn remap_str(s: &str, ids: &HashMap<String, String>) -> String {
 mod tests {
     use super::*;
 
-    fn new_thread(ws: Uuid, captain: Option<Uuid>, title: &str) -> NewThread {
+    fn new_thread(ws: Uuid, lead: Option<Uuid>, title: &str) -> NewThread {
         NewThread {
             workspace_id: ws,
-            captain_id: captain,
+            lead_id: lead,
             title: Some(title.into()),
             harness: HarnessKind::ClaudeCode,
             model: None,
@@ -602,8 +602,8 @@ mod tests {
         assert_eq!(all.len(), TEMPLATES.len());
         for t in &all {
             for i in &t.issues {
-                if let Some(c) = &i.captain {
-                    assert!(t.captains.iter().any(|x| &x.name == c), "{}: issue names unknown captain {c}", t.id);
+                if let Some(c) = &i.lead {
+                    assert!(t.leads.iter().any(|x| &x.name == c), "{}: issue names unknown lead {c}", t.id);
                 }
             }
             for a in &t.automations {
@@ -613,26 +613,26 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn apply_template_creates_captains_issues_settings_automations() {
+    async fn apply_template_creates_leads_issues_settings_automations() {
         let dir = tempfile::tempdir().unwrap();
         let r = Runner::open(dir.path()).unwrap();
         let ws = r.create_workspace("Site".into(), None).unwrap();
 
         let out = apply_template(&r, ws.id, "web-app", None).unwrap();
-        assert_eq!(out.captains, 3);
-        let caps = r.captains(ws.id);
+        assert_eq!(out.leads, 3);
+        let caps = r.leads(ws.id);
         let names: Vec<_> = caps.iter().map(|c| c.name.as_str()).collect();
         assert!(names.contains(&"Frontend") && names.contains(&"Backend") && names.contains(&"Tests"));
         let issues = r.list_issues(ws.id);
         assert_eq!(issues.len() as u32, out.issues);
-        assert!(issues.iter().all(|i| i.captain_id.is_some_and(|c| caps.iter().any(|x| x.id == c))));
+        assert!(issues.iter().all(|i| i.lead_id.is_some_and(|c| caps.iter().any(|x| x.id == c))));
         let s = r.settings(ws.id);
         assert!(s.dev_command.as_deref().unwrap().contains("{port}"));
         assert!(!s.instructions.is_empty());
 
-        // Applying again reuses captains and does not repeat the instructions.
+        // Applying again reuses leads and does not repeat the instructions.
         apply_template(&r, ws.id, "web-app", None).unwrap();
-        assert_eq!(r.captains(ws.id).len(), 3);
+        assert_eq!(r.leads(ws.id).len(), 3);
         assert_eq!(r.settings(ws.id).instructions, s.instructions);
 
         let v = call(&r, "create_workspace_from_template", &json!({ "name": "Launch", "template_id": "marketing-campaign" }), "t").await.unwrap().unwrap();
@@ -640,8 +640,8 @@ mod tests {
         assert_eq!(m.name, "Launch");
         let autos = r.list_automations(m.id);
         assert_eq!(autos.len(), 1);
-        let research = r.captains(m.id).into_iter().find(|c| c.name == "Research").unwrap();
-        assert_eq!(autos[0].captain_id, Some(research.id));
+        let research = r.leads(m.id).into_iter().find(|c| c.name == "Research").unwrap();
+        assert_eq!(autos[0].lead_id, Some(research.id));
         assert!(apply_template(&r, ws.id, "nope", None).is_err());
     }
 
@@ -651,7 +651,7 @@ mod tests {
         let r = Runner::open(dir.path().join("data")).unwrap();
         let ws = r.create_workspace("Bouvio".into(), None).unwrap();
         let cap = r
-            .create_captain(NewCaptain {
+            .create_lead(NewLead {
                 workspace_id: ws.id,
                 name: "Desktop".into(),
                 instructions: "UI".into(),
@@ -663,7 +663,7 @@ mod tests {
             .unwrap();
         let a = r.create_thread(new_thread(ws.id, Some(cap.id), "Parent")).await.unwrap();
         let b = r.create_thread(new_thread(ws.id, Some(cap.id), "Child")).await.unwrap();
-        r.emit(a.id, ThreadEvent::UserMessage { text: "hi".into(), author: "Tim".into() }).unwrap();
+        r.emit(a.id, ThreadEvent::UserMessage { text: "hi".into(), author: "Maya".into() }).unwrap();
         r.emit(a.id, ThreadEvent::ThreadSpawned { thread_id: b.id, title: "Child".into() }).unwrap();
 
         let mut issue = r.create_issue(ws.id, "Fix it".into(), String::new(), None, Some(cap.id)).unwrap();
@@ -675,7 +675,7 @@ mod tests {
             name: "Daily".into(),
             schedule: "0 9 * * *".into(),
             prompt: "go".into(),
-            captain_id: Some(cap.id),
+            lead_id: Some(cap.id),
             enabled: true,
             last_run: None,
             last_thread: Some(a.id),
@@ -706,12 +706,12 @@ mod tests {
         assert_eq!(out.workspace.name, "Copy");
         assert_eq!(out.threads, 2);
 
-        let ncap = r.captains(nw);
+        let ncap = r.leads(nw);
         assert_eq!(ncap.len(), 1);
         assert_ne!(ncap[0].id, cap.id);
         let nthreads = r.threads(nw);
         assert_eq!(nthreads.len(), 2);
-        assert!(nthreads.iter().all(|t| t.captain_id == Some(ncap[0].id) && t.id != a.id && t.id != b.id));
+        assert!(nthreads.iter().all(|t| t.lead_id == Some(ncap[0].id) && t.id != a.id && t.id != b.id));
         let na = nthreads.iter().find(|t| t.title == "Parent").unwrap();
         let nb = nthreads.iter().find(|t| t.title == "Child").unwrap();
 
@@ -724,10 +724,10 @@ mod tests {
         assert_eq!(ni.len(), 1);
         assert_ne!(ni[0].id, issue.id);
         assert_eq!(ni[0].thread_ids, vec![na.id, nb.id]);
-        assert_eq!(ni[0].captain_id, Some(ncap[0].id));
+        assert_eq!(ni[0].lead_id, Some(ncap[0].id));
 
         let nauto = r.list_automations(nw);
-        assert_eq!(nauto[0].captain_id, Some(ncap[0].id));
+        assert_eq!(nauto[0].lead_id, Some(ncap[0].id));
         assert_eq!(nauto[0].last_thread, Some(na.id));
         // A copy beside the original stays paused.
         assert!(!nauto[0].enabled);

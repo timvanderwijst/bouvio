@@ -3,7 +3,7 @@ import type { Budget } from "./Budget";
 
 export type BudgetStatus = { budget: Budget, 
 /**
- * Workspace or captain name.
+ * Workspace or lead name.
  */
 label: string, 
 /**

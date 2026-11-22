@@ -5,7 +5,7 @@ import { useT } from "../i18n";
 import type { Issue } from "../protocol/Issue";
 import type { IssueStatus } from "../protocol/IssueStatus";
 import type { Thread } from "../protocol/Thread";
-import { rpc, useStore, useWorkspaceCaptains, useWorkspaceThreads, useWsData } from "../store";
+import { rpc, useStore, useWorkspaceLeads, useWorkspaceThreads, useWsData } from "../store";
 import { ago } from "../lib/format";
 import { Empty } from "./Panel";
 import { Menu } from "./Menu";
@@ -122,8 +122,8 @@ export function IssuesPage({ sub }: { sub?: string } = {}) {
 }
 
 function IssueRow({ issue, on, onOpen }: { issue: Issue; on: boolean; onOpen: () => void }) {
-  const captains = useWorkspaceCaptains();
-  const c = captains.find((x) => x.id === issue.captain_id);
+  const leads = useWorkspaceLeads();
+  const c = leads.find((x) => x.id === issue.lead_id);
   const threads = useStore((s) => (s.workspaceId ? s.threads[s.workspaceId] : undefined));
   const working = issue.thread_ids.some((id) => threads?.find((t) => t.id === id)?.status === "working");
   return (
@@ -146,7 +146,7 @@ function IssueRow({ issue, on, onOpen }: { issue: Issue; on: boolean; onOpen: ()
 
 function IssueDetail({ issue, onClose }: { issue: Issue; onClose: () => void }) {
   const t = useT();
-  const captains = useWorkspaceCaptains();
+  const leads = useWorkspaceLeads();
   const openThread = useStore((s) => s.openThread);
   const notify = useStore((s) => s.notify);
   const threads = useWorkspaceThreads();
@@ -181,11 +181,11 @@ function IssueDetail({ issue, onClose }: { issue: Issue; onClose: () => void }) 
           items={ORDER.map((s) => ({ value: s, label: t(`issue.${s}`), icon: <IssueIcon status={s} /> }))}
           onChange={(s) => save({ status: s })}
         />
-        <span>{t("issues.captain")}</span>
+        <span>{t("issues.lead")}</span>
         <Menu
-          value={issue.captain_id}
-          items={[{ value: null, label: t("issues.noCaptain") }, ...captains.map((c) => ({ value: c.id as string | null, label: c.name, icon: <PixelAvatar seed={c.avatar_seed} size={14} /> }))]}
-          onChange={(c) => save({ captain_id: c })}
+          value={issue.lead_id}
+          items={[{ value: null, label: t("issues.noLead") }, ...leads.map((c) => ({ value: c.id as string | null, label: c.name, icon: <PixelAvatar seed={c.avatar_seed} size={14} /> }))]}
+          onChange={(c) => save({ lead_id: c })}
         />
       </div>
       <button
@@ -194,7 +194,7 @@ function IssueDetail({ issue, onClose }: { issue: Issue; onClose: () => void }) 
         onClick={async () => {
           setBusy(true);
           try {
-            const th = await rpc<Thread>("start_issue", { id: issue.id, captain_id: issue.captain_id });
+            const th = await rpc<Thread>("start_issue", { id: issue.id, lead_id: issue.lead_id });
             await useStore.getState().openThread(th.id);
           } catch (e) {
             notify(String(e));
@@ -309,7 +309,7 @@ export function AutomationsPage() {
   const t = useT();
   const load = useStore((s) => s.load);
   const data = useWsData();
-  const captains = useWorkspaceCaptains();
+  const leads = useWorkspaceLeads();
   const setDialog = useStore((s) => s.setDialog);
   const notify = useStore((s) => s.notify);
   const openThread = useStore((s) => s.openThread);
@@ -332,7 +332,7 @@ export function AutomationsPage() {
       {data.automations && list.length === 0 && <Empty text={t("auto.none")} />}
       <div className="auto-list">
         {list.map((a) => {
-          const c = captains.find((x) => x.id === a.captain_id);
+          const c = leads.find((x) => x.id === a.lead_id);
           return (
             <div key={a.id} className={`auto ${a.enabled ? "" : "off"}`}>
               <button className="auto-main" onClick={() => setDialog("automation", a)}>

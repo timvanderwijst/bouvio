@@ -1,7 +1,7 @@
 // Browser preview: a fake runner with sample data, so the UI can be built and
 // screenshotted without Tauri. Nothing here touches the disk or a model.
 
-import type { Captain } from "../protocol/Captain";
+import type { Lead } from "../protocol/Lead";
 import type { Thread } from "../protocol/Thread";
 import type { ThreadEnvelope } from "../protocol/ThreadEnvelope";
 import type { ThreadEvent } from "../protocol/ThreadEvent";
@@ -32,12 +32,12 @@ const ago = (min: number) => new Date(Date.now() - min * 60_000).toISOString();
 
 const ws: Workspace[] = [
   { id: uid(), name: "Bouvio", kind: "shared", root: "~/code/bouvio", created_at: ago(9000), role: null, host: null },
-  { id: uid(), name: "wyst.nl", kind: "personal", root: "~/code/wyst", created_at: ago(20000), role: null, host: null },
+  { id: uid(), name: "northwind.dev", kind: "personal", root: "~/code/northwind", created_at: ago(20000), role: null, host: null },
   { id: uid(), name: "Q1 planning", kind: "personal", root: null, created_at: ago(3000), role: null, host: null },
 ];
 const B = ws[0].id;
 
-const cap = (name: string, seed: number, instructions: string): Captain => ({
+const cap = (name: string, seed: number, instructions: string): Lead => ({
   id: uid(),
   workspace_id: B,
   name,
@@ -49,7 +49,7 @@ const cap = (name: string, seed: number, instructions: string): Captain => ({
   avatar_seed: seed,
 });
 
-const captains: Captain[] = [
+const leads: Lead[] = [
   cap("Desktop", 11, "Owns apps/desktop: the Tauri shell and the React UI."),
   cap("Runner", 23, "Owns crates/runner: harnesses, terminals, worktrees."),
   cap("Hub", 37, "Owns apps/hub: accounts, sync and presence."),
@@ -57,11 +57,11 @@ const captains: Captain[] = [
   cap("Docs", 53, "Keeps README and docs in step with the code."),
 ];
 
-function thread(c: Captain | null, title: string, status: Thread["status"], min: number, extra: Partial<Thread> = {}): Thread {
+function thread(c: Lead | null, title: string, status: Thread["status"], min: number, extra: Partial<Thread> = {}): Thread {
   return {
     id: uid(),
     workspace_id: c?.workspace_id ?? B,
-    captain_id: c?.id ?? null,
+    lead_id: c?.id ?? null,
     title,
     harness: "claude_code",
     model: null,
@@ -78,7 +78,7 @@ function thread(c: Captain | null, title: string, status: Thread["status"], min:
   };
 }
 
-const [desktop, runner, hub, design] = captains;
+const [desktop, runner, hub, design] = leads;
 const threads: Thread[] = [
   thread(desktop, "Desktop", "idle", 3, { cost_usd: 0.41, created_at: ago(20000) }),
   thread(desktop, "Keep a draft per thread in the composer", "idle", 4, { branch: "bouvio/3f9a2c1e", cost_usd: 0.38 }),
@@ -101,11 +101,11 @@ function seed(t: Thread, list: ThreadEvent[], startMin: number) {
   );
 }
 
-const lead = threads[0];
+const firstThread = threads[0];
 seed(
-  lead,
+  firstThread,
   [
-    { type: "user_message", text: "Switching threads wipes what I was typing in the composer. Keep a draft per thread, and check the rail while you're at it.", author: "Tim" },
+    { type: "user_message", text: "Switching threads wipes what I was typing in the composer. Keep a draft per thread, and check the rail while you're at it.", author: "Maya" },
     { type: "status", status: "working" },
     { type: "tool_use", id: "a", name: "Grep", input: { pattern: "draft", path: "apps/desktop/src" } },
     { type: "tool_result", tool_use_id: "a", output: "apps/desktop/src/components/Composer.tsx:42:  const [draft, setDraft] = useState(\"\");", is_error: false },
@@ -140,7 +140,7 @@ seed(
 seed(
   threads[7],
   [
-    { type: "user_message", text: "Add magic link sign-in to the hub.", author: "Tim" },
+    { type: "user_message", text: "Add magic link sign-in to the hub.", author: "Maya" },
     { type: "status", status: "working" },
     { type: "assistant_text", text: "Sending mail needs an SMTP provider. Which one should the hub use: Resend, Postmark, or plain SMTP settings in `compose.yml`?" },
     { type: "status", status: "blocked" },
@@ -166,10 +166,10 @@ seed(
 seed(
   threads[4],
   [
-    { type: "user_message", text: "`codex` is installed through npm on Windows but detect says not found.", author: "Tim" },
+    { type: "user_message", text: "`codex` is installed through npm on Windows but detect says not found.", author: "Maya" },
     { type: "status", status: "working" },
     { type: "tool_use", id: "w1", name: "Bash", input: { command: "where.exe codex" } },
-    { type: "tool_result", tool_use_id: "w1", output: "C:\\Users\\tim\\AppData\\Roaming\\npm\\codex.cmd", is_error: false },
+    { type: "tool_result", tool_use_id: "w1", output: "C:\\Users\\maya\\AppData\\Roaming\\npm\\codex.cmd", is_error: false },
   ],
   2.2,
 );
@@ -207,11 +207,11 @@ index 91be3d0..a27c6e4 100644
 
 // ---- more sample data: work, studio, people ------------------------------------------
 
-const tim: HubUser = { id: uid(), name: "Tim", email: "tim@bouvio.com", avatar_url: null };
-const isa: HubUser = { id: uid(), name: "Isa", email: "isa@bouvio.com", avatar_url: null };
+const maya: HubUser = { id: uid(), name: "Maya", email: "maya@bouvio.com", avatar_url: null };
+const jonas: HubUser = { id: uid(), name: "Jonas", email: "jonas@bouvio.com", avatar_url: null };
 const noor: HubUser = { id: uid(), name: "Noor", email: "noor@bouvio.com", avatar_url: null };
 
-const issue = (n: number, title: string, status: Issue["status"], captain: Captain | null, min: number, body = ""): Issue => ({
+const issue = (n: number, title: string, status: Issue["status"], lead: Lead | null, min: number, body = ""): Issue => ({
   id: uid(),
   workspace_id: B,
   number: n,
@@ -220,7 +220,7 @@ const issue = (n: number, title: string, status: Issue["status"], captain: Capta
   body,
   status,
   assignee: null,
-  captain_id: captain?.id ?? null,
+  lead_id: lead?.id ?? null,
   thread_ids: [],
   github_number: n < 30 ? n + 100 : null,
   created_at: ago(min + 600),
@@ -233,21 +233,21 @@ const issues: Issue[] = [
   issue(37, "Magic link sign-in for the hub", "in_progress", hub, 12, "Send a 6-digit code by mail; log it when SMTP is not set."),
   issue(38, "Diff colours are too bright in the dark theme", "todo", design, 90),
   issue(39, "Keyboard shortcut to jump to the next thread that needs you", "todo", desktop, 300),
-  issue(40, "Show cost per captain in the sidebar", "backlog", null, 900),
+  issue(40, "Show cost per lead in the sidebar", "backlog", null, 900),
   issue(41, "Live frames sleep when they are off screen", "backlog", design, 1400),
   issue(29, "Resume Claude sessions after a restart", "done", runner, 55),
 ];
 
 const prs: PullRequest[] = [
-  { number: 142, title: "fix(desktop): keep a draft per thread", url: "https://github.com/bouvio/bouvio/pull/142", head: "bouvio/3f9a2c1e", base: "main", state: "open", draft: false, author: "tim", additions: 17, deletions: 35, updated_at: ago(3) },
-  { number: 141, title: "feat(runner): resume Claude sessions after restart", url: "https://github.com/bouvio/bouvio/pull/141", head: "bouvio/9e1c0a77", base: "main", state: "merged", draft: false, author: "tim", additions: 88, deletions: 12, updated_at: ago(50) },
-  { number: 140, title: "feat(hub): invites with roles", url: "https://github.com/bouvio/bouvio/pull/140", head: "bouvio/1a2b3c4d", base: "main", state: "open", draft: true, author: "isa", additions: 214, deletions: 9, updated_at: ago(130) },
+  { number: 142, title: "fix(desktop): keep a draft per thread", url: "https://github.com/bouvio/bouvio/pull/142", head: "bouvio/3f9a2c1e", base: "main", state: "open", draft: false, author: "maya", additions: 17, deletions: 35, updated_at: ago(3) },
+  { number: 141, title: "feat(runner): resume Claude sessions after restart", url: "https://github.com/bouvio/bouvio/pull/141", head: "bouvio/9e1c0a77", base: "main", state: "merged", draft: false, author: "maya", additions: 88, deletions: 12, updated_at: ago(50) },
+  { number: 140, title: "feat(hub): invites with roles", url: "https://github.com/bouvio/bouvio/pull/140", head: "bouvio/1a2b3c4d", base: "main", state: "open", draft: true, author: "jonas", additions: 214, deletions: 9, updated_at: ago(130) },
 ];
 
 const automations: Automation[] = [
-  { id: uid(), workspace_id: B, name: "Morning triage", schedule: "0 8 * * 1-5", prompt: "Read the new issues and GitHub notifications. File what is missing, close duplicates, and post a short summary.", captain_id: captains[4].id, enabled: true, last_run: ago(600), last_thread: null },
-  { id: uid(), workspace_id: B, name: "Dependency check", schedule: "30 7 * * 1", prompt: "Run pnpm outdated and cargo outdated. Open one thread per major upgrade worth doing.", captain_id: runner.id, enabled: true, last_run: ago(4000), last_thread: null },
-  { id: uid(), workspace_id: B, name: "Release notes", schedule: "0 16 * * 5", prompt: "Write release notes from the PRs merged this week.", captain_id: null, enabled: false, last_run: null, last_thread: null },
+  { id: uid(), workspace_id: B, name: "Morning triage", schedule: "0 8 * * 1-5", prompt: "Read the new issues and GitHub notifications. File what is missing, close duplicates, and post a short summary.", lead_id: leads[4].id, enabled: true, last_run: ago(600), last_thread: null },
+  { id: uid(), workspace_id: B, name: "Dependency check", schedule: "30 7 * * 1", prompt: "Run pnpm outdated and cargo outdated. Open one thread per major upgrade worth doing.", lead_id: runner.id, enabled: true, last_run: ago(4000), last_thread: null },
+  { id: uid(), workspace_id: B, name: "Release notes", schedule: "0 16 * * 5", prompt: "Write release notes from the PRs merged this week.", lead_id: null, enabled: false, last_run: null, last_thread: null },
 ];
 
 const svgArt = (bg: string, fg: string, label: string) =>
@@ -255,7 +255,7 @@ const svgArt = (bg: string, fg: string, label: string) =>
 const art = (title: string, kind: Artifact["kind"], min: number, extra: Partial<Artifact> = {}): Artifact => ({
   id: uid(),
   workspace_id: B,
-  thread_id: lead.id,
+  thread_id: firstThread.id,
   kind,
   title,
   path: `~/code/bouvio/${title}`,
@@ -269,14 +269,14 @@ const artifacts: Artifact[] = [
   art("onboarding-hero.png", "image", 20, { prompt: "A calm workspace at dawn, soft light, paper textures", model: "fal:fal-ai/flux/schnell" }),
   art("pricing.html", "html", 45),
   art("rail-states.svg", "svg", 70),
-  art("captain-avatars.png", "image", 120, { prompt: "Sixteen tiny pixel characters in warm colours", model: "openai:gpt-image-1" }),
+  art("lead-avatars.png", "image", 120, { prompt: "Sixteen tiny pixel characters in warm colours", model: "openai:gpt-image-1" }),
   art("release-notes.md", "markdown", 200),
   art("standup.mp3", "audio", 300, { prompt: "Read this week's release notes", model: "elevenlabs:Rachel" }),
 ];
 const artPreview: Record<string, string> = {
   "onboarding-hero.png": svgArt("#F3EEE6", "#C2653A", "Onboarding"),
   "rail-states.svg": svgArt("#E3ECF7", "#3F6FB5", "Rail states"),
-  "captain-avatars.png": svgArt("#E6F2E4", "#3E8E5A", "Captains"),
+  "lead-avatars.png": svgArt("#E6F2E4", "#3E8E5A", "Leads"),
 };
 
 const now = new Date().toISOString();
@@ -297,14 +297,14 @@ const settings: Record<string, WorkspaceSettings> = {
 };
 
 const members: Member[] = [
-  { user: tim, role: "admin", see_costs: true, online: true },
-  { user: isa, role: "operator", see_costs: false, online: true },
+  { user: maya, role: "admin", see_costs: true, online: true },
+  { user: jonas, role: "operator", see_costs: false, online: true },
   { user: noor, role: "viewer", see_costs: false, online: false },
 ];
 
 const chat: ChatMessage[] = [
-  { id: uid(), workspace_id: B, channel: "general", author: isa, text: "The rail thread is close. Can someone check it on a small laptop screen?", at: ago(42), parent: null, reactions: [], pinned: false },
-  { id: uid(), workspace_id: B, channel: "general", author: tim, text: "On it. Also merged the draft fix.", at: ago(38), parent: null, reactions: [], pinned: false },
+  { id: uid(), workspace_id: B, channel: "general", author: jonas, text: "The rail thread is close. Can someone check it on a small laptop screen?", at: ago(42), parent: null, reactions: [], pinned: false },
+  { id: uid(), workspace_id: B, channel: "general", author: maya, text: "On it. Also merged the draft fix.", at: ago(38), parent: null, reactions: [], pinned: false },
   { id: uid(), workspace_id: B, channel: "general", author: noor, text: "Hub magic links are waiting on an SMTP choice — Resend?", at: ago(11), parent: null, reactions: [], pinned: false },
 ];
 
@@ -366,7 +366,7 @@ async function reply(id: string, text: string) {
     push(id, { type: "approval_request", id: "a1", tool: "Bash", input: { command: "pnpm test" } });
     push(id, { type: "status", status: "blocked" });
     const ok = await new Promise<boolean>((r) => pending.set("a1", r));
-    push(id, { type: "approval_resolved", id: "a1", allowed: ok, by: "Tim" });
+    push(id, { type: "approval_resolved", id: "a1", allowed: ok, by: "Maya" });
     push(id, { type: "status", status: "working" });
     await wait(500);
   }
@@ -405,10 +405,10 @@ const handlers: Record<string, (p: Record<string, any>) => unknown> = {
     ws.push(w);
     return w;
   },
-  list_captains: ({ workspace_id }) => captains.filter((c) => c.workspace_id === workspace_id),
-  create_captain: ({ captain }) => {
-    const c: Captain = { ...captain, id: uid(), avatar_seed: Math.floor(Math.random() * 1e6) };
-    captains.push(c);
+  list_leads: ({ workspace_id }) => leads.filter((c) => c.workspace_id === workspace_id),
+  create_lead: ({ lead }) => {
+    const c: Lead = { ...lead, id: uid(), avatar_seed: Math.floor(Math.random() * 1e6) };
+    leads.push(c);
     return c;
   },
   list_threads: ({ workspace_id }) => threads.filter((t) => t.workspace_id === workspace_id).map((t) => ({ ...t })),
@@ -416,7 +416,7 @@ const handlers: Record<string, (p: Record<string, any>) => unknown> = {
     const w = ws.find((x) => x.id === n.workspace_id)!;
     const t = thread(null, n.title ?? "New thread", "idle", 0, {
       workspace_id: n.workspace_id,
-      captain_id: n.captain_id,
+      lead_id: n.lead_id,
       harness: n.harness,
       model: n.model,
       effort: n.effort,
@@ -431,7 +431,7 @@ const handlers: Record<string, (p: Record<string, any>) => unknown> = {
   },
   thread_events: ({ thread_id }) => [...(events.get(thread_id) ?? [])],
   send_message: ({ thread_id, text, author }) => {
-    push(thread_id, { type: "user_message", text, author: author ?? "Tim" });
+    push(thread_id, { type: "user_message", text, author: author ?? "Maya" });
     reply(thread_id, text);
     return null;
   },
@@ -474,9 +474,9 @@ const handlers: Record<string, (p: Record<string, any>) => unknown> = {
   },
 
   list_issues: ({ workspace_id }) => issues.filter((i) => i.workspace_id === workspace_id).sort((a, b) => b.number - a.number),
-  create_issue: ({ workspace_id, title, body, status, captain_id }) => {
+  create_issue: ({ workspace_id, title, body, status, lead_id }) => {
     const n = Math.max(0, ...issues.map((i) => i.number)) + 1;
-    const i: Issue = { ...issue(n, title, status ?? "todo", null, 0, body ?? ""), workspace_id, captain_id: captain_id ?? null, github_number: null };
+    const i: Issue = { ...issue(n, title, status ?? "todo", null, 0, body ?? ""), workspace_id, lead_id: lead_id ?? null, github_number: null };
     issues.push(i);
     notice(workspace_id, "issue-changed", i);
     return i;
@@ -495,11 +495,11 @@ const handlers: Record<string, (p: Record<string, any>) => unknown> = {
   },
   start_issue: async ({ id }) => {
     const i = issues.find((x) => x.id === id)!;
-    const t = handlers.create_thread({ thread: { workspace_id: i.workspace_id, captain_id: i.captain_id, title: `${i.key} ${i.title}`, harness: "claude_code", model: null, effort: "medium", approval: "ask_risky", isolate: true } }) as Thread;
+    const t = handlers.create_thread({ thread: { workspace_id: i.workspace_id, lead_id: i.lead_id, title: `${i.key} ${i.title}`, harness: "claude_code", model: null, effort: "medium", approval: "ask_risky", isolate: true } }) as Thread;
     i.thread_ids.push(t.id);
     i.status = "in_progress";
     notice(i.workspace_id, "issue-changed", i);
-    handlers.send_message({ thread_id: t.id, text: `Work on ${i.key}: ${i.title}\n\n${i.body}`, author: "Tim" });
+    handlers.send_message({ thread_id: t.id, text: `Work on ${i.key}: ${i.title}\n\n${i.body}`, author: "Maya" });
     return t;
   },
   sync_github_issues: () => 0,
@@ -530,7 +530,7 @@ const handlers: Record<string, (p: Record<string, any>) => unknown> = {
   },
   run_automation: ({ id }) => {
     const a = automations.find((x) => x.id === id)!;
-    const t = handlers.create_thread({ thread: { workspace_id: a.workspace_id, captain_id: a.captain_id, title: a.name, harness: "claude_code", model: null, effort: "medium", approval: "ask_risky", isolate: false } }) as Thread;
+    const t = handlers.create_thread({ thread: { workspace_id: a.workspace_id, lead_id: a.lead_id, title: a.name, harness: "claude_code", model: null, effort: "medium", approval: "ask_risky", isolate: false } }) as Thread;
     a.last_run = new Date().toISOString();
     handlers.send_message({ thread_id: t.id, text: a.prompt, author: a.name });
     return t;
@@ -631,7 +631,7 @@ export const mockBackend: Backend = {
   },
   hub: {
     async status() {
-      return { url: "https://hub.bouvio.com", user: tim, connected: true };
+      return { url: "https://hub.bouvio.com", user: maya, connected: true };
     },
     async setUrl() {},
     async request(method: string, path: string) {
@@ -641,7 +641,7 @@ export const mockBackend: Backend = {
       return null as never;
     },
     async signIn() {
-      return tim;
+      return maya;
     },
     async logout() {},
     async refresh() {
@@ -657,7 +657,7 @@ export const mockBackend: Backend = {
     },
     async send(msg) {
       if (msg.t === "chat") {
-        const m: ChatMessage = { id: uid(), workspace_id: msg.workspace_id, channel: msg.channel, author: tim, text: msg.text, at: new Date().toISOString(), parent: null, reactions: [], pinned: false };
+        const m: ChatMessage = { id: uid(), workspace_id: msg.workspace_id, channel: msg.channel, author: maya, text: msg.text, at: new Date().toISOString(), parent: null, reactions: [], pinned: false };
         chat.push(m);
         fire("hub-chat", m);
       }
@@ -665,5 +665,5 @@ export const mockBackend: Backend = {
   },
 };
 
-// Some life in the preview: Isa looks at a thread and types in #general.
-setTimeout(() => fire("hub-presence", { presence: { workspace_id: B, user: isa, viewing: lead.id, cursor: null }, online: true }), 800);
+// Some life in the preview: Jonas looks at a thread and types in #general.
+setTimeout(() => fire("hub-presence", { presence: { workspace_id: B, user: jonas, viewing: firstThread.id, cursor: null }, online: true }), 800);

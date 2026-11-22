@@ -25,7 +25,7 @@ import { useEffect, useMemo, useState } from "react";
 import type * as Y from "yjs";
 import { backend } from "../../backend";
 import { getLang, t, useT } from "../../i18n";
-import { useStore, useWorkspaceCaptains } from "../../store";
+import { useStore, useWorkspaceLeads } from "../../store";
 import { Dialog } from "../Dialog";
 import { Menu } from "../Menu";
 import { Empty } from "../Panel";
@@ -61,16 +61,16 @@ export function useDb(ydoc: Y.Doc) {
 /** Names someone can pick for a person field. */
 export function usePeople(): string[] {
   const me = useStore((s) => s.hub.user?.name ?? s.userName);
-  const captains = useWorkspaceCaptains();
+  const leads = useWorkspaceLeads();
   const presence = useStore((s) => (s.workspaceId ? s.data[s.workspaceId]?.presence : undefined));
   const members = useStore((s) => (s.workspaceId ? s.data[s.workspaceId]?.members : undefined));
   return useMemo(() => {
     const names = new Set<string>([me]);
     Object.values(presence ?? {}).forEach((p) => names.add(p.user.name));
     (members ?? []).forEach((m) => names.add(m.user.name));
-    captains.forEach((c) => names.add(c.name));
+    leads.forEach((c) => names.add(c.name));
     return [...names];
-  }, [me, captains, presence, members]);
+  }, [me, leads, presence, members]);
 }
 
 export function OptionChip({ o }: { o?: Option }) {

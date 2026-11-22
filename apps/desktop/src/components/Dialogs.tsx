@@ -6,7 +6,7 @@ import type { Automation } from "../protocol/Automation";
 import type { Member } from "../protocol/Member";
 import type { Role } from "../protocol/Role";
 import type { Workspace } from "../protocol/Workspace";
-import { rpc, useStore, useWorkspace, useWorkspaceCaptains, useWsData } from "../store";
+import { rpc, useStore, useWorkspace, useWorkspaceLeads, useWsData } from "../store";
 import { Dialog } from "./Dialog";
 import { Menu } from "./Menu";
 import { PixelAvatar } from "./PixelAvatar";
@@ -17,7 +17,7 @@ import { TemplatePicker } from "./platform/TemplatePicker";
 export function Dialogs() {
   const dialog = useStore((s) => s.dialog);
   if (dialog === "workspace") return <WorkspaceDialog />;
-  if (dialog === "captain") return <CaptainDialog />;
+  if (dialog === "lead") return <LeadDialog />;
   if (dialog === "issue") return <IssueDialog />;
   if (dialog === "automation") return <AutomationDialog />;
   if (dialog === "signin") return <SignInDialog />;
@@ -55,7 +55,7 @@ function WorkspaceDialog() {
             return;
           }
           if (!template) return create(name.trim(), root);
-          // A template sets up captains, issues and automations in one go.
+          // A template sets up leads, issues and automations in one go.
           rpc<Workspace>("create_workspace_from_template", { name: name.trim(), root, template_id: template }, null)
             .then(async (w) => {
               useStore.setState((s) => ({ workspaces: [...s.workspaces, w], dialog: null }));
@@ -91,15 +91,15 @@ function WorkspaceDialog() {
   );
 }
 
-function CaptainDialog() {
+function LeadDialog() {
   const t = useT();
   const setDialog = useStore((s) => s.setDialog);
-  const create = useStore((s) => s.createCaptain);
+  const create = useStore((s) => s.createLead);
   const [name, setName] = useState("");
   const [instructions, setInstructions] = useState("");
   const [shake, setShake] = useState(false);
   return (
-    <Dialog title={t("ws.newCaptain")} onClose={() => setDialog(null)}>
+    <Dialog title={t("ws.newLead")} onClose={() => setDialog(null)}>
       <form
         className="form"
         onSubmit={(e) => {
@@ -113,19 +113,19 @@ function CaptainDialog() {
         }}
       >
         <label className="field">
-          <span>{t("captain.name")}</span>
+          <span>{t("lead.name")}</span>
           <input className={`input ${shake ? "nudge" : ""}`} autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="Web" />
         </label>
         <label className="field">
-          <span>{t("captain.instructions")}</span>
-          <textarea className="input" rows={4} value={instructions} onChange={(e) => setInstructions(e.target.value)} placeholder={t("captain.instructionsHint")} />
+          <span>{t("lead.instructions")}</span>
+          <textarea className="input" rows={4} value={instructions} onChange={(e) => setInstructions(e.target.value)} placeholder={t("lead.instructionsHint")} />
         </label>
         <div className="form-actions">
           <button type="button" className="btn ghost" onClick={() => setDialog(null)}>
             {t("common.cancel")}
           </button>
           <button type="submit" className="btn primary">
-            {t("captain.create")}
+            {t("lead.create")}
           </button>
         </div>
       </form>
@@ -142,10 +142,10 @@ function IssueDialog() {
   const t = useT();
   const setDialog = useStore((s) => s.setDialog);
   const notify = useStore((s) => s.notify);
-  const captains = useWorkspaceCaptains();
+  const leads = useWorkspaceLeads();
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
-  const [captain, setCaptain] = useState<string | null>(null);
+  const [lead, setLead] = useState<string | null>(null);
   const [shake, nudge] = useShake();
   return (
     <Dialog title={t("issues.new")} onClose={() => setDialog(null)}>
@@ -155,7 +155,7 @@ function IssueDialog() {
           e.preventDefault();
           if (!title.trim()) return nudge();
           try {
-            await rpc("create_issue", { workspace_id: useStore.getState().workspaceId, title: title.trim(), body, captain_id: captain });
+            await rpc("create_issue", { workspace_id: useStore.getState().workspaceId, title: title.trim(), body, lead_id: lead });
             setDialog(null);
           } catch (err) {
             notify(String(err));
@@ -166,9 +166,9 @@ function IssueDialog() {
         <textarea className="input" rows={5} value={body} placeholder={t("issues.bodyHint")} onChange={(e) => setBody(e.target.value)} />
         <div className="form-actions spread">
           <Menu
-            value={captain}
-            items={[{ value: null, label: t("issues.noCaptain") }, ...captains.map((c) => ({ value: c.id as string | null, label: c.name, icon: <PixelAvatar seed={c.avatar_seed} size={14} /> }))]}
-            onChange={setCaptain}
+            value={lead}
+            items={[{ value: null, label: t("issues.noLead") }, ...leads.map((c) => ({ value: c.id as string | null, label: c.name, icon: <PixelAvatar seed={c.avatar_seed} size={14} /> }))]}
+            onChange={setLead}
           />
           <button type="submit" className="btn primary">
             {t("issues.create")}
@@ -186,7 +186,7 @@ function AutomationDialog() {
   const setDialog = useStore((s) => s.setDialog);
   const existing = useStore((s) => s.dialogArg) as Automation | null;
   const notify = useStore((s) => s.notify);
-  const captains = useWorkspaceCaptains();
+  const leads = useWorkspaceLeads();
   const [a, setA] = useState<Automation>(
     existing ?? {
       id: "00000000-0000-0000-0000-000000000000",
@@ -194,7 +194,7 @@ function AutomationDialog() {
       name: "",
       schedule: "0 8 * * 1-5",
       prompt: "",
-      captain_id: null,
+      lead_id: null,
       enabled: true,
       last_run: null,
       last_thread: null,
@@ -233,9 +233,9 @@ function AutomationDialog() {
         </div>
         <div className="form-actions spread">
           <Menu
-            value={a.captain_id}
-            items={[{ value: null, label: t("issues.noCaptain") }, ...captains.map((c) => ({ value: c.id as string | null, label: c.name, icon: <PixelAvatar seed={c.avatar_seed} size={14} /> }))]}
-            onChange={(c) => setA({ ...a, captain_id: c })}
+            value={a.lead_id}
+            items={[{ value: null, label: t("issues.noLead") }, ...leads.map((c) => ({ value: c.id as string | null, label: c.name, icon: <PixelAvatar seed={c.avatar_seed} size={14} /> }))]}
+            onChange={(c) => setA({ ...a, lead_id: c })}
           />
           <div className="form-actions">
             {existing && (

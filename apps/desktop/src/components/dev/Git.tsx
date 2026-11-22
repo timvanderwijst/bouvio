@@ -6,7 +6,7 @@ import type { CommitDetail } from "../../protocol/CommitDetail";
 import type { GitGraph } from "../../protocol/GitGraph";
 import type { GraphCommit } from "../../protocol/GraphCommit";
 import type { Thread } from "../../protocol/Thread";
-import { rpc, useStore, useWorkspaceCaptains, useWorkspaceThreads } from "../../store";
+import { rpc, useStore, useWorkspaceLeads, useWorkspaceThreads } from "../../store";
 import { Empty } from "../Panel";
 import { PixelAvatar } from "../PixelAvatar";
 import { errText, laneColor } from "./state";
@@ -47,12 +47,12 @@ function GraphSvg({ commits, lanes, head }: { commits: GraphCommit[]; lanes: num
 }
 
 function RefBadge({ name, color, thread, head }: { name: string; color: string; thread?: Thread; head: boolean }) {
-  const captains = useWorkspaceCaptains();
+  const leads = useWorkspaceLeads();
   const openThread = useStore((s) => s.openThread);
   const remote = /^[^/]+\/.+/.test(name) && !name.startsWith("bouvio/") && name.split("/")[0] === "origin";
   const tag = /^v?\d+(\.\d+)+/.test(name);
   if (thread) {
-    const c = captains.find((x) => x.id === thread.captain_id);
+    const c = leads.find((x) => x.id === thread.lead_id);
     return (
       <span
         className={`dv-ref is-thread ${head ? "head" : ""}`}

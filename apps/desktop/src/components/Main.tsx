@@ -1,7 +1,7 @@
 import { PanelRight, Plus, X } from "lucide-react";
 import { useT } from "../i18n";
 import type { Thread } from "../protocol/Thread";
-import { useStore, useWorkspaceCaptains, useWorkspaceThreads, useWsData } from "../store";
+import { useStore, useWorkspaceLeads, useWorkspaceThreads, useWsData } from "../store";
 import { personColor } from "./Sidebar";
 import { cost } from "../lib/format";
 import { Composer } from "./Composer";
@@ -12,8 +12,8 @@ import { ThreadView } from "./ThreadView";
 export function Main({ thread }: { thread: Thread | null }) {
   const t = useT();
   const view = useStore((s) => s.view);
-  const captains = useWorkspaceCaptains();
-  const captain = view.kind === "draft" ? captains.find((c) => c.id === view.captainId) : null;
+  const leads = useWorkspaceLeads();
+  const lead = view.kind === "draft" ? leads.find((c) => c.id === view.leadId) : null;
 
   return (
     <section className="main">
@@ -26,12 +26,12 @@ export function Main({ thread }: { thread: Thread | null }) {
       ) : (
         <div className="draft">
           <div className="draft-inner">
-            {captain && (
+            {lead && (
               <span className="draft-avatar">
-                <PixelAvatar seed={captain.avatar_seed} size={40} />
+                <PixelAvatar seed={lead.avatar_seed} size={40} />
               </span>
             )}
-            <h1 className="display">{captain ? t("thread.emptyIn", { name: captain.name }) : t("thread.empty")}</h1>
+            <h1 className="display">{lead ? t("thread.emptyIn", { name: lead.name }) : t("thread.empty")}</h1>
             <Composer thread={null} />
           </div>
         </div>
@@ -45,7 +45,7 @@ function TabBar({ thread }: { thread: Thread | null }) {
   const workspaceId = useStore((s) => s.workspaceId);
   const tabIds = useStore((s) => (workspaceId ? s.tabs[workspaceId] : undefined)) ?? NO_TABS;
   const threads = useWorkspaceThreads();
-  const captains = useWorkspaceCaptains();
+  const leads = useWorkspaceLeads();
   const openThread = useStore((s) => s.openThread);
   const closeTab = useStore((s) => s.closeTab);
   const go = useStore((s) => s.go);
@@ -58,7 +58,7 @@ function TabBar({ thread }: { thread: Thread | null }) {
         {tabIds.map((id) => {
           const th = threads.find((x) => x.id === id);
           if (!th) return null;
-          const c = captains.find((x) => x.id === th.captain_id);
+          const c = leads.find((x) => x.id === th.lead_id);
           const on = thread?.id === id;
           return (
             <div key={id} className={`tab ${on ? "on" : ""}`}>
@@ -73,7 +73,7 @@ function TabBar({ thread }: { thread: Thread | null }) {
             </div>
           );
         })}
-        <button className="icon-btn" onClick={() => go({ kind: "draft", captainId: null })} aria-label={t("ws.newThread")} title={t("ws.newThread")}>
+        <button className="icon-btn" onClick={() => go({ kind: "draft", leadId: null })} aria-label={t("ws.newThread")} title={t("ws.newThread")}>
           <Plus size={15} />
         </button>
       </div>

@@ -34,7 +34,7 @@ impl Runner {
         v
     }
 
-    pub fn create_issue(&self, workspace_id: Uuid, title: String, body: String, status: Option<IssueStatus>, captain_id: Option<Uuid>) -> Result<Issue> {
+    pub fn create_issue(&self, workspace_id: Uuid, title: String, body: String, status: Option<IssueStatus>, lead_id: Option<Uuid>) -> Result<Issue> {
         let prefix = self.settings(workspace_id).issue_prefix;
         let number = self.issues.filter(|i| i.workspace_id == workspace_id).iter().map(|i| i.number).max().unwrap_or(0) + 1;
         let now = Utc::now();
@@ -47,7 +47,7 @@ impl Runner {
             body,
             status: status.unwrap_or(IssueStatus::Todo),
             assignee: None,
-            captain_id,
+            lead_id,
             thread_ids: vec![],
             github_number: None,
             created_at: now,
@@ -78,18 +78,18 @@ impl Runner {
     }
 
     /// Hand an issue to an agent: a new thread with the issue as its brief.
-    pub async fn start_issue(self: &Arc<Self>, issue_id: Uuid, captain_id: Option<Uuid>, author: String) -> Result<Thread> {
+    pub async fn start_issue(self: &Arc<Self>, issue_id: Uuid, lead_id: Option<Uuid>, author: String) -> Result<Thread> {
         let issue = self.issues.find(|i| i.id == issue_id).context("unknown issue")?;
-        let captain = captain_id.or(issue.captain_id).and_then(|c| self.store().captain(c));
+        let lead = lead_id.or(issue.lead_id).and_then(|c| self.store().lead(c));
         let t = self
             .create_thread(NewThread {
                 workspace_id: issue.workspace_id,
-                captain_id: captain.as_ref().map(|c| c.id),
+                lead_id: lead.as_ref().map(|c| c.id),
                 title: Some(format!("{} {}", issue.key, issue.title)),
-                harness: captain.as_ref().map(|c| c.harness).unwrap_or(HarnessKind::ClaudeCode),
-                model: captain.as_ref().and_then(|c| c.model.clone()),
-                effort: captain.as_ref().map(|c| c.effort).unwrap_or(Effort::Medium),
-                approval: captain.as_ref().map(|c| c.approval).unwrap_or(ApprovalLevel::AskRisky),
+                harness: lead.as_ref().map(|c| c.harness).unwrap_or(HarnessKind::ClaudeCode),
+                model: lead.as_ref().and_then(|c| c.model.clone()),
+                effort: lead.as_ref().map(|c| c.effort).unwrap_or(Effort::Medium),
+                approval: lead.as_ref().map(|c| c.approval).unwrap_or(ApprovalLevel::AskRisky),
                 isolate: true,
             })
             .await?;
@@ -230,16 +230,16 @@ impl Runner {
 
     pub async fn run_automation(self: &Arc<Self>, id: Uuid) -> Result<Thread> {
         let a = self.automations.find(|a| a.id == id).context("unknown automation")?;
-        let captain = a.captain_id.and_then(|c| self.store().captain(c));
+        let lead = a.lead_id.and_then(|c| self.store().lead(c));
         let t = self
             .create_thread(NewThread {
                 workspace_id: a.workspace_id,
-                captain_id: captain.as_ref().map(|c| c.id),
+                lead_id: lead.as_ref().map(|c| c.id),
                 title: Some(format!("{} · {}", a.name, Local::now().format("%d %b %H:%M"))),
-                harness: captain.as_ref().map(|c| c.harness).unwrap_or(HarnessKind::ClaudeCode),
-                model: captain.as_ref().and_then(|c| c.model.clone()),
-                effort: captain.as_ref().map(|c| c.effort).unwrap_or(Effort::Medium),
-                approval: captain.as_ref().map(|c| c.approval).unwrap_or(ApprovalLevel::AskRisky),
+                harness: lead.as_ref().map(|c| c.harness).unwrap_or(HarnessKind::ClaudeCode),
+                model: lead.as_ref().and_then(|c| c.model.clone()),
+                effort: lead.as_ref().map(|c| c.effort).unwrap_or(Effort::Medium),
+                approval: lead.as_ref().map(|c| c.approval).unwrap_or(ApprovalLevel::AskRisky),
                 isolate: false,
             })
             .await?;

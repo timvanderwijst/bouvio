@@ -2,6 +2,6 @@
 
 export type TemplateIssue = { title: string, body: string, 
 /**
- * Name of one of the template's captains.
+ * Name of one of the template's leads.
  */
-captain: string | null, };
+lead: string | null, };

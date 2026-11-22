@@ -1,22 +1,22 @@
 {
   "id": "marketing-campaign",
   "name": "Marketing campaign",
-  "description": "Copy, design and research captains for a campaign, with a weekly report every Monday.",
+  "description": "Copy, design and research leads for a campaign, with a weekly report every Monday.",
   "icon": "megaphone",
   "instructions": "This workspace runs a marketing campaign. Write for the audience in the brief, in plain language. Keep drafts in the workspace as Markdown or HTML so people can review them as artifacts. Cite sources for every claim about the market.",
-  "captains": [
+  "leads": [
     { "name": "Copy", "instructions": "Writes headlines, landing pages, emails and social posts. Offer two or three variants for anything public, and keep a consistent voice." },
     { "name": "Design", "instructions": "Makes visuals: social images, banners and landing page layouts as HTML or SVG artifacts. Keep the brand colours and type." },
     { "name": "Research", "instructions": "Researches the audience, competitors and channels. Summarise findings with sources and what they mean for the campaign." }
   ],
   "issues": [
-    { "title": "Write the campaign brief", "body": "Goal, audience, message, channels, budget and how we measure success.", "captain": "Research" },
-    { "title": "Map three competitors' recent campaigns", "captain": "Research" },
-    { "title": "Draft the landing page copy", "captain": "Copy" },
-    { "title": "Draft the launch email", "captain": "Copy" },
-    { "title": "Design social images for launch week", "captain": "Design" }
+    { "title": "Write the campaign brief", "body": "Goal, audience, message, channels, budget and how we measure success.", "lead": "Research" },
+    { "title": "Map three competitors' recent campaigns", "lead": "Research" },
+    { "title": "Draft the landing page copy", "lead": "Copy" },
+    { "title": "Draft the launch email", "lead": "Copy" },
+    { "title": "Design social images for launch week", "lead": "Design" }
   ],
   "automations": [
-    { "name": "Weekly report", "schedule": "0 9 * * 1", "prompt": "Write the weekly campaign report: what shipped last week, open issues and their status, results we can see, and the three most important things for this week. Save it as a Markdown file named report-<date>.md.", "captain": "Research", "enabled": true }
+    { "name": "Weekly report", "schedule": "0 9 * * 1", "prompt": "Write the weekly campaign report: what shipped last week, open issues and their status, results we can see, and the three most important things for this week. Save it as a Markdown file named report-<date>.md.", "lead": "Research", "enabled": true }
   ]
 }

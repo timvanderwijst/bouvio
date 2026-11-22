@@ -43,15 +43,15 @@ const task = (title: string, due: string | null, extra: Partial<PersonalTask> = 
 });
 
 let tasks: PersonalTask[] = [
-  task("Answer Isa about the hub invite flow", day(-1), { priority: "high" }, 0),
+  task("Answer Jonas about the hub invite flow", day(-1), { priority: "high" }, 0),
   task("Review the magic link thread", day(0), { priority: "medium" }, 1),
   task("Renew bouvio.com domain", day(0), { notes: "Registrar sends the invoice to the old address." }, 2),
   task("Draft release notes for 0.2", day(2), {}, 3),
-  task("Try Kimi K2 on the runner captain", day(5), { priority: "low" }, 4),
+  task("Try Kimi K2 on the runner lead", day(5), { priority: "low" }, 4),
   task("Call the accountant", day(9), {}, 5),
   task("Read the Herdr pane docs", null, {}, 6),
   task("Sketch the evals page", null, {}, 7),
-  task("Set a budget for the Design captain", day(-2), { done: true, done_at: ago(300) }, 8),
+  task("Set a budget for the Design lead", day(-2), { done: true, done_at: ago(300) }, 8),
   task("Ship the rail hover fix", day(-1), { done: true, done_at: ago(1500) }, 9),
 ];
 
@@ -71,9 +71,9 @@ const notes = new Map<string, PersonalNote>([
     "0f9e8d7c6b5a",
     {
       id: "0f9e8d7c6b5a",
-      title: "Captain prompts that work",
+      title: "Lead prompts that work",
       updated_at: ago(1440 * 2),
-      text: "# Captain prompts that work\n\nKeep each captain to one folder. Ask for a plan first, then threads per step.\n\n`spawn_thread` with `isolate: true` for anything that touches more than two files.",
+      text: "# Lead prompts that work\n\nKeep each lead to one folder. Ask for a plan first, then threads per step.\n\n`spawn_thread` with `isolate: true` for anything that touches more than two files.",
     },
   ],
   ["99aa88bb77cc", { id: "99aa88bb77cc", title: "Groceries", updated_at: ago(1440 * 6), text: "# Groceries\n\n- coffee\n- oat milk\n- bread" }],
@@ -107,9 +107,9 @@ async function costSummary(workspaceId: string | null, days: number): Promise<Co
   });
   const total = per_day.reduce((a, d) => a + d.cost_usd, 0);
   const turns = per_day.reduce((a, d) => a + d.turns, 0);
-  const caps = workspaceId ? st.captains[workspaceId] ?? [] : Object.values(st.captains).flat();
+  const caps = workspaceId ? st.leads[workspaceId] ?? [] : Object.values(st.leads).flat();
   const shares = [0.38, 0.27, 0.16, 0.11, 0.05];
-  const per_captain = [
+  const per_lead = [
     ...caps.slice(0, 5).map((c, i) => ({ key: c.id, label: c.name, cost_usd: total * shares[i], turns: Math.round(turns * shares[i]) })),
     { key: "", label: "", cost_usd: total * 0.03, turns: Math.round(turns * 0.03) },
   ];
@@ -122,7 +122,7 @@ async function costSummary(workspaceId: string | null, days: number): Promise<Co
     turns,
     unknown_turns: Math.round(turns * 0.12),
     per_day,
-    per_captain,
+    per_lead,
     per_model: [
       { key: "claude_code:opus", label: "Claude Code · opus", cost_usd: total * 0.58, turns: Math.round(turns * 0.4) },
       { key: "claude_code:", label: "Claude Code", cost_usd: total * 0.24, turns: Math.round(turns * 0.35) },
@@ -130,9 +130,9 @@ async function costSummary(workspaceId: string | null, days: number): Promise<Co
       { key: "codex:", label: "Codex", cost_usd: total * 0.06, turns: Math.round(turns * 0.1) },
     ],
     per_person: [
-      { key: "Tim", label: "Tim", cost_usd: total * 0.52, turns: Math.round(turns * 0.45) },
+      { key: "Maya", label: "Maya", cost_usd: total * 0.52, turns: Math.round(turns * 0.45) },
       { key: "Desktop", label: "Desktop", cost_usd: total * 0.29, turns: Math.round(turns * 0.33) },
-      { key: "Isa", label: "Isa", cost_usd: total * 0.19, turns: Math.round(turns * 0.22) },
+      { key: "Jonas", label: "Jonas", cost_usd: total * 0.19, turns: Math.round(turns * 0.22) },
     ],
     top_threads: ths.map((t, i) => ({ thread_id: t.id, workspace_id: t.workspace_id, title: t.title, cost_usd: total * [0.18, 0.12, 0.09, 0.07, 0.05, 0.03][i], turns: [21, 14, 11, 8, 6, 3][i] })),
     budgets: budgets.filter((b) => !workspaceId || b.budget.workspace_id === workspaceId),
@@ -380,13 +380,13 @@ export const handlers: Record<string, (p: Record<string, any>) => unknown> = {
   list_budgets: ({ workspace_id }) => budgets.filter((b) => !workspace_id || b.budget.workspace_id === workspace_id),
   set_budget: async ({ workspace_id, scope, id, monthly_usd }) => {
     const st = await state();
-    const i = budgets.findIndex((b) => b.budget.workspace_id === workspace_id && b.budget.scope === scope && (b.budget.id ?? null) === (scope === "captain" ? id : null));
+    const i = budgets.findIndex((b) => b.budget.workspace_id === workspace_id && b.budget.scope === scope && (b.budget.id ?? null) === (scope === "lead" ? id : null));
     if (i >= 0) budgets.splice(i, 1);
     if (monthly_usd > 0) {
-      const captain = scope === "captain" ? (st.captains[workspace_id] ?? []).find((c) => c.id === id) : null;
-      const label = captain?.name ?? st.workspaces.find((w) => w.id === workspace_id)?.name ?? "";
-      const spent = scope === "captain" ? 6.4 : 21.7;
-      budgets.push({ budget: { workspace_id, scope, id: scope === "captain" ? id : null, monthly_usd }, label, spent_usd: spent });
+      const lead = scope === "lead" ? (st.leads[workspace_id] ?? []).find((c) => c.id === id) : null;
+      const label = lead?.name ?? st.workspaces.find((w) => w.id === workspace_id)?.name ?? "";
+      const spent = scope === "lead" ? 6.4 : 21.7;
+      budgets.push({ budget: { workspace_id, scope, id: scope === "lead" ? id : null, monthly_usd }, label, spent_usd: spent });
     }
     return budgets.filter((b) => b.budget.workspace_id === workspace_id);
   },

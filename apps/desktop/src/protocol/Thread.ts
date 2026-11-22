@@ -4,7 +4,7 @@ import type { ApprovalLevel } from "./ApprovalLevel";
 import type { Effort } from "./Effort";
 import type { HarnessKind } from "./HarnessKind";
 
-export type Thread = { id: string, workspace_id: string, captain_id: string | null, title: string, harness: HarnessKind, model: string | null, effort: Effort, approval: ApprovalLevel, status: AgentStatus, 
+export type Thread = { id: string, workspace_id: string, lead_id: string | null, title: string, harness: HarnessKind, model: string | null, effort: Effort, approval: ApprovalLevel, status: AgentStatus, 
 /**
  * Where the agent works: the workspace root, or its own worktree.
  */

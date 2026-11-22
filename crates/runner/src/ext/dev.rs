@@ -202,7 +202,7 @@ mod tests {
         let t = r
             .create_thread(NewThread {
                 workspace_id: ws.id,
-                captain_id: None,
+                lead_id: None,
                 title: Some("x".into()),
                 harness: HarnessKind::ClaudeCode,
                 model: None,
@@ -215,35 +215,35 @@ mod tests {
         std::fs::write(repo.join("a.txt"), "one\nTWO\n").unwrap();
 
         let c: ReviewComment = serde_json::from_value(
-            r.call("add_review_comment", json!({ "thread_id": t.id, "path": "a.txt", "line": 2, "side": "new", "text": "why caps?" }), "Isa").await.unwrap(),
+            r.call("add_review_comment", json!({ "thread_id": t.id, "path": "a.txt", "line": 2, "side": "new", "text": "why caps?" }), "Jonas").await.unwrap(),
         )
         .unwrap();
-        assert_eq!(c.author, "Isa");
+        assert_eq!(c.author, "Jonas");
         assert_eq!(c.line_text, "TWO");
         // A line that is not in the diff is refused.
-        assert!(r.call("add_review_comment", json!({ "thread_id": t.id, "path": "a.txt", "line": 9, "side": "new", "text": "?" }), "Isa").await.is_err());
+        assert!(r.call("add_review_comment", json!({ "thread_id": t.id, "path": "a.txt", "line": 9, "side": "new", "text": "?" }), "Jonas").await.is_err());
 
         // The agent adds a line on top: the comment follows.
         std::fs::write(repo.join("a.txt"), "zero\none\nTWO\n").unwrap();
-        let list: Vec<ReviewComment> = serde_json::from_value(r.call("list_review_comments", json!({ "thread_id": t.id }), "Isa").await.unwrap()).unwrap();
+        let list: Vec<ReviewComment> = serde_json::from_value(r.call("list_review_comments", json!({ "thread_id": t.id }), "Jonas").await.unwrap()).unwrap();
         assert_eq!((list[0].line, list[0].outdated), (3, false));
 
         // Scoped calls find the comment's workspace by its id.
-        assert!(r.call_scoped(ws.id, "resolve_review_comment", json!({ "id": c.id }), "Isa").await.is_ok());
-        assert!(r.call_scoped(Uuid::new_v4(), "resolve_review_comment", json!({ "id": c.id }), "Isa").await.is_err());
+        assert!(r.call_scoped(ws.id, "resolve_review_comment", json!({ "id": c.id }), "Jonas").await.is_ok());
+        assert!(r.call_scoped(Uuid::new_v4(), "resolve_review_comment", json!({ "id": c.id }), "Jonas").await.is_err());
 
         std::fs::write(repo.join("a.txt"), "one\ntwo\n").unwrap();
-        let list: Vec<ReviewComment> = serde_json::from_value(r.call("list_review_comments", json!({ "thread_id": t.id }), "Isa").await.unwrap()).unwrap();
+        let list: Vec<ReviewComment> = serde_json::from_value(r.call("list_review_comments", json!({ "thread_id": t.id }), "Jonas").await.unwrap()).unwrap();
         assert!(list[0].resolved);
 
         // Git graph and commit details on the same repo.
-        let g: GitGraph = serde_json::from_value(r.call("git_graph", json!({ "workspace_id": ws.id }), "Isa").await.unwrap()).unwrap();
+        let g: GitGraph = serde_json::from_value(r.call("git_graph", json!({ "workspace_id": ws.id }), "Jonas").await.unwrap()).unwrap();
         assert_eq!(g.commits.len(), 1);
         assert_eq!(g.commits[0].refs, ["HEAD", "main"]);
-        let d: CommitDetail = serde_json::from_value(r.call("get_commit", json!({ "workspace_id": ws.id, "sha": g.commits[0].sha }), "Isa").await.unwrap()).unwrap();
+        let d: CommitDetail = serde_json::from_value(r.call("get_commit", json!({ "workspace_id": ws.id, "sha": g.commits[0].sha }), "Jonas").await.unwrap()).unwrap();
         assert_eq!(d.subject, "init");
         assert_eq!(d.files[0].path, "a.txt");
-        assert!(r.call("get_commit", json!({ "workspace_id": ws.id, "sha": "--output=/tmp/x" }), "Isa").await.is_err());
+        assert!(r.call("get_commit", json!({ "workspace_id": ws.id, "sha": "--output=/tmp/x" }), "Jonas").await.is_err());
     }
 
     #[test]

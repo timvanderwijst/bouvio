@@ -4,4 +4,4 @@ export type TemplateAutomation = { name: string,
 /**
  * Five-field cron, local time.
  */
-schedule: string, prompt: string, captain: string | null, enabled: boolean, };
+schedule: string, prompt: string, lead: string | null, enabled: boolean, };

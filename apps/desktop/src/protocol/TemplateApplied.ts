@@ -3,4 +3,4 @@
 /**
  * What `apply_template` added to a workspace.
  */
-export type TemplateApplied = { captains: number, issues: number, automations: number, };
+export type TemplateApplied = { leads: number, issues: number, automations: number, };

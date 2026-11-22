@@ -482,7 +482,7 @@ mod tests {
         {
             let opts = sqlx::sqlite::SqliteConnectOptions::new().filename(root.join("app.db")).create_if_missing(true);
             let mut db = sqlx::SqliteConnection::connect_with(&opts).await.unwrap();
-            sqlx::raw_sql("CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, score REAL, avatar BLOB); INSERT INTO users (name, score) VALUES ('Tim', 9.5), ('Isa', NULL);")
+            sqlx::raw_sql("CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, score REAL, avatar BLOB); INSERT INTO users (name, score) VALUES ('Maya', 9.5), ('Jonas', NULL);")
                 .execute(&mut db)
                 .await
                 .unwrap();
@@ -504,7 +504,7 @@ mod tests {
 
         let page = rows(&r, ws.id, c.id, "users", 2, 0, Some(DbOrder { column: "id".into(), desc: false })).await.unwrap();
         assert_eq!(page.columns, ["id", "name", "score", "avatar"]);
-        assert_eq!(page.rows[0], vec![json!(1), json!("Tim"), json!(9.5), Value::Null]);
+        assert_eq!(page.rows[0], vec![json!(1), json!("Maya"), json!(9.5), Value::Null]);
         assert_eq!(page.total, Some(1007));
 
         let all = query(&r, ws.id, c.id, "SELECT * FROM users").await.unwrap();
@@ -517,7 +517,7 @@ mod tests {
         let mut w = c.clone();
         w.read_only = false;
         save(&r, ws.id, w).unwrap();
-        let res = query(&r, ws.id, c.id, "DELETE FROM users WHERE name = 'Isa'").await.unwrap();
+        let res = query(&r, ws.id, c.id, "DELETE FROM users WHERE name = 'Jonas'").await.unwrap();
         assert_eq!(res.affected, Some(1));
     }
 }

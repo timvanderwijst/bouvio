@@ -167,7 +167,7 @@ async fn handle(me: &Arc<HubClient>, runner: &Arc<Runner>, msg: ServerMsg) {
             }
         }
         ServerMsg::Chat { message } => {
-            // `@Captain do this` in a workspace this runner hosts starts a thread.
+            // `@Lead do this` in a workspace this runner hosts starts a thread.
             if message.parent.is_none() && me.hosts(message.workspace_id) {
                 crate::ext::comms::on_chat(runner, me, &message);
             }

@@ -3,12 +3,12 @@ import { backend } from "../../backend";
 import { useStore } from "../../store";
 
 // Chat text: paragraphs, fenced and inline code, bold, links, links to threads
-// (`bouvio://thread/<id>`, as captains post them) and @mention chips.
+// (`bouvio://thread/<id>`, as leads post them) and @mention chips.
 // Nothing is interpreted as HTML.
 
 export interface MentionTarget {
   name: string;
-  kind: "person" | "captain" | "me";
+  kind: "person" | "lead" | "me";
 }
 
 const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");

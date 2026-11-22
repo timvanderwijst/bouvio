@@ -427,7 +427,7 @@ fn cost_summary_at(r: &Runner, workspace_id: Option<Uuid>, days: u32, now: DateT
         .map(|i| CostDay { date: (first + Duration::days(i as i64)).format("%Y-%m-%d").to_string(), ..Default::default() })
         .collect();
     let (mut total, mut turns_n, mut unknown) = (0.0, 0u32, 0u32);
-    let (mut captains, mut models, mut people) = (Acc::default(), Acc::default(), Acc::default());
+    let (mut leads, mut models, mut people) = (Acc::default(), Acc::default(), Acc::default());
     let mut threads: Vec<CostThread> = Vec::new();
 
     let scope: Vec<Workspace> = match workspace_id {
@@ -435,7 +435,7 @@ fn cost_summary_at(r: &Runner, workspace_id: Option<Uuid>, days: u32, now: DateT
         None => local_workspaces(r),
     };
     for ws in &scope {
-        let names: HashMap<Uuid, String> = r.captains(ws.id).into_iter().map(|c| (c.id, c.name)).collect();
+        let names: HashMap<Uuid, String> = r.leads(ws.id).into_iter().map(|c| (c.id, c.name)).collect();
         for t in r.threads(ws.id) {
             let mut row = CostThread { thread_id: t.id, workspace_id: ws.id, title: t.title.clone(), cost_usd: 0.0, turns: 0 };
             for turn in thread_turns(r, t.id).iter().filter(|x| x.at >= since && x.at <= now) {
@@ -450,9 +450,9 @@ fn cost_summary_at(r: &Runner, workspace_id: Option<Uuid>, days: u32, now: DateT
                     d.cost_usd += c;
                     d.turns += 1;
                 }
-                match t.captain_id {
-                    Some(cid) => captains.add(cid.to_string(), names.get(&cid).cloned().unwrap_or_default(), c),
-                    None => captains.add(String::new(), String::new(), c),
+                match t.lead_id {
+                    Some(cid) => leads.add(cid.to_string(), names.get(&cid).cloned().unwrap_or_default(), c),
+                    None => leads.add(String::new(), String::new(), c),
                 }
                 let model = t.model.clone().unwrap_or_default();
                 let label = if model.is_empty() { harness_name(t.harness).to_string() } else { format!("{} · {model}", harness_name(t.harness)) };
@@ -478,7 +478,7 @@ fn cost_summary_at(r: &Runner, workspace_id: Option<Uuid>, days: u32, now: DateT
         turns: turns_n,
         unknown_turns: unknown,
         per_day,
-        per_captain: captains.rows(),
+        per_lead: leads.rows(),
         per_model: models.rows(),
         per_person: people.rows(),
         top_threads: threads,
@@ -486,11 +486,11 @@ fn cost_summary_at(r: &Runner, workspace_id: Option<Uuid>, days: u32, now: DateT
     }
 }
 
-/// What a workspace (or one captain in it) spent since `since`.
-fn spent_since(r: &Runner, workspace_id: Uuid, captain: Option<Uuid>, since: DateTime<Utc>) -> f64 {
+/// What a workspace (or one lead in it) spent since `since`.
+fn spent_since(r: &Runner, workspace_id: Uuid, lead: Option<Uuid>, since: DateTime<Utc>) -> f64 {
     r.threads(workspace_id)
         .into_iter()
-        .filter(|t| captain.is_none() || t.captain_id == captain)
+        .filter(|t| lead.is_none() || t.lead_id == lead)
         .map(|t| thread_turns(r, t.id).iter().filter(|x| x.at >= since).filter_map(|x| x.cost).sum::<f64>())
         .sum()
 }
@@ -507,7 +507,7 @@ fn load_budgets(r: &Runner) -> Vec<Budget> {
 
 fn budget_label(r: &Runner, b: &Budget) -> String {
     match (b.scope, b.id) {
-        (BudgetScope::Captain, Some(id)) => r.store().captain(id).map(|c| c.name).unwrap_or_else(|| "a removed captain".into()),
+        (BudgetScope::Lead, Some(id)) => r.store().lead(id).map(|c| c.name).unwrap_or_else(|| "a removed lead".into()),
         _ => r.workspace(b.workspace_id).map(|w| w.name).unwrap_or_else(|| "this workspace".into()),
     }
 }
@@ -522,11 +522,11 @@ fn list_budgets_at(r: &Runner, workspace_id: Option<Uuid>, now: DateTime<Utc>) -
         .into_iter()
         .filter(|b| workspace_id.is_none_or(|w| w == b.workspace_id))
         .map(|b| {
-            let captain = if b.scope == BudgetScope::Captain { b.id } else { None };
-            BudgetStatus { label: budget_label(r, &b), spent_usd: spent_since(r, b.workspace_id, captain, since), budget: b }
+            let lead = if b.scope == BudgetScope::Lead { b.id } else { None };
+            BudgetStatus { label: budget_label(r, &b), spent_usd: spent_since(r, b.workspace_id, lead, since), budget: b }
         })
         .collect();
-    v.sort_by_key(|b| (b.budget.scope == BudgetScope::Captain, b.label.to_lowercase()));
+    v.sort_by_key(|b| (b.budget.scope == BudgetScope::Lead, b.label.to_lowercase()));
     v
 }
 
@@ -535,9 +535,9 @@ pub fn set_budget(r: &Runner, workspace_id: Uuid, scope: BudgetScope, id: Option
     r.workspace(workspace_id).context("unknown workspace")?;
     let id = match scope {
         BudgetScope::Workspace => None,
-        BudgetScope::Captain => {
-            let id = id.context("a captain budget needs the captain")?;
-            r.store().captain(id).filter(|c| c.workspace_id == workspace_id).context("unknown captain")?;
+        BudgetScope::Lead => {
+            let id = id.context("a lead budget needs the lead")?;
+            r.store().lead(id).filter(|c| c.workspace_id == workspace_id).context("unknown lead")?;
             Some(id)
         }
     };
@@ -558,17 +558,17 @@ pub fn set_budget(r: &Runner, workspace_id: Uuid, scope: BudgetScope, id: Option
     Ok(out)
 }
 
-/// Refuse a new turn when the thread's captain or workspace is over its budget.
+/// Refuse a new turn when the thread's lead or workspace is over its budget.
 pub fn check_budget(r: &Runner, thread: &bouvio_protocol::Thread) -> Result<()> {
     let budgets: Vec<Budget> = load_budgets(r).into_iter().filter(|b| b.workspace_id == thread.workspace_id).collect();
     if budgets.is_empty() {
         return Ok(());
     }
     let since = month_start(Utc::now());
-    let captain = budgets.iter().find(|b| b.scope == BudgetScope::Captain && b.id.is_some() && b.id == thread.captain_id);
+    let lead = budgets.iter().find(|b| b.scope == BudgetScope::Lead && b.id.is_some() && b.id == thread.lead_id);
     let workspace = budgets.iter().find(|b| b.scope == BudgetScope::Workspace);
-    for b in [captain, workspace].into_iter().flatten() {
-        let who = if b.scope == BudgetScope::Captain { b.id } else { None };
+    for b in [lead, workspace].into_iter().flatten() {
+        let who = if b.scope == BudgetScope::Lead { b.id } else { None };
         let spent = spent_since(r, thread.workspace_id, who, since);
         if spent >= b.monthly_usd {
             bail!("Budget reached for {} (${spent:.2} of ${:.2} this month). Raise it in Costs.", budget_label(r, b), b.monthly_usd);
@@ -1025,7 +1025,7 @@ async fn eval_case(r: &Arc<Runner>, run: &EvalRun, case: &EvalCase, target: &Eva
     let t = r
         .create_thread(NewThread {
             workspace_id: run.workspace_id,
-            captain_id: None,
+            lead_id: None,
             title: Some(format!("Eval · {} · {}", run.suite_name, target_label(target))),
             harness: target.harness,
             model: target.model.clone().filter(|m| !m.is_empty()),
@@ -1177,10 +1177,10 @@ mod tests {
         (dir, r)
     }
 
-    async fn thread(r: &Arc<Runner>, ws: Uuid, captain: Option<Uuid>, model: Option<&str>) -> Thread {
+    async fn thread(r: &Arc<Runner>, ws: Uuid, lead: Option<Uuid>, model: Option<&str>) -> Thread {
         r.create_thread(NewThread {
             workspace_id: ws,
-            captain_id: captain,
+            lead_id: lead,
             title: Some("T".into()),
             harness: HarnessKind::ClaudeCode,
             model: model.map(String::from),
@@ -1192,8 +1192,8 @@ mod tests {
         .unwrap()
     }
 
-    fn captain(r: &Runner, ws: Uuid, name: &str) -> Captain {
-        r.create_captain(NewCaptain {
+    fn lead(r: &Runner, ws: Uuid, name: &str) -> Lead {
+        r.create_lead(NewLead {
             workspace_id: ws,
             name: name.into(),
             instructions: String::new(),
@@ -1216,14 +1216,14 @@ mod tests {
     async fn costs_aggregate_from_event_logs() {
         let (_d, r) = runner();
         let ws = r.create_workspace("Bouvio".into(), None).unwrap();
-        let cap = captain(&r, ws.id, "Runner");
+        let cap = lead(&r, ws.id, "Runner");
         let a = thread(&r, ws.id, Some(cap.id), Some("opus")).await;
         let b = thread(&r, ws.id, None, None).await;
         let now = Utc::now();
-        turn(&r, a.id, 0, now - Duration::days(2), "Tim", Some(0.50));
-        turn(&r, a.id, 2, now - Duration::minutes(5), "Isa", Some(0.25));
-        turn(&r, b.id, 0, now - Duration::minutes(1), "Tim", None);
-        turn(&r, b.id, 2, now - Duration::days(40), "Tim", Some(9.0)); // outside 7 days
+        turn(&r, a.id, 0, now - Duration::days(2), "Maya", Some(0.50));
+        turn(&r, a.id, 2, now - Duration::minutes(5), "Jonas", Some(0.25));
+        turn(&r, b.id, 0, now - Duration::minutes(1), "Maya", None);
+        turn(&r, b.id, 2, now - Duration::days(40), "Maya", Some(9.0)); // outside 7 days
 
         let s = cost_summary_at(&r, Some(ws.id), 7, now);
         assert_eq!(s.per_day.len(), 7);
@@ -1232,15 +1232,15 @@ mod tests {
         assert_eq!(s.unknown_turns, 1);
         assert!((s.per_day.iter().map(|d| d.cost_usd).sum::<f64>() - 0.75).abs() < 1e-9);
         assert!((s.per_day.last().unwrap().cost_usd - 0.25).abs() < 1e-9);
-        assert_eq!(s.per_captain[0].label, "Runner");
-        assert_eq!(s.per_captain[1].key, "");
-        let tim = s.per_person.iter().find(|p| p.key == "Tim").unwrap();
-        assert_eq!((tim.turns, tim.cost_usd), (2, 0.5));
+        assert_eq!(s.per_lead[0].label, "Runner");
+        assert_eq!(s.per_lead[1].key, "");
+        let maya = s.per_person.iter().find(|p| p.key == "Maya").unwrap();
+        assert_eq!((maya.turns, maya.cost_usd), (2, 0.5));
         assert_eq!(s.per_model[0].label, "Claude Code · opus");
         assert_eq!(s.top_threads[0].thread_id, a.id);
 
         // A new turn changes the file length, so the cache sees it.
-        turn(&r, b.id, 4, now, "Tim", Some(1.0));
+        turn(&r, b.id, 4, now, "Maya", Some(1.0));
         let s = cost_summary_at(&r, None, 90, now + Duration::seconds(1));
         assert!((s.total_usd - 10.75).abs() < 1e-9, "{}", s.total_usd);
     }
@@ -1249,16 +1249,16 @@ mod tests {
     async fn budget_refuses_turns_over_the_limit() {
         let (_d, r) = runner();
         let ws = r.create_workspace("Bouvio".into(), None).unwrap();
-        let cap = captain(&r, ws.id, "Runner");
+        let cap = lead(&r, ws.id, "Runner");
         let a = thread(&r, ws.id, Some(cap.id), None).await;
         let b = thread(&r, ws.id, None, None).await;
-        turn(&r, a.id, 0, Utc::now(), "Tim", Some(1.20));
+        turn(&r, a.id, 0, Utc::now(), "Maya", Some(1.20));
         assert!(check_budget(&r, &a).is_ok());
 
-        set_budget(&r, ws.id, BudgetScope::Captain, Some(cap.id), 1.0).unwrap();
+        set_budget(&r, ws.id, BudgetScope::Lead, Some(cap.id), 1.0).unwrap();
         let err = check_budget(&r, &a).unwrap_err().to_string();
         assert_eq!(err, "Budget reached for Runner ($1.20 of $1.00 this month). Raise it in Costs.");
-        // Another thread without that captain is not affected by its budget.
+        // Another thread without that lead is not affected by its budget.
         assert!(check_budget(&r, &b).is_ok());
 
         set_budget(&r, ws.id, BudgetScope::Workspace, None, 5.0).unwrap();
@@ -1268,13 +1268,13 @@ mod tests {
 
         // Zero removes; send_message goes through again.
         set_budget(&r, ws.id, BudgetScope::Workspace, None, 0.0).unwrap();
-        set_budget(&r, ws.id, BudgetScope::Captain, Some(cap.id), 0.0).unwrap();
+        set_budget(&r, ws.id, BudgetScope::Lead, Some(cap.id), 0.0).unwrap();
         assert!(list_budgets(&r, Some(ws.id)).is_empty());
         assert!(check_budget(&r, &a).is_ok());
 
         // And send_message itself refuses.
-        set_budget(&r, ws.id, BudgetScope::Captain, Some(cap.id), 0.5).unwrap();
-        assert!(r.send_message(a.id, "more".into(), "Tim".into()).await.is_err());
+        set_budget(&r, ws.id, BudgetScope::Lead, Some(cap.id), 0.5).unwrap();
+        assert!(r.send_message(a.id, "more".into(), "Maya".into()).await.is_err());
         let st = list_budgets(&r, Some(ws.id));
         assert!((st[0].spent_usd - 1.2).abs() < 1e-9);
     }
@@ -1329,11 +1329,11 @@ mod tests {
             item(BriefKind::Waiting, "Magic link sign-in", None),
             item(BriefKind::Issue, "BOU-12 Drafts", Some("in_progress")),
             item(BriefKind::Issue, "BOU-9 Rail", Some("done")),
-            item(BriefKind::Task, "Reply to Isa", Some("overdue")),
+            item(BriefKind::Task, "Reply to Jonas", Some("overdue")),
         ]);
         assert_eq!(
             md,
-            "**Waiting on you**\n- Magic link sign-in · Bouvio\n\n**Issues**\n- BOU-12 Drafts · Bouvio (in progress)\n- BOU-9 Rail · Bouvio (done)\n\n**Your tasks for today**\n- Reply to Isa · Bouvio (overdue)"
+            "**Waiting on you**\n- Magic link sign-in · Bouvio\n\n**Issues**\n- BOU-12 Drafts · Bouvio (in progress)\n- BOU-9 Rail · Bouvio (done)\n\n**Your tasks for today**\n- Reply to Jonas · Bouvio (overdue)"
         );
         assert_eq!(fallback_markdown(&[]), "Nothing happened in the last 24 hours.");
     }
@@ -1345,7 +1345,7 @@ mod tests {
         let t = thread(&r, ws.id, None, None).await;
         r.store().update_thread(t.id, |t| t.status = AgentStatus::Blocked).unwrap();
         let today = local_date(Utc::now()).format("%Y-%m-%d").to_string();
-        create_task(&r, NewTask { title: "Reply to Isa".into(), notes: None, due: Some(today.clone()), priority: None, workspace_id: None, thread_id: None }).unwrap();
+        create_task(&r, NewTask { title: "Reply to Jonas".into(), notes: None, due: Some(today.clone()), priority: None, workspace_id: None, thread_id: None }).unwrap();
         create_task(&r, NewTask { title: "Later".into(), notes: None, due: Some("2999-01-01".into()), priority: None, workspace_id: None, thread_id: None }).unwrap();
 
         let b = get_brief(&r, None, false).await.unwrap();
@@ -1392,7 +1392,7 @@ mod tests {
         let t0 = Utc::now();
         let env = |seq, ms: i64, event| ThreadEnvelope { thread_id: id, seq, at: t0 + Duration::milliseconds(ms), event };
         let events = vec![
-            env(0, 0, ThreadEvent::UserMessage { text: "Fix it".into(), author: "Tim".into() }),
+            env(0, 0, ThreadEvent::UserMessage { text: "Fix it".into(), author: "Maya".into() }),
             env(1, 10, ThreadEvent::Status { status: AgentStatus::Working }),
             env(2, 500, ThreadEvent::ToolUse { id: "a".into(), name: "Bash".into(), input: serde_json::json!({ "command": "ls" }) }),
             env(3, 1500, ThreadEvent::ToolResult { tool_use_id: "a".into(), output: "x.rs".into(), is_error: false }),

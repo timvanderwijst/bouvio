@@ -180,7 +180,7 @@ impl Runner {
         Ok(())
     }
 
-    // ---- workspaces & captains ------------------------------------------------
+    // ---- workspaces & leads ------------------------------------------------
 
     pub fn workspaces(&self) -> Vec<Workspace> {
         self.store.workspaces()
@@ -192,12 +192,12 @@ impl Runner {
         Ok(ws)
     }
 
-    pub fn captains(&self, workspace_id: Uuid) -> Vec<Captain> {
-        self.store.captains(workspace_id)
+    pub fn leads(&self, workspace_id: Uuid) -> Vec<Lead> {
+        self.store.leads(workspace_id)
     }
 
-    pub fn create_captain(&self, new: NewCaptain) -> Result<Captain> {
-        let c = Captain {
+    pub fn create_lead(&self, new: NewLead) -> Result<Lead> {
+        let c = Lead {
             id: Uuid::new_v4(),
             workspace_id: new.workspace_id,
             avatar_seed: rand_seed(&new.name),
@@ -208,7 +208,7 @@ impl Runner {
             effort: new.effort,
             approval: new.approval,
         };
-        self.store.put_captain(c.clone())?;
+        self.store.put_lead(c.clone())?;
         Ok(c)
     }
 
@@ -246,7 +246,7 @@ impl Runner {
         let t = Thread {
             id,
             workspace_id: ws.id,
-            captain_id: new.captain_id,
+            lead_id: new.lead_id,
             title: new.title.filter(|t| !t.trim().is_empty()).unwrap_or_else(|| "New thread".into()),
             harness: new.harness,
             model: new.model,
@@ -327,8 +327,8 @@ impl Runner {
             .map(PathBuf::from)
             .unwrap_or_else(|| dirs::home_dir().unwrap_or_else(|| PathBuf::from(".")));
         let settings = self.settings(thread.workspace_id);
-        let captain = thread.captain_id.and_then(|c| self.store.captain(c));
-        let instructions = compose_instructions(captain.as_ref(), &settings);
+        let lead = thread.lead_id.and_then(|c| self.store.lead(c));
+        let instructions = compose_instructions(lead.as_ref(), &settings);
         let (tx, mut rx) = mpsc::unbounded_channel();
         let mcp_config = self.write_mcp_config(thread, &settings).ok();
         let cfg = SessionConfig {
@@ -413,10 +413,10 @@ impl Runner {
     }
 }
 
-fn compose_instructions(captain: Option<&Captain>, s: &WorkspaceSettings) -> String {
+fn compose_instructions(lead: Option<&Lead>, s: &WorkspaceSettings) -> String {
     let mut parts = vec!["You work inside Bouvio, a shared workspace where people and agents collaborate. People in this workspace watch your work live. The `bouvio` tools let you split work into parallel threads (spawn_thread), follow them up, file issues and keep workspace memory.".to_string()];
-    if let Some(c) = captain {
-        parts.push(format!("You are the captain \"{}\". {}", c.name, c.instructions));
+    if let Some(c) = lead {
+        parts.push(format!("You are the lead \"{}\". {}", c.name, c.instructions));
     }
     if !s.instructions.trim().is_empty() {
         parts.push(format!("Workspace instructions:\n{}", s.instructions.trim()));
@@ -437,7 +437,7 @@ pub(crate) fn title_from(text: &str) -> String {
 }
 
 fn rand_seed(name: &str) -> u32 {
-    // Stable per name, so a captain keeps its face when recreated.
+    // Stable per name, so a lead keeps its face when recreated.
     name.bytes().fold(2166136261u32, |h, b| (h ^ b as u32).wrapping_mul(16777619))
 }
 
@@ -453,7 +453,7 @@ mod tests {
         let t = r
             .create_thread(NewThread {
                 workspace_id: ws.id,
-                captain_id: None,
+                lead_id: None,
                 title: None,
                 harness: HarnessKind::Api,
                 model: None,
@@ -464,7 +464,7 @@ mod tests {
             .await
             .unwrap();
         // The API loop is phase 2, so this ends in a clear error, not a hang.
-        r.send_message(t.id, "Fix the sign-up form\nmore".into(), "Tim".into()).await.unwrap();
+        r.send_message(t.id, "Fix the sign-up form\nmore".into(), "Maya".into()).await.unwrap();
         let events = r.thread_events(t.id).unwrap();
         assert!(matches!(events[0].event, ThreadEvent::UserMessage { .. }));
         assert!(events.iter().any(|e| matches!(e.event, ThreadEvent::Error { .. })));
@@ -494,7 +494,7 @@ mod tests {
         let t = r
             .create_thread(NewThread {
                 workspace_id: ws.id,
-                captain_id: None,
+                lead_id: None,
                 title: Some("Isolated".into()),
                 harness: HarnessKind::ClaudeCode,
                 model: None,

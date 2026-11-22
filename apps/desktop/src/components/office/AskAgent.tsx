@@ -11,7 +11,7 @@ export async function askAgent(question: string, context: string, title: string)
   const ws = s.workspaceId;
   if (!ws) return;
   const thread = await rpc<Thread>("create_thread", {
-    thread: { workspace_id: ws, captain_id: null, title: null, harness: s.prefs.harness, model: s.prefs.model, effort: s.prefs.effort, approval: s.prefs.approval, isolate: false },
+    thread: { workspace_id: ws, lead_id: null, title: null, harness: s.prefs.harness, model: s.prefs.model, effort: s.prefs.effort, approval: s.prefs.approval, isolate: false },
   });
   useStore.setState((st) => {
     const list = st.threads[ws] ?? [];

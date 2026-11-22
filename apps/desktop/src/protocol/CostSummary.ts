@@ -12,7 +12,7 @@ unknown_turns: number,
 /**
  * One entry per day of the period, oldest first, zero days included.
  */
-per_day: Array<CostDay>, per_captain: Array<CostRow>, 
+per_day: Array<CostDay>, per_lead: Array<CostRow>, 
 /**
  * `harness · model`.
  */

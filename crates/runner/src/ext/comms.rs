@@ -1,5 +1,5 @@
-//! Communication: what the runner does for chat. `@Captain do this` in a shared
-//! workspace this runner hosts starts a thread under that captain and answers in
+//! Communication: what the runner does for chat. `@Lead do this` in a shared
+//! workspace this runner hosts starts a thread under that lead and answers in
 //! the chat thread: once when it starts, once when the turn is done.
 
 use crate::hub::HubClient;
@@ -27,12 +27,12 @@ pub fn workspace_of(_r: &Runner, _method: &str, _params: &Value) -> Option<Resul
 
 pub fn start(_r: &Arc<Runner>) {}
 
-/// The captain a message is addressed to, and the rest of the message. The
+/// The lead a message is addressed to, and the rest of the message. The
 /// longest name wins, so `@Design Lead` beats `@Design`; case does not matter.
-pub fn mentioned<'a, 'c>(captains: &'c [Captain], text: &'a str) -> Option<(&'c Captain, &'a str)> {
+pub fn mentioned<'a, 'c>(leads: &'c [Lead], text: &'a str) -> Option<(&'c Lead, &'a str)> {
     let rest = text.trim_start().strip_prefix('@')?;
     let lower = rest.to_lowercase();
-    captains
+    leads
         .iter()
         .filter(|c| !c.name.trim().is_empty())
         .filter_map(|c| {
@@ -55,10 +55,10 @@ pub fn on_chat(r: &Arc<Runner>, hub: &Arc<HubClient>, msg: &ChatMessage) {
     if msg.parent.is_some() || !msg.text.trim_start().starts_with('@') {
         return;
     }
-    let captains = r.captains(msg.workspace_id);
-    let Some((captain, prompt)) = mentioned(&captains, &msg.text) else { return };
-    let (captain, prompt) = (captain.clone(), prompt.to_string());
-    tokio::spawn(run(r.clone(), hub.clone(), msg.clone(), captain, prompt));
+    let leads = r.leads(msg.workspace_id);
+    let Some((lead, prompt)) = mentioned(&leads, &msg.text) else { return };
+    let (lead, prompt) = (lead.clone(), prompt.to_string());
+    tokio::spawn(run(r.clone(), hub.clone(), msg.clone(), lead, prompt));
 }
 
 fn reply(hub: &HubClient, msg: &ChatMessage, text: String) {
@@ -83,7 +83,7 @@ pub fn truncate(text: &str, max: usize) -> String {
     format!("{}…", cut.trim_end())
 }
 
-async fn run(r: Arc<Runner>, hub: Arc<HubClient>, msg: ChatMessage, captain: Captain, prompt: String) {
+async fn run(r: Arc<Runner>, hub: Arc<HubClient>, msg: ChatMessage, lead: Lead, prompt: String) {
     // Running an agent is `send_message`; whoever asks in chat needs that role too.
     let needed = required_role("send_message");
     let me = hub.me();
@@ -97,34 +97,34 @@ async fn run(r: Arc<Runner>, hub: Arc<HubClient>, msg: ChatMessage, captain: Cap
         };
         if role.is_none_or(|r| r < needed) {
             let name = serde_json::to_value(needed).ok().and_then(|v| v.as_str().map(str::to_string)).unwrap_or_default();
-            return reply(&hub, &msg, format!("Only people with role {name} or higher can ask {} to work.", captain.name));
+            return reply(&hub, &msg, format!("Only people with role {name} or higher can ask {} to work.", lead.name));
         }
     }
     if prompt.is_empty() {
-        return reply(&hub, &msg, format!("Tell {} what to do after the mention.", captain.name));
+        return reply(&hub, &msg, format!("Tell {} what to do after the mention.", lead.name));
     }
 
     let isolate = r.workspace(msg.workspace_id).is_some_and(|w| w.root.is_some());
     let thread = match r
         .create_thread(NewThread {
             workspace_id: msg.workspace_id,
-            captain_id: Some(captain.id),
+            lead_id: Some(lead.id),
             title: None,
-            harness: captain.harness,
-            model: captain.model.clone(),
-            effort: captain.effort,
-            approval: captain.approval,
+            harness: lead.harness,
+            model: lead.model.clone(),
+            effort: lead.effort,
+            approval: lead.approval,
             isolate,
         })
         .await
     {
         Ok(t) => t,
-        Err(e) => return reply(&hub, &msg, format!("{} could not start: {e:#}", captain.name)),
+        Err(e) => return reply(&hub, &msg, format!("{} could not start: {e:#}", lead.name)),
     };
     // Subscribe before sending, so a fast turn is not missed.
     let mut events = r.subscribe_events();
     if let Err(e) = r.send_message(thread.id, prompt, msg.author.name.clone()).await {
-        return reply(&hub, &msg, format!("{} could not start: {e:#}", captain.name));
+        return reply(&hub, &msg, format!("{} could not start: {e:#}", lead.name));
     }
     let thread = r.thread(thread.id).unwrap_or(thread);
     reply(&hub, &msg, format!("Started {}", link(&thread)));
@@ -139,7 +139,7 @@ async fn run(r: Arc<Runner>, hub: Arc<HubClient>, msg: ChatMessage, captain: Cap
                     ThreadEvent::Status { status: AgentStatus::Blocked } if !asked => {
                         asked = true;
                         let t = r.thread(thread.id).unwrap_or_else(|| thread.clone());
-                        reply(&hub, &msg, format!("{} is waiting for an approval in {}", captain.name, link(&t)));
+                        reply(&hub, &msg, format!("{} is waiting for an approval in {}", lead.name, link(&t)));
                     }
                     ThreadEvent::Status { status: AgentStatus::Error } => return Err("the agent stopped with an error".to_string()),
                     _ => {}
@@ -187,8 +187,8 @@ async fn run(r: Arc<Runner>, hub: Arc<HubClient>, msg: ChatMessage, captain: Cap
 mod tests {
     use super::*;
 
-    fn captain(name: &str) -> Captain {
-        Captain {
+    fn lead(name: &str) -> Lead {
+        Lead {
             id: Uuid::new_v4(),
             workspace_id: Uuid::nil(),
             name: name.into(),
@@ -202,8 +202,8 @@ mod tests {
     }
 
     #[test]
-    fn finds_the_mentioned_captain() {
-        let cs = [captain("Design"), captain("Design Lead"), captain("Hub")];
+    fn finds_the_mentioned_lead() {
+        let cs = [lead("Design"), lead("Design Lead"), lead("Hub")];
         let (c, rest) = mentioned(&cs, "@design lead: pick a font").unwrap();
         assert_eq!(c.name, "Design Lead");
         assert_eq!(rest, "pick a font");

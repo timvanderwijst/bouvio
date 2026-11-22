@@ -4,4 +4,4 @@ export type Automation = { id: string, workspace_id: string, name: string,
 /**
  * Five-field cron, local time.
  */
-schedule: string, prompt: string, captain_id: string | null, enabled: boolean, last_run: string | null, last_thread: string | null, };
+schedule: string, prompt: string, lead_id: string | null, enabled: boolean, last_run: string | null, last_thread: string | null, };

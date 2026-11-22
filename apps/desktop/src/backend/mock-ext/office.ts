@@ -203,11 +203,11 @@ function seed(y: Y.Doc, kind: DocKind, template: string | null, formFields: Fiel
       ])
         schema.set(f.id, f);
       rows.push([
-        row({ title: "Launch announcement", status: "status-2", channel: "channel-0", date: day(2), owner: "Tim" }),
+        row({ title: "Launch announcement", status: "status-2", channel: "channel-0", date: day(2), owner: "Maya" }),
         row({ title: "Monthly update", status: "status-1", channel: "channel-1", date: day(6), owner: "Sanne" }),
         row({ title: "Behind the scenes: the formula engine", status: "status-0", channel: "channel-2", date: day(9) }),
         row({ title: "Customer story: a studio of three", status: "status-0", channel: "channel-0", date: day(14) }),
-        row({ title: "Release notes 0.4", status: "status-3", channel: "channel-0", date: day(-3), owner: "Tim" }),
+        row({ title: "Release notes 0.4", status: "status-3", channel: "channel-0", date: day(-3), owner: "Maya" }),
       ]);
       views.push([view("All posts", "table"), view("Board", "kanban", { group_by: "status" }), view("Calendar", "calendar", { date_field: "date" }), view("Gallery", "gallery")]);
     } else if (template === "calendar") {
@@ -252,7 +252,7 @@ function seed(y: Y.Doc, kind: DocKind, template: string | null, formFields: Fiel
 }
 
 function make(ws: string, kind: DocKind, title: string, template: string | null, opts: { by?: string; min?: number; parent?: string } = {}): Doc {
-  const d: Doc = { id: uid(), workspace_id: ws, kind, title, icon: null, created_at: ago((opts.min ?? 0) + 60), updated_at: ago(opts.min ?? 0), created_by: opts.by ?? "Tim", parent_id: opts.parent ?? null };
+  const d: Doc = { id: uid(), workspace_id: ws, kind, title, icon: null, created_at: ago((opts.min ?? 0) + 60), updated_at: ago(opts.min ?? 0), created_by: opts.by ?? "Maya", parent_id: opts.parent ?? null };
   const y = new Y.Doc();
   const fields = opts.parent ? (Object.values(ydocs.get(opts.parent)?.getMap("schema").toJSON() ?? {}) as FieldSeed[]).sort((a, b) => a.order - b.order) : [];
   seed(y, kind, template, fields);
@@ -337,12 +337,12 @@ export const handlers: Record<string, (p: Record<string, any>) => unknown> = {
   doc_update: ({ id, update, client }) => {
     const d = find(id);
     Y.applyUpdate(ydocs.get(id)!, unb64(update));
-    notice(d.workspace_id, "office-update", { id, update, by: "Tim", client: client ?? null });
+    notice(d.workspace_id, "office-update", { id, update, by: "Maya", client: client ?? null });
     return null;
   },
   doc_awareness: ({ id, state }) => {
     const d = find(id);
-    notice(d.workspace_id, "office-awareness", { id, state, by: "Tim" });
+    notice(d.workspace_id, "office-awareness", { id, state, by: "Maya" });
     return null;
   },
   get_form_public: ({ workspace_id, form_id }) => {

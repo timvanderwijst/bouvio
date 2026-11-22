@@ -1,7 +1,7 @@
 import { Plus } from "lucide-react";
 import { useMemo } from "react";
 import { LANGUAGES, getLang, setLang, useT, type Lang } from "../i18n";
-import { useStore, useWorkspaceCaptains, useWorkspaceThreads, type ThemePref } from "../store";
+import { useStore, useWorkspaceLeads, useWorkspaceThreads, type ThemePref } from "../store";
 import { HubSettings, ProviderSettings } from "./More";
 import { extHome, extSettings } from "../ext/areas";
 import { ago, cost } from "../lib/format";
@@ -73,14 +73,14 @@ export function Home() {
 export function ThreadsPage() {
   const t = useT();
   const threads = useWorkspaceThreads();
-  const captains = useWorkspaceCaptains();
+  const leads = useWorkspaceLeads();
   const openThread = useStore((s) => s.openThread);
   return (
     <div className="page">
       <h1 className="page-title">{t("ws.threads")}</h1>
       <div className="list">
         {threads.map((th) => {
-          const c = captains.find((x) => x.id === th.captain_id);
+          const c = leads.find((x) => x.id === th.lead_id);
           return (
             <button key={th.id} className="list-row" onClick={() => openThread(th.id)}>
               <StatusIcon status={th.status} />

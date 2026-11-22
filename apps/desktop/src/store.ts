@@ -4,7 +4,7 @@ import type { ApprovalLevel } from "./protocol/ApprovalLevel";
 import type { Artifact } from "./protocol/Artifact";
 import type { Automation } from "./protocol/Automation";
 import type { Board } from "./protocol/Board";
-import type { Captain } from "./protocol/Captain";
+import type { Lead } from "./protocol/Lead";
 import type { ChatMessage } from "./protocol/ChatMessage";
 import type { Effort } from "./protocol/Effort";
 import type { HarnessInfo } from "./protocol/HarnessInfo";
@@ -36,7 +36,7 @@ export type View =
   | { kind: "ext"; id: string; sub?: string }
   | { kind: "thread"; id: string }
   /** A thread that does not exist yet: the first message creates it. */
-  | { kind: "draft"; captainId: string | null };
+  | { kind: "draft"; leadId: string | null };
 
 export type PanelTab = "overview" | "changes" | "terminal" | "preview" | (string & {});
 export type ThemePref = "system" | "light" | "dark";
@@ -70,7 +70,7 @@ interface State {
   hub: HubStatus;
   workspaces: Workspace[];
   workspaceId: string | null;
-  captains: Record<string, Captain[]>;
+  leads: Record<string, Lead[]>;
   threads: Record<string, Thread[]>;
   events: Record<string, ThreadEnvelope[]>;
   data: Record<string, WsData>;
@@ -81,7 +81,7 @@ interface State {
   prefs: ComposerPrefs;
   userName: string;
   theme: ThemePref;
-  dialog: null | "workspace" | "captain" | "share" | "issue" | "automation" | "signin" | "join";
+  dialog: null | "workspace" | "lead" | "share" | "issue" | "automation" | "signin" | "join";
   dialogArg: unknown;
   palette: boolean;
   toast: string | null;
@@ -91,7 +91,7 @@ interface State {
   selectWorkspace(id: string): Promise<void>;
   openThread(id: string): Promise<void>;
   closeTab(id: string): void;
-  openCaptain(c: Captain): Promise<void>;
+  openLead(c: Lead): Promise<void>;
   send(text: string): Promise<void>;
   stop(threadId: string): Promise<void>;
   setDraft(key: string, text: string): void;
@@ -99,7 +99,7 @@ interface State {
   setPanel(p: Partial<State["panel"]>): void;
   openArtifact(a: Artifact): void;
   createWorkspace(name: string, root: string | null): Promise<void>;
-  createCaptain(name: string, instructions: string): Promise<void>;
+  createLead(name: string, instructions: string): Promise<void>;
   setUserName(n: string): void;
   setTheme(t: ThemePref): void;
   setDialog(d: State["dialog"], arg?: unknown): void;
@@ -137,7 +137,7 @@ export function applyTheme(pref: ThemePref) {
 
 let initStarted = false;
 
-export const draftKey = (v: View) => (v.kind === "thread" ? v.id : v.kind === "draft" ? `draft:${v.captainId ?? ""}` : "");
+export const draftKey = (v: View) => (v.kind === "thread" ? v.id : v.kind === "draft" ? `draft:${v.leadId ?? ""}` : "");
 
 /** The workspace id to route a call to; null for app-level calls. */
 export const wsOf = () => useStore.getState().workspaceId;
@@ -154,7 +154,7 @@ export const useStore = create<State>((set, get) => ({
   hub: { url: null, user: null, connected: false },
   workspaces: [],
   workspaceId: null,
-  captains: {},
+  leads: {},
   threads: {},
   events: {},
   data: {},
@@ -163,7 +163,7 @@ export const useStore = create<State>((set, get) => ({
   panel: { open: true, tab: "overview", wide: false, artifact: null },
   drafts: {},
   prefs: { harness: "claude_code", model: null, effort: "medium", approval: "ask_risky", isolate: true },
-  userName: ls.get("bouvio.name") || "Tim",
+  userName: ls.get("bouvio.name") || "You",
   theme: (ls.get("bouvio.theme") as ThemePref) || "system",
   dialog: null,
   dialogArg: null,
@@ -181,16 +181,16 @@ export const useStore = create<State>((set, get) => ({
     ]);
     const lists = await Promise.all(
       workspaces.map((w) =>
-        Promise.all([backend.rpc<Thread[]>(w.id, "list_threads", { workspace_id: w.id }), backend.rpc<Captain[]>(w.id, "list_captains", { workspace_id: w.id })]).catch(
-          () => [[], []] as [Thread[], Captain[]],
+        Promise.all([backend.rpc<Thread[]>(w.id, "list_threads", { workspace_id: w.id }), backend.rpc<Lead[]>(w.id, "list_leads", { workspace_id: w.id })]).catch(
+          () => [[], []] as [Thread[], Lead[]],
         ),
       ),
     );
     const threads: State["threads"] = {};
-    const captains: State["captains"] = {};
+    const leads: State["leads"] = {};
     workspaces.forEach((w, i) => {
       threads[w.id] = lists[i][0];
-      captains[w.id] = lists[i][1];
+      leads[w.id] = lists[i][1];
     });
     const saved = ls.get("bouvio.workspace");
     const workspaceId = workspaces.find((w) => w.id === saved)?.id ?? workspaces[0]?.id ?? null;
@@ -246,9 +246,9 @@ export const useStore = create<State>((set, get) => ({
       workspaces,
       workspaceId,
       threads,
-      captains,
+      leads,
       prefs: { ...get().prefs, harness: preferred },
-      view: workspaceId ? { kind: "draft", captainId: null } : { kind: "home" },
+      view: workspaceId ? { kind: "draft", leadId: null } : { kind: "home" },
     });
     get().refreshProviders();
     const recent = workspaceId ? [...(threads[workspaceId] ?? [])].sort((a, b) => b.updated_at.localeCompare(a.updated_at))[0] : null;
@@ -268,14 +268,14 @@ export const useStore = create<State>((set, get) => ({
     ls.set("bouvio.workspace", id);
     set({ workspaceId: id });
     if (!get().threads[id]) {
-      const [t, c] = await Promise.all([rpc<Thread[]>("list_threads", { workspace_id: id }, id), rpc<Captain[]>("list_captains", { workspace_id: id }, id)]).catch(
-        () => [[], []] as [Thread[], Captain[]],
+      const [t, c] = await Promise.all([rpc<Thread[]>("list_threads", { workspace_id: id }, id), rpc<Lead[]>("list_leads", { workspace_id: id }, id)]).catch(
+        () => [[], []] as [Thread[], Lead[]],
       );
-      set((s) => ({ threads: { ...s.threads, [id]: t }, captains: { ...s.captains, [id]: c } }));
+      set((s) => ({ threads: { ...s.threads, [id]: t }, leads: { ...s.leads, [id]: c } }));
     }
     const tabs = get().tabs[id];
     if (tabs?.length) await get().openThread(tabs[tabs.length - 1]);
-    else get().go({ kind: "draft", captainId: null });
+    else get().go({ kind: "draft", leadId: null });
   },
 
   async openThread(id) {
@@ -301,14 +301,14 @@ export const useStore = create<State>((set, get) => ({
     set({ tabs: { ...s.tabs, [ws]: tabs } });
     if (s.view.kind === "thread" && s.view.id === id) {
       if (tabs.length) get().openThread(tabs[tabs.length - 1]);
-      else get().go({ kind: "draft", captainId: null });
+      else get().go({ kind: "draft", leadId: null });
     }
   },
 
-  async openCaptain(c) {
-    const own = (get().threads[c.workspace_id] ?? []).filter((t) => t.captain_id === c.id).sort((a, b) => a.created_at.localeCompare(b.created_at))[0];
+  async openLead(c) {
+    const own = (get().threads[c.workspace_id] ?? []).filter((t) => t.lead_id === c.id).sort((a, b) => a.created_at.localeCompare(b.created_at))[0];
     if (own) await get().openThread(own.id);
-    else get().go({ kind: "draft", captainId: c.id });
+    else get().go({ kind: "draft", leadId: c.id });
   },
 
   async send(text) {
@@ -320,18 +320,18 @@ export const useStore = create<State>((set, get) => ({
     try {
       if (v.kind === "thread") threadId = v.id;
       else if (v.kind === "draft") {
-        const captain = v.captainId ? (s.captains[s.workspaceId] ?? []).find((c) => c.id === v.captainId) : null;
-        const first = captain && !(s.threads[s.workspaceId] ?? []).some((t) => t.captain_id === captain.id);
+        const lead = v.leadId ? (s.leads[s.workspaceId] ?? []).find((c) => c.id === v.leadId) : null;
+        const first = lead && !(s.threads[s.workspaceId] ?? []).some((t) => t.lead_id === lead.id);
         const ws = s.workspaces.find((w) => w.id === s.workspaceId);
         const t = await rpc<Thread>("create_thread", {
           thread: {
             workspace_id: s.workspaceId,
-            captain_id: captain?.id ?? null,
-            title: first ? captain!.name : null,
-            harness: captain?.harness ?? s.prefs.harness,
-            model: captain?.model ?? s.prefs.model,
-            effort: captain?.effort ?? s.prefs.effort,
-            approval: captain?.approval ?? s.prefs.approval,
+            lead_id: lead?.id ?? null,
+            title: first ? lead!.name : null,
+            harness: lead?.harness ?? s.prefs.harness,
+            model: lead?.model ?? s.prefs.model,
+            effort: lead?.effort ?? s.prefs.effort,
+            approval: lead?.approval ?? s.prefs.approval,
             isolate: first || !ws?.root ? false : s.prefs.isolate,
           },
         });
@@ -372,18 +372,18 @@ export const useStore = create<State>((set, get) => ({
 
   async createWorkspace(name, root) {
     const w = await rpc<Workspace>("create_workspace", { name, root }, null);
-    set((s) => ({ workspaces: [...s.workspaces, w], threads: { ...s.threads, [w.id]: [] }, captains: { ...s.captains, [w.id]: [] }, dialog: null }));
+    set((s) => ({ workspaces: [...s.workspaces, w], threads: { ...s.threads, [w.id]: [] }, leads: { ...s.leads, [w.id]: [] }, dialog: null }));
     await get().selectWorkspace(w.id);
   },
 
-  async createCaptain(name, instructions) {
+  async createLead(name, instructions) {
     const s = get();
     if (!s.workspaceId) return;
-    const c = await rpc<Captain>("create_captain", {
-      captain: { workspace_id: s.workspaceId, name, instructions, harness: s.prefs.harness, model: s.prefs.model, effort: s.prefs.effort, approval: s.prefs.approval },
+    const c = await rpc<Lead>("create_lead", {
+      lead: { workspace_id: s.workspaceId, name, instructions, harness: s.prefs.harness, model: s.prefs.model, effort: s.prefs.effort, approval: s.prefs.approval },
     });
-    set((st) => ({ captains: { ...st.captains, [c.workspace_id]: [...(st.captains[c.workspace_id] ?? []), c] }, dialog: null }));
-    get().go({ kind: "draft", captainId: c.id });
+    set((st) => ({ leads: { ...st.leads, [c.workspace_id]: [...(st.leads[c.workspace_id] ?? []), c] }, dialog: null }));
+    get().go({ kind: "draft", leadId: c.id });
   },
 
   setUserName(n) {
@@ -452,8 +452,8 @@ export const boardListeners = new Set<(ws: string, kind: string, payload: any) =
 export function useWorkspaceThreads() {
   return useStore((s) => (s.workspaceId ? s.threads[s.workspaceId] : undefined)) ?? EMPTY_T;
 }
-export function useWorkspaceCaptains() {
-  return useStore((s) => (s.workspaceId ? s.captains[s.workspaceId] : undefined)) ?? EMPTY_C;
+export function useWorkspaceLeads() {
+  return useStore((s) => (s.workspaceId ? s.leads[s.workspaceId] : undefined)) ?? EMPTY_C;
 }
 export function useWsData() {
   return useStore((s) => (s.workspaceId ? s.data[s.workspaceId] : undefined)) ?? EMPTY_D;
@@ -462,5 +462,5 @@ export function useWorkspace() {
   return useStore((s) => s.workspaces.find((w) => w.id === s.workspaceId));
 }
 const EMPTY_T: Thread[] = [];
-const EMPTY_C: Captain[] = [];
+const EMPTY_C: Lead[] = [];
 const EMPTY_D: WsData = {};

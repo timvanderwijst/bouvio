@@ -2,7 +2,7 @@ import { Hash, Headphones, Pin, Plus, X } from "lucide-react";
 import { Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useT } from "../../i18n";
 import type { ChatMessage } from "../../protocol/ChatMessage";
-import { useStore, useWorkspace, useWorkspaceCaptains, useWsData } from "../../store";
+import { useStore, useWorkspace, useWorkspaceLeads, useWsData } from "../../store";
 import { Empty } from "../Panel";
 import { ChatComposer, type Mentionable } from "./ChatComposer";
 import type { MentionTarget } from "./ChatText";
@@ -83,7 +83,7 @@ function Chat({ wsId, sub }: { wsId: string; sub?: string }) {
   const load = useStore((s) => s.load);
   const notify = useStore((s) => s.notify);
   const data = useWsData();
-  const captains = useWorkspaceCaptains();
+  const leads = useWorkspaceLeads();
   const role = roleIn(ws);
   const canWrite = atLeast(role, "commenter");
   const canPin = atLeast(role, "operator");
@@ -135,17 +135,17 @@ function Chat({ wsId, sub }: { wsId: string; sub?: string }) {
   const members = data.members ?? [];
   const people: Mentionable[] = useMemo(
     () => [
-      ...captains.map((c) => ({ key: `c:${c.id}`, name: c.name, captain: c })),
+      ...leads.map((c) => ({ key: `c:${c.id}`, name: c.name, lead: c })),
       ...members.filter((m) => m.user.id !== hubUser?.id).map((m) => ({ key: `u:${m.user.id}`, name: m.user.name, user: m.user })),
     ],
-    [captains, members, hubUser?.id],
+    [leads, members, hubUser?.id],
   );
   const targets: MentionTarget[] = useMemo(
     () => [
-      ...captains.map((c) => ({ name: c.name, kind: "captain" as const })),
+      ...leads.map((c) => ({ name: c.name, kind: "lead" as const })),
       ...members.map((m) => ({ name: m.user.name, kind: m.user.id === hubUser?.id ? ("me" as const) : ("person" as const) })),
     ],
-    [captains, members, hubUser?.id],
+    [leads, members, hubUser?.id],
   );
   const names = useMemo(() => Object.fromEntries(members.map((m) => [m.user.id, m.user.name])), [members]);
 
@@ -495,7 +495,7 @@ function ThreadPanel({
         key={parentId}
         draftKey={`thread:${parentId}`}
         autoFocus
-        captainHint={false}
+        leadHint={false}
         people={people}
         placeholder={t("comms.replyPlaceholder")}
         disabled={!canWrite}

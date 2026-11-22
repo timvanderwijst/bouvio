@@ -4,14 +4,14 @@
   "description": "A researcher who gathers and checks sources, and a writer who turns them into clear documents.",
   "icon": "book-open",
   "instructions": "This workspace is a research project. Keep a sources list with links and dates. Separate what a source says from what we conclude. Write in plain language and mark open questions clearly.",
-  "captains": [
+  "leads": [
     { "name": "Researcher", "instructions": "Finds, reads and summarises sources. Checks claims against more than one source and keeps notes in the workspace." },
     { "name": "Writer", "instructions": "Turns notes into outlines, drafts and summaries. Keeps structure clear and cites the researcher's sources." }
   ],
   "issues": [
-    { "title": "Write down the research question and scope", "captain": "Writer" },
-    { "title": "Collect the first ten sources", "captain": "Researcher" },
-    { "title": "Outline the final document", "captain": "Writer" }
+    { "title": "Write down the research question and scope", "lead": "Writer" },
+    { "title": "Collect the first ten sources", "lead": "Researcher" },
+    { "title": "Outline the final document", "lead": "Writer" }
   ],
   "automations": []
 }
