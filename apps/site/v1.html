@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Bouvio</title>
+<meta name="description" content="Bouvio is a free, open-source desktop workspace where people and AI agents work together, on your own machines and keys." />
+<script>try{var t=localStorage.getItem("bouvio.theme")||"system";document.documentElement.dataset.theme=t==="dark"||(t==="system"&&matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light"}catch(e){}</script>
+<link rel="stylesheet" href="../desktop/src/styles/tokens.css" />
+<link rel="stylesheet" href="../desktop/src/styles/app.css" />
+<link rel="stylesheet" href="../desktop/src/styles/screens.css" />
+<link rel="stylesheet" href="site.css" />
+<link rel="stylesheet" href="parts.css" />
+</head>
+<body class="site">
+<div data-ui="nav"></div>
+<main>
+<section class="hero center wrap">
+  <h1 class="h1">Your agents, at work in <span class="accent">one shared workspace</span></h1>
+  <p class="lede">Claude Code, Codex and local models run on your own machines. Your team watches, steers and approves, live.</p>
+  <div data-ui="cta"></div>
+</section>
+<section class="wrap" style="margin-top:56px"><div data-ui="window" data-typing="Looks good. Open a PR for the draft fix"></div></section>
+
+<section class="sec wrap reveal" id="how">
+  <div class="two">
+    <div><h2 class="h2">Risky steps wait for a yes</h2><p class="lede" style="margin-top:14px">Shell commands, network calls and deletes stop at a card anyone with the right role can answer.</p></div>
+    <div class="shot pad" data-ui="approval"></div>
+  </div>
+</section>
+
+<section class="sec wrap reveal" id="together">
+  <div class="two flip">
+    <div><h2 class="h2">Mention a captain, it gets to work</h2><p class="lede" style="margin-top:14px">Ask in chat. The captain starts a thread on the host's runner and answers right there.</p></div>
+    <div class="shot pad" data-ui="chat"></div>
+  </div>
+</section>
+
+<section class="sec wrap reveal">
+  <div class="sec-head"><h2 class="h2">Design next to the running app</h2><p class="lede">Every frame is a live branch. Ask for two variants and get two branches side by side.</p></div>
+  <div class="shot" data-ui="board"></div>
+</section>
+
+<section class="end wrap reveal" id="free">
+  <h2 class="h2">Free, open source and yours</h2>
+  <p class="lede" style="margin:14px auto 0">Your keys stay in your keychain. Your hub runs on your own server.</p>
+  <div data-ui="cta"></div>
+</section>
+</main>
+<div data-ui="foot"></div>
+<script type="module">import { mount } from "./ui.js"; mount();</script>
+</body>
+</html>

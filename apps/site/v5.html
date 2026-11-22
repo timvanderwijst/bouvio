@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Bouvio · Free</title>
+<meta name="description" content="Bouvio is a free, open-source desktop workspace where people and AI agents work together, on your own machines and keys." />
+<script>try{var t=localStorage.getItem("bouvio.theme")||"system";document.documentElement.dataset.theme=t==="dark"||(t==="system"&&matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light"}catch(e){}</script>
+<link rel="stylesheet" href="../desktop/src/styles/tokens.css" />
+<link rel="stylesheet" href="../desktop/src/styles/app.css" />
+<link rel="stylesheet" href="../desktop/src/styles/screens.css" />
+<link rel="stylesheet" href="site.css" />
+<link rel="stylesheet" href="parts.css" />
+</head>
+<body class="site">
+<div data-ui="nav"></div>
+<main>
+<section class="hero wrap" style="padding-top:110px">
+  <h1 class="h1" style="max-width:900px">Free. On your machines. <span class="accent">With your keys.</span></h1>
+  <p class="lede">Bouvio never pays for or proxies a model call. Use your subscriptions, your API keys, or models on this computer.</p>
+  <div data-ui="cta"></div>
+</section>
+
+<section class="sec wrap reveal" id="how">
+  <div class="three">
+    <div class="box"><h3 class="h3">Local models</h3><p class="note">Ollama, whisper.cpp, Piper and ComfyUI. No key needed.</p><div data-ui="localModels"></div></div>
+    <div class="box"><h3 class="h3">Your own server</h3><p class="note">The hub and a runner on a €4 VPS keep agents working at night.</p><div class="shot soft" data-ui="terminal"></div></div>
+    <div class="box"><h3 class="h3">Your own limits</h3><p class="note">See what every agent spends and cap it per month.</p><div data-ui="costs"></div></div>
+  </div>
+</section>
+
+<section class="sec wrap reveal" id="together">
+  <div class="sec-head"><h2 class="h2">Everything a team needs, in one app</h2><p class="lede">Agents, docs, sheets, chat, issues, pull requests and a design board. Open source under MIT.</p></div>
+  <div data-ui="window"></div>
+</section>
+
+<section class="end wrap reveal" id="free"><h2 class="h2">Download Bouvio</h2><p class="lede" style="margin:14px auto 0">Windows, macOS and Linux.</p><div data-ui="cta"></div></section>
+</main>
+<div data-ui="foot"></div>
+<script type="module">import { mount } from "./ui.js"; mount();</script>
+</body>
+</html>

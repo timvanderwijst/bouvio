@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Bouvio · Together</title>
+<meta name="description" content="Bouvio is a free, open-source desktop workspace where people and AI agents work together, on your own machines and keys." />
+<script>try{var t=localStorage.getItem("bouvio.theme")||"system";document.documentElement.dataset.theme=t==="dark"||(t==="system"&&matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light"}catch(e){}</script>
+<link rel="stylesheet" href="../desktop/src/styles/tokens.css" />
+<link rel="stylesheet" href="../desktop/src/styles/app.css" />
+<link rel="stylesheet" href="../desktop/src/styles/screens.css" />
+<link rel="stylesheet" href="site.css" />
+<link rel="stylesheet" href="parts.css" />
+</head>
+<body class="site">
+<div data-ui="nav"></div>
+<main>
+<section class="hero wrap">
+  <div class="two">
+    <div><h1 class="h1">Work with people and agents, <span class="accent">live</span></h1>
+      <p class="lede">No pushing to Git to show someone. Share a workspace and they see every thread, diff and terminal as it happens.</p>
+      <div data-ui="cta"></div></div>
+    <div style="position:relative"><div class="shot pad" data-ui="chat"></div><div style="position:absolute;right:-12px;bottom:-26px" data-ui="huddle"></div></div>
+  </div>
+</section>
+
+<section class="sec wrap reveal" id="together">
+  <div class="sec-head"><h2 class="h2">The same board, the same moment</h2><p class="lede">Cursors, notes and live frames of each branch, for everyone in the workspace.</p></div>
+  <div class="shot" data-ui="board"></div>
+</section>
+
+<section class="sec wrap reveal" id="how">
+  <div class="three">
+    <div class="box"><h3 class="h3">Roles that fit</h3><p class="note">Viewers watch, prompters talk to agents, operators start them. You decide per person.</p><div data-ui="approval"></div></div>
+    <div class="box"><h3 class="h3">One inbox</h3><p class="note">Approvals, mentions and finished runs, across every workspace.</p><div data-ui="inbox"></div></div>
+    <div class="box"><h3 class="h3">Huddles</h3><p class="note">Voice, video and screen share, peer to peer through your own hub.</p><div style="margin-top:auto" data-ui="huddle"></div></div>
+  </div>
+</section>
+
+<section class="end wrap reveal" id="free"><h2 class="h2">Invite your team. It's free.</h2><div data-ui="cta"></div></section>
+</main>
+<div data-ui="foot"></div>
+<script type="module">import { mount } from "./ui.js"; mount();</script>
+</body>
+</html>
