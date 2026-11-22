@@ -129,7 +129,6 @@ export function sidebar({ active = "Desktop", page = null } = {}) {
     <nav class="sb-nav">${row("pen", "New thread")}${row("list", "Threads")}${row("chat", "Chat", page === "Chat")}${row("cal", "Planning", page === "Planning", 5)}${row("book", "Library", page === "Library")}${row("studio", "Studio", page === "Studio")}${row("code", "Build")}${row("chart", "Insights")}</nav>
     <div class="sb-scroll"><div class="sb-section"><span class="sb-heading static">Leads</span></div>${leads}
       <div class="sb-section"><span class="sb-heading static">People</span></div>
-      <div class="sb-row">${icon("hash")}<span>general</span></div>
       <div class="sb-row person">${person("Maya")}<span class="truncate">Maya</span><span class="sb-meta">Desktop</span></div>
     </div>
     <div class="user-row"><span class="user-avatar">N</span><span class="user-text"><span class="user-name">Noor</span><span class="user-ws">Bouvio</span></span></div>
@@ -204,13 +203,13 @@ export function huddle() {
 export function board() {
   const bars = Array.from({ length: 16 }, (_, i) => 20 + ((i * 37) % 60) + i * 1.6);
   const frame = (x, label, kind) => `<div class="bd-frame ${kind}" style="left:${x}px"><div class="bd-label">${icon("branch", 11)}<b>${label}</b><span>/revenue</span></div><div class="bd-body"><div class="bd-k">Revenue, last 30 days</div><div class="bd-v">$1,420,380</div><div class="bd-g">+38.6% vs. previous period</div><div class="bd-chart">${kind === "bars" ? bars.map((h, i) => `<i style="height:${h}%;${i === 15 ? "background:#1b1b1a" : ""}"></i>`).join("") : `<svg viewBox="0 0 160 60" preserveAspectRatio="none"><polyline points="${bars.map((h, i) => `${i * 10.6},${60 - h * 0.6}`).join(" ")}" fill="none" stroke="#2F6FEB" stroke-width="2"/></svg>`}</div></div></div>`;
-  return `<div class="bd">
+  return `<div class="win-fit bd-fit"><div class="bd">
     <div class="bd-sticky" style="left:30px;top:18px;background:#FCE9A8">Bars for daily, line for the trend<span>Sam</span></div>
     <div class="bd-sticky" style="left:520px;top:12px;background:#CFE3FB">Top customers next to the chart<span>Lena</span></div>
     ${frame(24, "Variant A", "line")}${frame(330, "Variant B", "bars")}
     <div class="bd-cursor" style="left:300px;top:40px;--c:#2F9E5A">${cursorSvg()}<span>Sam</span></div>
     <div class="bd-cursor" style="left:600px;top:250px;--c:#6553C4">${cursorSvg()}<span>Lena</span></div>
-  </div>`;
+  </div></div>`;
 }
 const cursorSvg = () => `<svg width="16" height="16" viewBox="0 0 16 16"><path d="M2 1l12 6-5.5 1.5L6 14Z" fill="var(--c)" stroke="#fff" stroke-width="1.2" stroke-linejoin="round"/></svg>`;
 
@@ -523,7 +522,7 @@ function tabs() {
     const ind = box.querySelector("[data-ind]");
     const pick = (i, focus) => {
       btns.forEach((b, j) => { b.setAttribute("aria-selected", String(i === j)); b.tabIndex = i === j ? 0 : -1; });
-      panes.forEach((p, j) => (p.hidden = i !== j));
+      panes.forEach((p, j) => { p.classList.toggle("off", i !== j); p.inert = i !== j; p.setAttribute("aria-hidden", String(i !== j)); });
       ind.style.transform = `translateX(${btns[i].offsetLeft}px)`;
       ind.style.width = `${btns[i].offsetWidth}px`;
       if (focus) btns[i].focus();
