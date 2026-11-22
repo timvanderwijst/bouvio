@@ -1,0 +1,121 @@
+# The Bouvio hub (apps/hub) on bouvio.com: accounts, invites, relay, and the web client under /app/.
+# SQLite lives on the PVC. Optional settings (SMTP_URL, SMTP_FROM, GITHUB_/GOOGLE_CLIENT_*, TURN_*)
+# go in Secret bouvio-secrets; without SMTP, login codes are written to the log.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: bouvio-data
+  namespace: bouvio
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bouvio
+  namespace: bouvio
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate # one SQLite writer on a ReadWriteOnce volume
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: bouvio
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: bouvio
+    spec:
+      enableServiceLinks: false
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        fsGroup: 10001
+      containers:
+        - name: hub
+          image: bouvio-hub # registry + tag pinned by kustomization.yaml
+          env:
+            - name: BOUVIO_HUB_PUBLIC_URL
+              value: https://bouvio.com
+            - name: SMTP_FROM
+              value: Bouvio <noreply@bouvio.com>
+          envFrom:
+            - secretRef:
+                name: bouvio-secrets
+                optional: true
+          ports:
+            - name: http
+              containerPort: 8787
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 20m
+              memory: 64Mi
+            limits:
+              memory: 512Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: bouvio-data
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bouvio
+  namespace: bouvio
+spec:
+  selector:
+    app.kubernetes.io/name: bouvio
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: bouvio
+  namespace: bouvio
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - bouvio.com
+        - www.bouvio.com
+      secretName: bouvio-tls
+  rules:
+    - host: bouvio.com
+      http: &routes
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: bouvio
+                port:
+                  name: http
+    - host: www.bouvio.com
+      http: *routes
