@@ -108,6 +108,11 @@ spec:
         - cuna.io
         - www.cuna.io
       secretName: cuna-tls
+    # The old domain keeps working (own certificate) until cuna.io points here.
+    - hosts:
+        - bouvio.com
+        - www.bouvio.com
+      secretName: bouvio-tls
   rules:
     - host: cuna.io
       http: &routes
@@ -120,4 +125,8 @@ spec:
                 port:
                   name: http
     - host: www.cuna.io
+      http: *routes
+    - host: bouvio.com
+      http: *routes
+    - host: www.bouvio.com
       http: *routes
