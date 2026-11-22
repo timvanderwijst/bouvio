@@ -19,6 +19,9 @@ COPY apps/desktop/package.json apps/desktop/package.json
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     pnpm install --frozen-lockfile --filter @bouvio/desktop...
 COPY apps/desktop apps/desktop
+# The web build also imports these from outside apps/desktop (picker.js?raw, generated types).
+COPY crates/runner/src/ext crates/runner/src/ext
+COPY crates/protocol/bindings crates/protocol/bindings
 RUN pnpm --filter @bouvio/desktop build:web
 
 FROM debian:bookworm-slim
