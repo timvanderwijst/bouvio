@@ -1221,7 +1221,7 @@ mod tests {
         let b = thread(&r, ws.id, None, None).await;
         let now = Utc::now();
         turn(&r, a.id, 0, now - Duration::days(2), "Maya", Some(0.50));
-        turn(&r, a.id, 2, now - Duration::minutes(5), "Jonas", Some(0.25));
+        turn(&r, a.id, 2, now - Duration::minutes(5), "Jordan", Some(0.25));
         turn(&r, b.id, 0, now - Duration::minutes(1), "Maya", None);
         turn(&r, b.id, 2, now - Duration::days(40), "Maya", Some(9.0)); // outside 7 days
 
@@ -1329,11 +1329,11 @@ mod tests {
             item(BriefKind::Waiting, "Magic link sign-in", None),
             item(BriefKind::Issue, "BOU-12 Drafts", Some("in_progress")),
             item(BriefKind::Issue, "BOU-9 Rail", Some("done")),
-            item(BriefKind::Task, "Reply to Jonas", Some("overdue")),
+            item(BriefKind::Task, "Reply to Jordan", Some("overdue")),
         ]);
         assert_eq!(
             md,
-            "**Waiting on you**\n- Magic link sign-in · Cuna\n\n**Issues**\n- BOU-12 Drafts · Cuna (in progress)\n- BOU-9 Rail · Cuna (done)\n\n**Your tasks for today**\n- Reply to Jonas · Cuna (overdue)"
+            "**Waiting on you**\n- Magic link sign-in · Cuna\n\n**Issues**\n- BOU-12 Drafts · Cuna (in progress)\n- BOU-9 Rail · Cuna (done)\n\n**Your tasks for today**\n- Reply to Jordan · Cuna (overdue)"
         );
         assert_eq!(fallback_markdown(&[]), "Nothing happened in the last 24 hours.");
     }
@@ -1345,7 +1345,7 @@ mod tests {
         let t = thread(&r, ws.id, None, None).await;
         r.store().update_thread(t.id, |t| t.status = AgentStatus::Blocked).unwrap();
         let today = local_date(Utc::now()).format("%Y-%m-%d").to_string();
-        create_task(&r, NewTask { title: "Reply to Jonas".into(), notes: None, due: Some(today.clone()), priority: None, workspace_id: None, thread_id: None }).unwrap();
+        create_task(&r, NewTask { title: "Reply to Jordan".into(), notes: None, due: Some(today.clone()), priority: None, workspace_id: None, thread_id: None }).unwrap();
         create_task(&r, NewTask { title: "Later".into(), notes: None, due: Some("2999-01-01".into()), priority: None, workspace_id: None, thread_id: None }).unwrap();
 
         let b = get_brief(&r, None, false).await.unwrap();

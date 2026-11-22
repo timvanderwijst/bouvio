@@ -33,7 +33,7 @@ async function state(orig: { request: (m: string, p: string, b?: unknown) => Pro
   const me = (await orig.status()).user!;
   const members = (((await orig.request("GET", `/workspaces/${ws}/members`)) as Member[]) ?? []).map((m) => m.user);
   const seed = (((await orig.request("GET", `/workspaces/${ws}/chat?channel=general`)) as ChatMessage[]) ?? []).map((m) => ({ ...m }));
-  const [jonas, noor] = [members.find((u) => u.name === "Jonas") ?? me, members.find((u) => u.name === "Noor") ?? me];
+  const [jordan, olivia] = [members.find((u) => u.name === "Jordan") ?? me, members.find((u) => u.name === "Olivia") ?? me];
   const at = (min: number) => ago(min);
   const msg = (author: HubUser, text: string, min: number, extra: Partial<ChatMessage> = {}): ChatMessage => ({
     id: uid(),
@@ -48,26 +48,26 @@ async function state(orig: { request: (m: string, p: string, b?: unknown) => Pro
     ...extra,
   });
   const earlier = [
-    msg(noor, "Release notes for this week are in **#design**. Shout if anything is missing.", 60 * 26, { pinned: true }),
-    msg(jonas, "Morning! Picking up the hub invites today.", 60 * 25),
+    msg(olivia, "Release notes for this week are in **#design**. Shout if anything is missing.", 60 * 26, { pinned: true }),
+    msg(jordan, "Morning! Picking up the hub invites today.", 60 * 25),
   ];
   if (seed[0]) seed[0].reactions = [["👀", [me.id]]];
-  if (seed[1]) seed[1].reactions = [["🎉", [jonas.id, noor.id]], ["👍", [jonas.id]]];
+  if (seed[1]) seed[1].reactions = [["🎉", [jordan.id, olivia.id]], ["👍", [jordan.id]]];
   const root = seed[2] ?? seed[0];
   const replies = root
     ? [
         msg(me, "Resend is fine. Free tier covers us, and it is plain SMTP for self-hosters anyway.", 9, { parent: root.id }),
-        msg(jonas, `Agreed. @${me.name} can you update the compose file?`, 7, { parent: root.id }),
+        msg(jordan, `Agreed. @${me.name} can you update the compose file?`, 7, { parent: root.id }),
       ]
     : [];
-  const design = [msg(noor, "Dark diff colours: two options in the board. I lean to the softer one.", 90, { channel: "design" })];
+  const design = [msg(olivia, "Dark diff colours: two options in the board. I lean to the softer one.", 90, { channel: "design" })];
   st = {
     me,
     members,
     messages: [...earlier, ...seed, ...replies, ...design],
     channels: [
       { name: "general", created_at: at(9000), created_by: null },
-      { name: "design", created_at: at(5000), created_by: noor.id },
+      { name: "design", created_at: at(5000), created_by: olivia.id },
       { name: "releases", created_at: at(4000), created_by: me.id },
     ],
     huddle: new Map(),
@@ -212,11 +212,11 @@ function stopFake() {
 }
 
 function fakeHuddle(s: State, ws: string) {
-  const jonas = s.members.find((u) => u.name === "Jonas");
-  if (!jonas) return;
-  const peer = "preview-jonas";
-  s.huddle.set(jonas.id, { user: jonas, conn: 9001 });
-  const signal = (kind: string, payload: Record<string, unknown>) => mockFire("hub-signal", { workspace_id: ws, from: jonas, kind, payload: { peer, conn: 9001, ...payload } });
+  const jordan = s.members.find((u) => u.name === "Jordan");
+  if (!jordan) return;
+  const peer = "preview-jordan";
+  s.huddle.set(jordan.id, { user: jordan, conn: 9001 });
+  const signal = (kind: string, payload: Record<string, unknown>) => mockFire("hub-signal", { workspace_id: ws, from: jordan, kind, payload: { peer, conn: 9001, ...payload } });
   setTimeout(() => signal("join", { media: { muted: false, camera: false, screen: false } }), 900);
   let muted = false;
   stopFake();

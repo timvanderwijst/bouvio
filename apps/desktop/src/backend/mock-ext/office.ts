@@ -204,7 +204,7 @@ function seed(y: Y.Doc, kind: DocKind, template: string | null, formFields: Fiel
         schema.set(f.id, f);
       rows.push([
         row({ title: "Launch announcement", status: "status-2", channel: "channel-0", date: day(2), owner: "Maya" }),
-        row({ title: "Monthly update", status: "status-1", channel: "channel-1", date: day(6), owner: "Sanne" }),
+        row({ title: "Monthly update", status: "status-1", channel: "channel-1", date: day(6), owner: "Grace" }),
         row({ title: "Behind the scenes: the formula engine", status: "status-0", channel: "channel-2", date: day(9) }),
         row({ title: "Customer story: a studio of three", status: "status-0", channel: "channel-0", date: day(14) }),
         row({ title: "Release notes 0.4", status: "status-3", channel: "channel-0", date: day(-3), owner: "Maya" }),
@@ -226,8 +226,8 @@ function seed(y: Y.Doc, kind: DocKind, template: string | null, formFields: Fiel
       ])
         schema.set(f.id, f);
       rows.push([
-        row({ name: "Noor de Vries", email: "noor@example.com", role: "role-1", message: "Design reviews with agents in the loop" }),
-        row({ name: "Daan Bakker", email: "daan@example.com", role: "role-0", message: "Running Claude Code overnight on our VPS" }),
+        row({ name: "Olivia Reed", email: "olivia@example.com", role: "role-1", message: "Design reviews with agents in the loop" }),
+        row({ name: "Ethan Brooks", email: "ethan@example.com", role: "role-0", message: "Running Claude Code overnight on our VPS" }),
       ]);
       views.push([view("Table", "table")]);
     } else {
@@ -265,12 +265,12 @@ function seedWorkspace(ws: string) {
   if (seeded.has(ws)) return;
   seeded.add(ws);
   make(ws, "doc", "Weekly sync", "sample", { min: 12 });
-  make(ws, "sheet", "Launch budget", "sample", { min: 95, by: "Sanne" });
+  make(ws, "sheet", "Launch budget", "sample", { min: 95, by: "Grace" });
   make(ws, "slides", "Roadmap review", "sample", { min: 300 });
-  make(ws, "database", "Content calendar", "content-calendar", { min: 60 * 26, by: "Sanne" });
+  make(ws, "database", "Content calendar", "content-calendar", { min: 60 * 26, by: "Grace" });
   const db = make(ws, "database", "Beta signups", "responses", { min: 60 * 50 });
   make(ws, "form", "Beta signup", "sample", { min: 60 * 49, parent: db.id });
-  make(ws, "doc", "Project brief: hub v2", "project-brief", { min: 60 * 72, by: "Daan" });
+  make(ws, "doc", "Project brief: hub v2", "project-brief", { min: 60 * 72, by: "Ethan" });
 }
 
 // A colleague who opens the weekly sync a moment after you do.
@@ -278,8 +278,8 @@ function visitor(id: string, ws: string) {
   const y = ydocs.get(id);
   if (!y) return;
   const peer = new Awareness(new Y.Doc());
-  peer.setLocalStateField("user", { name: "Sanne", color: "hsl(145 62% 52%)" });
-  window.setTimeout(() => notice(ws, "office-awareness", { id, by: "Sanne", state: { u: b64(encodeAwarenessUpdate(peer, [peer.clientID])), client: "mock-sanne" } }), 1200);
+  peer.setLocalStateField("user", { name: "Grace", color: "hsl(145 62% 52%)" });
+  window.setTimeout(() => notice(ws, "office-awareness", { id, by: "Grace", state: { u: b64(encodeAwarenessUpdate(peer, [peer.clientID])), client: "mock-grace" } }), 1200);
 }
 
 const find = (id: string) => {

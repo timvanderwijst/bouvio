@@ -90,9 +90,9 @@ export const mark = (s = 16) => `<svg width="${s}" height="${s}" viewBox="0 0 24
 
 // People in the example workspace. Made up.
 const PEOPLE = {
-  Noor: "hsl(12 62% 52%)",
+  Olivia: "hsl(12 62% 52%)",
   Maya: "hsl(340 62% 52%)",
-  Daan: "hsl(225 62% 52%)",
+  Ethan: "hsl(225 62% 52%)",
   Sam: "hsl(160 50% 38%)",
   Lena: "hsl(268 50% 55%)",
 };
@@ -115,23 +115,23 @@ export function rail() {
 }
 
 export function sidebar({ active = "Desktop", page = null } = {}) {
-  const row = (ic, label, on, count) => `<div class="sb-row ${on ? "active" : ""}">${icon(ic)}<span class="truncate">${label}</span>${count ? `<span class="sb-count">${count}</span>` : ""}</div>`;
+  const row = (ic, label, on, count, go) => `<${go ? `button type="button" data-go="${go}"` : "div"} class="sb-row ${on ? "active" : ""}">${icon(ic)}<span class="truncate">${label}</span>${count ? `<span class="sb-count">${count}</span>` : ""}</${go ? "button" : "div"}>`;
   const leads = LEADS.map((c) => {
     const on = c.name === active;
     const right = c.badge ? `<span class="badge">${c.badge}</span>` : c.state === "working" ? status("working", 13) : "";
     const kids = on && c.threads
       ? `<div class="lead-threads">${c.threads.map(([t, s, w]) => `<div class="sb-row thread-row nested">${s !== "idle" ? status(s, 12) : ""}<span class="truncate">${t}</span><span class="sb-meta">${w} ago</span></div>`).join("")}</div>`
       : "";
-    return `<div class="lead"><div class="sb-row lead-row ${on && !page ? "active" : ""}"><span class="avatar-wrap">${avatar(c.seed)}</span><span class="truncate">${c.name}</span>${right}</div>${kids}</div>`;
+    return `<div class="lead"><div class="sb-row lead-row ${on && !page ? "active" : ""}" ${on ? 'data-go="thread"' : ""}><span class="avatar-wrap">${avatar(c.seed)}</span><span class="truncate">${c.name}</span>${right}</div>${kids}</div>`;
   }).join("");
   return `<aside class="sidebar">
     <div class="sb-top"><div class="ws-btn"><span class="ws-mark">${mark(16)}</span><span>Cuna</span></div><div class="sb-top-actions"><span class="icon-btn">${icon("search")}</span></div></div>
-    <nav class="sb-nav">${row("pen", "New thread")}${row("list", "Threads")}${row("chat", "Chat", page === "Chat")}${row("cal", "Planning", page === "Planning", 5)}${row("book", "Library", page === "Library")}${row("studio", "Studio", page === "Studio")}${row("code", "Build")}${row("chart", "Insights")}</nav>
+    <nav class="sb-nav">${row("pen", "New thread")}${row("list", "Threads")}${row("chat", "Chat", page === "Chat", 0, "chat")}${row("cal", "Planning", page === "Planning", 5, "planning")}${row("book", "Library", page === "Library", 0, "library")}${row("studio", "Studio", page === "Studio", 0, "studio")}${row("code", "Build", false, 0, "build")}${row("chart", "Insights", false, 0, "insights")}</nav>
     <div class="sb-scroll"><div class="sb-section"><span class="sb-heading static">Leads</span></div>${leads}
       <div class="sb-section"><span class="sb-heading static">People</span></div>
       <div class="sb-row person">${person("Maya")}<span class="truncate">Maya</span><span class="sb-meta">Desktop</span></div>
     </div>
-    <div class="user-row"><span class="user-avatar">N</span><span class="user-text"><span class="user-name">Noor</span><span class="user-ws">Cuna</span></span></div>
+    <div class="user-row"><span class="user-avatar">O</span><span class="user-text"><span class="user-name">Olivia</span><span class="user-ws">Cuna</span></span></div>
   </aside>`;
 }
 
@@ -179,8 +179,62 @@ export function panel() {
 
 /** The whole app window: rail, sidebar, a lead's thread and the overview panel. */
 export function windowUI({ approvalCard = false, typing = "" } = {}) {
-  return `<div class="win-fit"><div class="win" role="img" aria-label="The Cuna app with leads, a thread and the overview">${rail()}${sidebar()}
-    <div class="w-sheet"><section class="main">${tabbar()}${thread({ withApproval: approvalCard, typing })}</section>${panel()}</div></div></div>`;
+  return `<div class="win-fit"><div class="win" data-live aria-label="The Cuna app. Click Chat, Planning, Library, Studio, Build or Insights to look around.">${rail()}${sidebar()}
+    <div class="w-sheet"><section class="main" data-home>${tabbar()}${thread({ withApproval: approvalCard, typing })}</section>${panel()}<section class="main w-page" data-page hidden></section></div></div></div>`;
+}
+
+/** The pages behind each sidebar group, with the same tabs as in the app. */
+const fileList = () => {
+  const f = (ic, name, meta) => `<div class="fl-row">${icon(ic, 15)}<span class="truncate">${name}</span><span class="fl-meta">${meta}</span></div>`;
+  return `<div class="fl">${f("folder", "apps/desktop", "412 files")}${f("folder", "apps/hub", "96 files")}${f("folder", "crates/runner", "143 files")}${f("doc", "README.md", "4 KB")}${f("doc", "research/drafts-in-editors.pdf", "1.2 MB")}${f("doc", "Cargo.toml", "1 KB")}</div>`;
+};
+const knowledge = () => {
+  const k = (title, src) => `<div class="fl-row">${icon("book", 15)}<span class="truncate">${title}</span><span class="fl-meta">${src}</span></div>`;
+  return `<div class="fl">${k("How editors keep a draft per tab", "PDF · 12 pages")}${k("Hub deployment notes", "Doc")}${k("Tauri updater, signing keys", "Web clip")}${k("Pricing research", "Sheet")}</div>`;
+};
+const GROUPS = {
+  chat: { title: "Chat", tabs: [["#general", () => chat() + `<div class="w-huddle">${huddle()}</div>`]] },
+  planning: { title: "Planning", tabs: [["Issues", () => issues()], ["Pull requests", () => prs()], ["Calendar", () => calendar()]] },
+  library: { title: "Library", tabs: [["Docs", () => doc()], ["Files", fileList], ["Knowledge", knowledge], ["Search", () => search()]] },
+  studio: { title: "Studio", tabs: [["Board", () => board()]] },
+  build: { title: "Build", tabs: [["Dev", () => devTerminal()], ["Automations", () => automations()], ["Integrations", () => integrations()]] },
+  insights: { title: "Insights", tabs: [["Costs", () => costs()], ["Evals", () => evals()]] },
+};
+
+/** The hero window works: the sidebar groups open their pages, the tabs switch inside them. */
+function liveWindow() {
+  document.querySelectorAll(".win[data-live]").forEach((win) => {
+    const home = win.querySelector("[data-home]");
+    const page = win.querySelector("[data-page]");
+    const sheet = win.querySelector(".w-sheet");
+    let tour = null;
+    const open = (go, tab = 0) => {
+      win.querySelectorAll(".sb-nav .sb-row, .lead-row").forEach((r) => r.classList.toggle("active", r.dataset.go === go));
+      const g = GROUPS[go];
+      sheet.classList.toggle("is-page", !!g);
+      home.hidden = !!g;
+      page.hidden = !g;
+      if (!g) return;
+      const tabs = g.tabs.length > 1
+        ? `<nav class="group-tabs">${g.tabs.map(([name], i) => `<button type="button" class="group-tab ${i === tab ? "on" : ""}" data-tab="${i}">${name}</button>`).join("")}</nav>`
+        : "";
+      page.innerHTML = `${tabs}<div class="w-page-body w-${go}">${g.tabs[tab][1]()}</div>`;
+      dispatchEvent(new Event("resize")); // fit the board, like everything else that scales
+      page.querySelectorAll("[data-tab]").forEach((b) => b.addEventListener("click", () => { stop(); open(go, +b.dataset.tab); }));
+    };
+    const stop = () => { clearInterval(tour); tour = null; };
+    win.querySelectorAll("[data-go]").forEach((r) => r.addEventListener("click", () => { stop(); open(r.dataset.go); }));
+    // A slow tour through the groups, until someone clicks or hovers. Not with reduced motion.
+    if (!still) {
+      const steps = [["planning", 0], ["planning", 1], ["library", 0], ["studio", 0], ["insights", 0], ["thread", 0]];
+      let i = 0;
+      setTimeout(() => {
+        if (win.dataset.touched) return;
+        tour = setInterval(() => { const [g, t] = steps[i++ % steps.length]; open(g, t); }, 3600);
+      }, 7000);
+      win.addEventListener("pointerenter", () => { win.dataset.touched = "1"; stop(); });
+    }
+  });
 }
 
 /** Team chat. The last lead reply is still being typed. */
@@ -188,7 +242,7 @@ export function chat() {
   const msg = (who, time, text, extra = "") => `<div class="sc-msg">${person(who, "lg")}<div><div class="sc-meta"><b>${who}</b><span>${time}</span></div><div class="sc-text">${text}</div>${extra}</div></div>`;
   return `<div class="sc">
     ${msg("Maya", "10:12", "The rail thread is close. Can someone check it on a small laptop screen?", `<div class="sc-reacts"><span>👀 1</span></div>`)}
-    ${msg("Daan", "10:14", `<span class="sc-chip">@Desktop</span> check the rail at 1280×720 and fix what overlaps`)}
+    ${msg("Ethan", "10:14", `<span class="sc-chip">@Desktop</span> check the rail at 1280×720 and fix what overlaps`)}
     <div class="sc-reply">${avatar(11, 18)}<div><div class="sc-meta"><b>Desktop</b><span>10:14</span></div><div class="sc-text">Started <span class="sc-link">Rail at 1280×720</span>. I'll post here when it's done.</div></div></div>
     <div class="sc-reply">${avatar(11, 18)}<div><div class="sc-meta"><b>Desktop</b><span>10:19</span></div><div class="sc-text">Done. The rail tooltip overlapped the sidebar, so it now opens to the right. Typecheck passes.</div><div class="sc-reacts"><span>🎉 2</span><span>👍 1</span></div></div></div>
     <div class="sc-reply sc-typing">${avatar(37, 18)}<span class="sc-dots" aria-label="Hub is typing"><i></i><i></i><i></i></span><span class="sc-who">Hub is typing</span></div>
@@ -197,7 +251,7 @@ export function chat() {
 
 export function huddle() {
   const p = (n, on) => `<span class="hd-p ${on ? "speak" : ""}">${person(n, "lg")}</span>`;
-  return `<div class="hd">${p("Daan", true)}${p("Maya")}${p("Noor")}<span class="hd-sep"></span><span class="icon-btn">${icon("mic")}</span><span class="icon-btn">${icon("monitor")}</span><span class="btn small hd-leave">Leave</span></div>`;
+  return `<div class="hd">${p("Ethan", true)}${p("Maya")}${p("Olivia")}<span class="hd-sep"></span><span class="icon-btn">${icon("mic")}</span><span class="icon-btn">${icon("monitor")}</span><span class="btn small hd-leave">Leave</span></div>`;
 }
 
 export function board() {
@@ -310,7 +364,7 @@ export function integrations() {
 
 export function inbox() {
   const row = (s, t, m, w) => `<div class="ov-row">${status(s)}<span class="ov-text"><span class="ov-title truncate">${t}</span><span class="ov-meta truncate">${m}</span></span><span class="ov-when">${w}</span></div>`;
-  return `<div class="overview">${row("blocked", "Magic link sign-in", "Waiting for your yes · Hub", "12m")}${row("idle", "Maya mentioned you in #general", "“@Noor can you check the rail?”", "20m")}${row("done", "Dependency check finished", "Automation · 3m 12s", "1h")}</div>`;
+  return `<div class="overview">${row("blocked", "Magic link sign-in", "Waiting for your yes · Hub", "12m")}${row("idle", "Maya mentioned you in #general", "“@Olivia can you check the rail?”", "20m")}${row("done", "Dependency check finished", "Automation · 3m 12s", "1h")}</div>`;
 }
 
 export function myWork() {
@@ -320,17 +374,17 @@ export function myWork() {
 
 export function people() {
   const row = (n, role, note) => `<div class="pp-row">${person(n)}<span class="pp-name">${n}<span>${note}</span></span><span class="pp-role">${role}</span></div>`;
-  return `<div class="pp">${row("Noor", "Owner", "Everything")}${row("Daan", "Operator", "Starts agents")}${row("Maya", "Prompter", "Talks to agents")}${row("Sam", "Viewer", "Watches")}</div>`;
+  return `<div class="pp">${row("Olivia", "Owner", "Everything")}${row("Ethan", "Operator", "Starts agents")}${row("Maya", "Prompter", "Talks to agents")}${row("Sam", "Viewer", "Watches")}</div>`;
 }
 
 export function machines() {
   const row = (ic, n, what, state, on) => `<div class="lm-row"><span class="lm-dot ${on ? "ok" : ""}"></span><b>${n}</b><span class="muted">${what}</span><span class="lm-state ${on ? "ok" : ""}">${state}</span></div>`;
-  return `<div class="lm">${row("monitor", "This computer", "Windows", "2 threads", true)}${row("server", "VPS", "Linux · €4 a month", "Online", true)}${row("monitor", "Daan's laptop", "macOS", "Asleep", false)}</div>`;
+  return `<div class="lm">${row("monitor", "This computer", "Windows", "2 threads", true)}${row("server", "VPS", "Linux · €4 a month", "Online", true)}${row("monitor", "Ethan's laptop", "macOS", "Asleep", false)}</div>`;
 }
 
 /** A task's life, as a dotted timeline. */
 export function timeline() {
-  const steps = [["09:02", "Issue", "Maya files BOU-34: the composer loses the draft."], ["09:03", "Lead", "Desktop picks it up and starts a thread on its own branch."], ["09:11", "Approval", "It asks to run the tests. Daan says yes."], ["09:14", "Pull request", "#44 opens with the diff and a passing check."], ["09:20", "Merged", "Noor merges it from the app."]];
+  const steps = [["09:02", "Issue", "Maya files BOU-34: the composer loses the draft."], ["09:03", "Lead", "Desktop picks it up and starts a thread on its own branch."], ["09:11", "Approval", "It asks to run the tests. Ethan says yes."], ["09:14", "Pull request", "#44 opens with the diff and a passing check."], ["09:20", "Merged", "Olivia merges it from the app."]];
   return `<ol class="tl">${steps.map(([t, h, p], i) => `<li style="--i:${i}"><span class="mono tl-t">${t}</span><b>${h}</b><p>${p}</p></li>`).join("")}</ol>`;
 }
 
@@ -398,6 +452,7 @@ export function mount() {
     setTimeout(tick, 1400);
   });
 
+  liveWindow();
   splitWords();
   navBehaviour();
   fillStatement();

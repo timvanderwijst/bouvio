@@ -223,7 +223,7 @@ async function seedReview(thread_id: string) {
       line: 41,
       side: "new",
       text: "Select both in one call with useShallow, so the composer re-renders once per keystroke instead of twice.",
-      author: "Jonas",
+      author: "Jordan",
       line_text: text,
       resolved: false,
       outdated: false,
@@ -246,7 +246,7 @@ const conns = (ws: string) => {
 };
 const findConn = (id: string) => [...connections.values()].flat().find((c) => c.id === id);
 
-const NAMES = ["Maya Peters", "Jonas de Vries", "Noor Bakker", "Sem Jansen", "Lotte Visser", "Daan Smit", "Eva Mulder", "Finn de Boer", "Mila Bos", "Luuk Meijer"];
+const NAMES = ["Maya Peters", "Jordan Miles", "Olivia Reed", "Ryan Cooper", "Chloe Bennett", "Ethan Brooks", "Ava Turner", "Liam Carter", "Zoe Parker", "Noah Hayes"];
 const TABLES: Record<string, { kind: string; columns: string[]; rows: (i: number) => unknown[]; total: number }> = {
   users: {
     kind: "table",
@@ -261,7 +261,7 @@ const TABLES: Record<string, { kind: string; columns: string[]; rows: (i: number
     kind: "table",
     columns: ["id", "name", "owner_id", "shared", "created_at"],
     total: 37,
-    rows: (i) => [`ws_${(1e6 + i * 7919).toString(36)}`, ["Cuna", "northwind.dev", "Q1 planning", "Jonas's studio", "Hub ops"][i % 5] + (i > 4 ? ` ${i}` : ""), (i % 10) + 1, i % 3 === 0, ago(60 * 24 * (200 - i))],
+    rows: (i) => [`ws_${(1e6 + i * 7919).toString(36)}`, ["Cuna", "northwind.dev", "Q1 planning", "Jordan's studio", "Hub ops"][i % 5] + (i > 4 ? ` ${i}` : ""), (i % 10) + 1, i % 3 === 0, ago(60 * 24 * (200 - i))],
   },
   invites: {
     kind: "table",
@@ -279,7 +279,7 @@ const TABLES: Record<string, { kind: string; columns: string[]; rows: (i: number
     kind: "view",
     columns: ["workspace", "members", "last_seen"],
     total: 5,
-    rows: (i) => [["Cuna", "northwind.dev", "Q1 planning", "Jonas's studio", "Hub ops"][i], 2 + ((i * 3) % 7), ago(i * 13)],
+    rows: (i) => [["Cuna", "northwind.dev", "Q1 planning", "Jordan's studio", "Hub ops"][i], 2 + ((i * 3) % 7), ago(i * 13)],
   },
 };
 

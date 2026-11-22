@@ -43,7 +43,7 @@ const task = (title: string, due: string | null, extra: Partial<PersonalTask> = 
 });
 
 let tasks: PersonalTask[] = [
-  task("Answer Jonas about the hub invite flow", day(-1), { priority: "high" }, 0),
+  task("Answer Jordan about the hub invite flow", day(-1), { priority: "high" }, 0),
   task("Review the magic link thread", day(0), { priority: "medium" }, 1),
   task("Renew cuna.io domain", day(0), { notes: "Registrar sends the invoice to the old address." }, 2),
   task("Draft release notes for 0.2", day(2), {}, 3),
@@ -132,7 +132,7 @@ async function costSummary(workspaceId: string | null, days: number): Promise<Co
     per_person: [
       { key: "Maya", label: "Maya", cost_usd: total * 0.52, turns: Math.round(turns * 0.45) },
       { key: "Desktop", label: "Desktop", cost_usd: total * 0.29, turns: Math.round(turns * 0.33) },
-      { key: "Jonas", label: "Jonas", cost_usd: total * 0.19, turns: Math.round(turns * 0.22) },
+      { key: "Jordan", label: "Jordan", cost_usd: total * 0.19, turns: Math.round(turns * 0.22) },
     ],
     top_threads: ths.map((t, i) => ({ thread_id: t.id, workspace_id: t.workspace_id, title: t.title, cost_usd: total * [0.18, 0.12, 0.09, 0.07, 0.05, 0.03][i], turns: [21, 14, 11, 8, 6, 3][i] })),
     budgets: budgets.filter((b) => !workspaceId || b.budget.workspace_id === workspaceId),

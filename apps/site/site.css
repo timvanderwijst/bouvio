@@ -88,7 +88,26 @@ body { overflow: auto; user-select: auto; background: var(--bg); color: var(--in
 /* the whole app window, scaled to fit */
 .win-fit { --scale: 1; --h: 760px; height: calc(var(--h) * var(--scale)); }
 .win { width: 1240px; height: 760px; transform: scale(var(--scale)); transform-origin: top left; display: grid; grid-template-columns: 52px 232px minmax(0, 1fr) 360px; background: var(--bg); border-radius: 14px; box-shadow: 0 0 0 1px var(--line), var(--shadow-lg); overflow: hidden; font-size: 13.5px; text-align: left; }
-.win .sidebar { width: auto; padding: 10px 8px 8px 6px; pointer-events: none; }
+.win .sidebar { width: auto; padding: 10px 8px 8px 6px; }
+.win .sidebar .sb-row { pointer-events: none; }
+.win .sidebar [data-go] { pointer-events: auto; cursor: pointer; }
+.win .sidebar button[data-go] { width: 100%; border: 0; font: inherit; color: inherit; text-align: left; }
+.win .sidebar button[data-go]:not(.active) { background: none; }
+.win .sidebar [data-go]:not(.active):hover { background: var(--hover); }
+.win .w-sheet.is-page { grid-template-columns: minmax(0, 1fr); }
+.win .w-sheet.is-page > .panel { display: none; }
+.win .w-page { overflow: hidden; animation: fade .3s var(--e); }
+.win .w-page .group-tab { border: 0; background: none; font: inherit; font-size: 13px; cursor: pointer; }
+.win .w-page .group-tab.on { background: var(--active); }
+.w-page-body { padding: 20px 24px; overflow: hidden; min-height: 0; }
+.w-page-body > * { max-width: 100%; }
+.w-chat { display: flex; flex-direction: column; gap: 14px; }
+.w-huddle { align-self: flex-start; }
+.w-studio .bd { height: 660px; }
+.fl { display: flex; flex-direction: column; }
+.fl-row { display: flex; align-items: center; gap: 10px; height: 40px; border-bottom: 1px solid var(--line); color: var(--ink); font-size: 13.5px; }
+.fl-row svg { color: var(--mute); flex: none; }
+.fl-meta { margin-left: auto; color: var(--mute); font-size: 12.5px; white-space: nowrap; }
 .win .w-sheet { margin: 8px 8px 8px 0; background: var(--sheet); border-radius: 12px; box-shadow: 0 0 0 1px var(--line); display: grid; grid-template-columns: minmax(0, 1fr) 360px; overflow: hidden; grid-column: 3 / span 2; }
 .win .main { min-height: 0; }
 .win .thread { padding: 22px 24px 12px; gap: 12px; }

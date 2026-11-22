@@ -208,8 +208,8 @@ index 91be3d0..a27c6e4 100644
 // ---- more sample data: work, studio, people ------------------------------------------
 
 const maya: HubUser = { id: uid(), name: "Maya", email: "maya@cuna.io", avatar_url: null };
-const jonas: HubUser = { id: uid(), name: "Jonas", email: "jonas@cuna.io", avatar_url: null };
-const noor: HubUser = { id: uid(), name: "Noor", email: "noor@cuna.io", avatar_url: null };
+const jordan: HubUser = { id: uid(), name: "Jordan", email: "jordan@cuna.io", avatar_url: null };
+const olivia: HubUser = { id: uid(), name: "Olivia", email: "olivia@cuna.io", avatar_url: null };
 
 const issue = (n: number, title: string, status: Issue["status"], lead: Lead | null, min: number, body = ""): Issue => ({
   id: uid(),
@@ -241,7 +241,7 @@ const issues: Issue[] = [
 const prs: PullRequest[] = [
   { number: 142, title: "fix(desktop): keep a draft per thread", url: "https://github.com/timvanderwijst/bouvio/pull/142", head: "cuna/3f9a2c1e", base: "main", state: "open", draft: false, author: "maya", additions: 17, deletions: 35, updated_at: ago(3) },
   { number: 141, title: "feat(runner): resume Claude sessions after restart", url: "https://github.com/timvanderwijst/bouvio/pull/141", head: "cuna/9e1c0a77", base: "main", state: "merged", draft: false, author: "maya", additions: 88, deletions: 12, updated_at: ago(50) },
-  { number: 140, title: "feat(hub): invites with roles", url: "https://github.com/timvanderwijst/bouvio/pull/140", head: "cuna/1a2b3c4d", base: "main", state: "open", draft: true, author: "jonas", additions: 214, deletions: 9, updated_at: ago(130) },
+  { number: 140, title: "feat(hub): invites with roles", url: "https://github.com/timvanderwijst/bouvio/pull/140", head: "cuna/1a2b3c4d", base: "main", state: "open", draft: true, author: "jordan", additions: 214, deletions: 9, updated_at: ago(130) },
 ];
 
 const automations: Automation[] = [
@@ -298,14 +298,14 @@ const settings: Record<string, WorkspaceSettings> = {
 
 const members: Member[] = [
   { user: maya, role: "admin", see_costs: true, online: true },
-  { user: jonas, role: "operator", see_costs: false, online: true },
-  { user: noor, role: "viewer", see_costs: false, online: false },
+  { user: jordan, role: "operator", see_costs: false, online: true },
+  { user: olivia, role: "viewer", see_costs: false, online: false },
 ];
 
 const chat: ChatMessage[] = [
-  { id: uid(), workspace_id: B, channel: "general", author: jonas, text: "The rail thread is close. Can someone check it on a small laptop screen?", at: ago(42), parent: null, reactions: [], pinned: false },
+  { id: uid(), workspace_id: B, channel: "general", author: jordan, text: "The rail thread is close. Can someone check it on a small laptop screen?", at: ago(42), parent: null, reactions: [], pinned: false },
   { id: uid(), workspace_id: B, channel: "general", author: maya, text: "On it. Also merged the draft fix.", at: ago(38), parent: null, reactions: [], pinned: false },
-  { id: uid(), workspace_id: B, channel: "general", author: noor, text: "Hub magic links are waiting on an SMTP choice — Resend?", at: ago(11), parent: null, reactions: [], pinned: false },
+  { id: uid(), workspace_id: B, channel: "general", author: olivia, text: "Hub magic links are waiting on an SMTP choice — Resend?", at: ago(11), parent: null, reactions: [], pinned: false },
 ];
 
 const files: Record<string, { name: string; dir: boolean; size: number }[]> = {
@@ -665,5 +665,5 @@ export const mockBackend: Backend = {
   },
 };
 
-// Some life in the preview: Jonas looks at a thread and types in #general.
-setTimeout(() => fire("hub-presence", { presence: { workspace_id: B, user: jonas, viewing: firstThread.id, cursor: null }, online: true }), 800);
+// Some life in the preview: Jordan looks at a thread and types in #general.
+setTimeout(() => fire("hub-presence", { presence: { workspace_id: B, user: jordan, viewing: firstThread.id, cursor: null }, online: true }), 800);

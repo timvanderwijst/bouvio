@@ -482,7 +482,7 @@ mod tests {
         {
             let opts = sqlx::sqlite::SqliteConnectOptions::new().filename(root.join("app.db")).create_if_missing(true);
             let mut db = sqlx::SqliteConnection::connect_with(&opts).await.unwrap();
-            sqlx::raw_sql("CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, score REAL, avatar BLOB); INSERT INTO users (name, score) VALUES ('Maya', 9.5), ('Jonas', NULL);")
+            sqlx::raw_sql("CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, score REAL, avatar BLOB); INSERT INTO users (name, score) VALUES ('Maya', 9.5), ('Jordan', NULL);")
                 .execute(&mut db)
                 .await
                 .unwrap();
@@ -517,7 +517,7 @@ mod tests {
         let mut w = c.clone();
         w.read_only = false;
         save(&r, ws.id, w).unwrap();
-        let res = query(&r, ws.id, c.id, "DELETE FROM users WHERE name = 'Jonas'").await.unwrap();
+        let res = query(&r, ws.id, c.id, "DELETE FROM users WHERE name = 'Jordan'").await.unwrap();
         assert_eq!(res.affected, Some(1));
     }
 }
