@@ -268,7 +268,7 @@ export function board() {
 const cursorSvg = () => `<svg width="16" height="16" viewBox="0 0 16 16"><path d="M2 1l12 6-5.5 1.5L6 14Z" fill="var(--c)" stroke="#fff" stroke-width="1.2" stroke-linejoin="round"/></svg>`;
 
 export function sheet() {
-  const rows = [["Category", "Planned", "Actual", "Difference"], ["Hosting", "€40.00", "€36.00", "€4.00"], ["Domains", "€15.00", "€15.00", "€0.00"], ["Design", "€600.00", "€720.00", "−€120.00"], ["Ads", "€300.00", "€180.00", "€120.00"], ["Total", "€955.00", "€951.00", "€4.00"]];
+  const rows = [["Category", "Planned", "Actual", "Difference"], ["Hosting", "$40.00", "$36.00", "$4.00"], ["Domains", "$15.00", "$15.00", "$0.00"], ["Design", "$600.00", "$720.00", "−$120.00"], ["Ads", "$300.00", "$180.00", "$120.00"], ["Total", "$955.00", "$951.00", "$4.00"]];
   return `<div class="ss"><div class="ss-bar"><span class="mono">D6</span><span class="ss-fx">fx</span><span class="mono">=SUM(D2:D5)</span></div>
     <div class="ss-scroll"><table class="ss-grid"><tr><th></th>${["A", "B", "C", "D"].map((c) => `<th>${c}</th>`).join("")}</tr>${rows.map((r, i) => `<tr><th>${i + 1}</th>${r.map((v, j) => `<td class="${i === 0 || i === 5 ? "b" : ""} ${j ? "r" : ""} ${i === 5 && j === 3 ? "on" : ""} ${v.startsWith("−") ? "neg" : ""}">${v}</td>`).join("")}</tr>`).join("")}</table></div></div>`;
 }
@@ -290,14 +290,14 @@ export function search() {
   const hit = (ic, title, snip) => `<div class="sr-hit"><span class="sr-ic">${icon(ic, 14)}</span><div><b>${title}</b><p>${snip}</p></div></div>`;
   return `<div class="sr"><div class="sr-input">${icon("search", 16)}<span>draft</span></div>
     ${hit("chat", "Keep a draft per thread in the composer", "Move the composer <mark>draft</mark> into the store, keyed by thread id.")}
-    ${hit("issue", "BOU-34 Composer loses the draft", "Composer loses the <mark>draft</mark> when switching threads")}
+    ${hit("issue", "CUN-34 Composer loses the draft", "Composer loses the <mark>draft</mark> when switching threads")}
     ${hit("doc", "Weekly sync", "…the <mark>draft</mark> fix shipped on Tuesday, release notes follow.")}
     ${hit("folder", "research/drafts-in-editors.pdf", "Imported PDF, page 4: how editors keep a <mark>draft</mark> per tab.")}</div>`;
 }
 
 export function issues() {
   const row = (s, id, t, seed, lead, label) => `<div class="is-row">${status(s)}<span class="mono is-id">${id}</span><span class="truncate is-t">${t}</span><span class="is-label">${label}</span><span class="is-lead">${avatar(seed, 14)}<span>${lead}</span></span></div>`;
-  return `<div class="is">${row("working", "BOU-41", "Rail shows on hover at the left edge", 11, "Desktop", "UI")}${row("blocked", "BOU-38", "Magic link sign-in", 37, "Hub", "Auth")}${row("idle", "BOU-34", "Composer loses the draft when switching threads", 11, "Desktop", "Bug")}${row("idle", "BOU-29", "Find Codex on the Windows PATH", 23, "Runner", "Windows")}${row("done", "BOU-22", "Resume Claude sessions after a restart", 23, "Runner", "Runner")}</div>`;
+  return `<div class="is">${row("working", "CUN-41", "Rail shows on hover at the left edge", 11, "Desktop", "UI")}${row("blocked", "CUN-38", "Magic link sign-in", 37, "Hub", "Auth")}${row("idle", "CUN-34", "Composer loses the draft when switching threads", 11, "Desktop", "Bug")}${row("idle", "CUN-29", "Find Codex on the Windows PATH", 23, "Runner", "Windows")}${row("done", "CUN-22", "Resume Claude sessions after a restart", 23, "Runner", "Runner")}</div>`;
 }
 
 export function prs() {
@@ -312,7 +312,7 @@ export function calendar() {
 }
 
 export function gitgraph() {
-  const rows = [["Widen the rail's hover zone", 11, "Rail shows on hover…", 1], ["Keep a draft per thread", 11, "Keep a draft per…", 2], ["Look for codex.cmd on Windows", 23, "Find Codex on the…", 3], ["Merge pull request #41", 0, "main", 0], ["Resume Claude sessions", 0, "", 0], ["Diff colours in the dark theme", 0, "v0.4.0", 0]];
+  const rows = [["Widen the rail's hover zone", 11, "Rail shows on hover…", 1], ["Keep a draft per thread", 11, "Keep a draft per…", 2], ["Look for codex.cmd on Windows", 23, "Find Codex on the…", 3], ["Merge pull request #41", 0, "main", 0], ["Resume Claude sessions", 0, "", 0], ["Diff colors in the dark theme", 0, "v0.4.0", 0]];
   const colors = ["var(--accent)", "#2F9E5A", "#C2653A", "#6553C4"];
   return `<div class="gg">${rows.map(([s, seed, ref, lane], i) => `<div class="gg-row"><svg width="64" height="30" aria-hidden="true"><line x1="12" y1="0" x2="12" y2="30" stroke="var(--accent)" stroke-width="2"/>${lane ? `<path d="M12 ${i ? 30 : 15} C12 20 ${12 + lane * 14} 22 ${12 + lane * 14} 15 L${12 + lane * 14} 0" fill="none" stroke="${colors[lane]}" stroke-width="2"/>` : ""}<circle cx="${12 + lane * 14}" cy="15" r="4.5" fill="${colors[lane]}"/></svg>${ref ? `<span class="gg-ref" style="--r:${colors[lane]}">${seed ? avatar(seed, 12) : ""}${ref}</span>` : ""}<span class="truncate">${s}</span></div>`).join("")}</div>`;
 }
@@ -379,12 +379,12 @@ export function people() {
 
 export function machines() {
   const row = (ic, n, what, state, on) => `<div class="lm-row"><span class="lm-dot ${on ? "ok" : ""}"></span><b>${n}</b><span class="muted">${what}</span><span class="lm-state ${on ? "ok" : ""}">${state}</span></div>`;
-  return `<div class="lm">${row("monitor", "This computer", "Windows", "2 threads", true)}${row("server", "VPS", "Linux · €4 a month", "Online", true)}${row("monitor", "Ethan's laptop", "macOS", "Asleep", false)}</div>`;
+  return `<div class="lm">${row("monitor", "This computer", "Windows", "2 threads", true)}${row("server", "VPS", "Linux · $4 a month", "Online", true)}${row("monitor", "Ethan's laptop", "macOS", "Asleep", false)}</div>`;
 }
 
 /** A task's life, as a dotted timeline. */
 export function timeline() {
-  const steps = [["09:02", "Issue", "Maya files BOU-34: the composer loses the draft."], ["09:03", "Lead", "Desktop picks it up and starts a thread on its own branch."], ["09:11", "Approval", "It asks to run the tests. Ethan says yes."], ["09:14", "Pull request", "#44 opens with the diff and a passing check."], ["09:20", "Merged", "Olivia merges it from the app."]];
+  const steps = [["09:02", "Issue", "Maya files CUN-34: the composer loses the draft."], ["09:03", "Lead", "Desktop picks it up and starts a thread on its own branch."], ["09:11", "Approval", "It asks to run the tests. Ethan says yes."], ["09:14", "Pull request", "#44 opens with the diff and a passing check."], ["09:20", "Merged", "Olivia merges it from the app."]];
   return `<ol class="tl">${steps.map(([t, h, p], i) => `<li style="--i:${i}"><span class="mono tl-t">${t}</span><b>${h}</b><p>${p}</p></li>`).join("")}</ol>`;
 }
 
@@ -408,7 +408,7 @@ export const nav = () => `<nav class="nav" data-nav><div class="nav-in">
 export const foot = () => `<footer class="foot">
   <div class="wrap foot-cols">
     <div><h6>Product</h6><a href="${REPO}/releases/latest">Download</a><a href="#agents">Agents</a><a href="#work">Docs and planning</a><a href="#studio">Studio</a></div>
-    <div><h6>Self-host</h6><a href="${REPO}/blob/main/apps/hub/README.md">Run the hub</a><a href="#free">Local models</a><a href="#build">Runners</a></div>
+    <div><h6>Self-host</h6><a href="${REPO}/blob/main/apps/hub/README.md">Run the hub</a><a href="#free">Local models</a><a href="#team">Runners</a></div>
     <div><h6>Build on it</h6><a href="${REPO}/blob/main/docs/plugins.md">Plugins</a><a href="${REPO}">Source code</a><a href="${REPO}/issues">Issues</a></div>
     <div><h6>Cuna</h6><span>Free and open source</span><span>MIT licensed</span><span>Windows, macOS, Linux</span></div>
   </div>
@@ -416,7 +416,7 @@ export const foot = () => `<footer class="foot">
   <div class="wrap foot-bt"><span>© Cuna contributors</span><span>Your keys, your machines</span></div>
 </footer>`;
 export const cta = (second = "Self-host the hub") => `<div class="cta">
-  <a class="btn primary lg" href="${REPO}/releases/latest">${icon("download", 16)}Download for Windows</a>
+  <a class="btn primary lg" href="${REPO}/releases/latest">${icon("download", 16)}Download</a>
   <a class="btn lg" href="${REPO}/blob/main/apps/hub/README.md">${second}<span class="arrow">${icon("arrow", 15)}</span></a></div>`;
 
 // ---- mount ------------------------------------------------------------------------

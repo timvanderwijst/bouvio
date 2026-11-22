@@ -168,7 +168,7 @@ async function brief(regenerate: boolean): Promise<Brief> {
       `- **${name("waiting")}** waits on your approval to send the sign-in email; nothing else is blocked.`,
       `- **${name("failed")}** failed overnight on a missing token in the dark theme; worth a look before it drifts.`,
       `- Three threads finished, including **${name("finished")}**; all changes sit on their branches, none merged yet.`,
-      "- BOU-14 moved to in progress; BOU-9 is done.",
+      "- CUN-14 moved to in progress; CUN-9 is done.",
       "- The nightly dependency check ran at 03:00 and found nothing new.",
       `- Due today: **${tasks.find((t) => t.due === day(0))?.title ?? "nothing"}**, plus one overdue task.`,
     ].join("\n"),

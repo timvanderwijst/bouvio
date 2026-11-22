@@ -3,6 +3,6 @@ import type { IssueStatus } from "./IssueStatus";
 
 export type Issue = { id: string, workspace_id: string, number: number, 
 /**
- * `BOU-12`
+ * `CUN-12`
  */
 key: string, title: string, body: string, status: IssueStatus, assignee: string | null, lead_id: string | null, thread_ids: Array<string>, github_number: number | null, created_at: string, updated_at: string, };

@@ -215,7 +215,7 @@ const issue = (n: number, title: string, status: Issue["status"], lead: Lead | n
   id: uid(),
   workspace_id: B,
   number: n,
-  key: `BOU-${n}`,
+  key: `CUN-${n}`,
   title,
   body,
   status,

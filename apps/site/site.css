@@ -226,7 +226,7 @@ body { overflow: auto; user-select: auto; background: var(--bg); color: var(--in
   .stg-scr, .nav-in, .nav-ind, .tabx-ind { transition: none; }
   .mq-track { animation: none; flex-wrap: wrap; width: auto; }
   .mq-item[aria-hidden] { display: none; }
-  .mq { -webkit-mask-image: none; mask-image: none; }
+  .mq { -webkit-mask-image: none; mask-image: none; width: min(1200px, calc(100% - 40px)); margin: 0 auto; }
 }
 
 /* ---- tablet and phone ---- */

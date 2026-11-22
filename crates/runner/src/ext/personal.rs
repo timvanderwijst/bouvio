@@ -1327,13 +1327,13 @@ mod tests {
         };
         let md = fallback_markdown(&[
             item(BriefKind::Waiting, "Magic link sign-in", None),
-            item(BriefKind::Issue, "BOU-12 Drafts", Some("in_progress")),
-            item(BriefKind::Issue, "BOU-9 Rail", Some("done")),
+            item(BriefKind::Issue, "CUN-12 Drafts", Some("in_progress")),
+            item(BriefKind::Issue, "CUN-9 Rail", Some("done")),
             item(BriefKind::Task, "Reply to Jordan", Some("overdue")),
         ]);
         assert_eq!(
             md,
-            "**Waiting on you**\n- Magic link sign-in · Cuna\n\n**Issues**\n- BOU-12 Drafts · Cuna (in progress)\n- BOU-9 Rail · Cuna (done)\n\n**Your tasks for today**\n- Reply to Jordan · Cuna (overdue)"
+            "**Waiting on you**\n- Magic link sign-in · Cuna\n\n**Issues**\n- CUN-12 Drafts · Cuna (in progress)\n- CUN-9 Rail · Cuna (done)\n\n**Your tasks for today**\n- Reply to Jordan · Cuna (overdue)"
         );
         assert_eq!(fallback_markdown(&[]), "Nothing happened in the last 24 hours.");
     }

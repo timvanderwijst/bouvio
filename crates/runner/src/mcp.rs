@@ -40,7 +40,7 @@ pub fn tools() -> Value {
         },
         {
             "name": "create_issue",
-            "description": "File an issue in the workspace tracker. Returns its key, like BOU-12.",
+            "description": "File an issue in the workspace tracker. Returns its key, like CUN-12.",
             "inputSchema": { "type": "object", "properties": {
                 "title": { "type": "string" }, "body": { "type": "string" }
             }, "required": ["title"] }

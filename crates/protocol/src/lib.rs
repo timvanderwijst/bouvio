@@ -343,7 +343,7 @@ pub struct Issue {
     pub id: Uuid,
     pub workspace_id: Uuid,
     pub number: u32,
-    /// `BOU-12`
+    /// `CUN-12`
     pub key: String,
     pub title: String,
     pub body: String,
