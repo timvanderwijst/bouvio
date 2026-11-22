@@ -67,6 +67,9 @@
   position: fixed; inset: 0; z-index: 95; display: grid; place-items: center; padding: 16px;
   background: var(--bg); overflow-y: auto; animation: fade var(--t) var(--e);
 }
+/* The app stays transparent until init() finishes, and on the web that waits for a session:
+   without this the sign-in screen sits inside an invisible .app and the page looks blank. */
+.app:has(> .pf-signin) { opacity: 1; }
 .pf-signin-card {
   width: min(380px, 100%); padding: 28px 24px 22px; border-radius: 16px;
   background: var(--sheet); box-shadow: 0 0 0 1px var(--line), var(--shadow);
